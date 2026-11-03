@@ -1,0 +1,18 @@
+{
+ "as_of": "2026-11-03",
+ "note": "Known facts used to detect a stale or broken index. If one fails, check the official WotC ban list / Game Changers before editing.",
+ "checks": [
+  {"card": "Sol Ring", "field": "legal", "expect": "legal"},
+  {"card": "Sol Ring", "field": "gc", "expect": false},
+  {"card": "Sol Ring", "field": "identity", "expect": ""},
+  {"card": "Mana Crypt", "field": "legal", "expect": "banned"},
+  {"card": "Dockside Extortionist", "field": "legal", "expect": "banned"},
+  {"card": "Rhystic Study", "field": "gc", "expect": true},
+  {"card": "Demonic Tutor", "field": "gc", "expect": true},
+  {"card": "Smothering Tithe", "field": "gc", "expect": true},
+  {"card": "Thassa's Oracle", "field": "gc", "expect": true},
+  {"card": "Biorhythm", "field": "gc", "expect": true},
+  {"card": "Farewell", "field": "gc", "expect": true},
+  {"card": "Command Tower", "field": "gc", "expect": false}
+ ]
+}

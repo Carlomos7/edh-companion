@@ -1,0 +1,298 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>__TITLE__</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{color-scheme:light;
+ --bg:#f6f5f2;--surface:#fcfcfb;--surface-2:#efeee9;--line:#dcdad3;
+ --text:#0b0b0b;--text-2:#52514e;--muted:#7a7873;--accent:#2a78d6;
+ --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
+ --good:#1a7f37;--warn:#b26b00;--bad:#c0392b;
+ --t-S:#0b4a99;--t-A:#2a78d6;--t-B:#6ea6e6;--t-C:#a9c9ef;--t-D:#d9e6f6;
+ --radius:12px;--gutter:16px;}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
+ --bg:#121211;--surface:#1a1a19;--surface-2:#242422;--line:#34332f;--text:#f0efec;--text-2:#c3c2b7;--muted:#8f8d86;--accent:#3987e5;
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+ --good:#3fb950;--warn:#d29922;--bad:#f0605a;--t-S:#9cc4f5;--t-A:#3987e5;--t-B:#2c6bb8;--t-C:#1f4d85;--t-D:#163659;}}
+:root[data-theme="dark"]{color-scheme:dark;
+ --bg:#121211;--surface:#1a1a19;--surface-2:#242422;--line:#34332f;--text:#f0efec;--text-2:#c3c2b7;--muted:#8f8d86;--accent:#3987e5;
+ --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
+ --good:#3fb950;--warn:#d29922;--bad:#f0605a;--t-S:#9cc4f5;--t-A:#3987e5;--t-B:#2c6bb8;--t-C:#1f4d85;--t-D:#163659;}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:15px/1.5 Inter,system-ui,sans-serif}
+.num,code,.mono{font-family:"JetBrains Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+header{padding:20px var(--gutter) 8px;max-width:1200px;margin:0 auto;display:flex;gap:16px;align-items:flex-end;justify-content:space-between;flex-wrap:wrap}
+h1{margin:0;font-size:26px;letter-spacing:-.01em}.sub{color:var(--text-2);margin:2px 0 0}
+.fan{display:flex;align-items:flex-end;height:96px}
+.fan .art{width:60px;margin-left:-18px;transform:rotate(var(--r)) translateY(var(--y));transition:transform .3s;box-shadow:0 4px 12px #0004}
+.fan .art:first-child{margin-left:0}.fan:hover .art{transform:rotate(calc(var(--r)*1.4)) translateY(calc(var(--y) - 6px))}
+nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
+nav .in{max-width:1200px;margin:0 auto;padding:0 var(--gutter);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
+nav button{all:unset;cursor:pointer;padding:12px 14px;color:var(--text-2);border-bottom:2px solid transparent;white-space:nowrap;font-weight:600}
+nav button[aria-selected="true"]{color:var(--text);border-color:var(--accent)}
+nav button:focus-visible,button:focus-visible,.tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+main{max-width:1200px;margin:0 auto;padding:16px var(--gutter) 64px}
+section.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;margin:0 0 16px}
+h2{font-size:18px;margin:0 0 8px}h3{font-size:15px;margin:16px 0 6px}
+.muted{color:var(--muted)}.t2{color:var(--text-2)}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.ctrl{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:0 0 12px}
+select,input[type=search],input[type=number]{font:inherit;background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 8px;min-height:36px}
+.btn{font:inherit;cursor:pointer;background:var(--surface-2);color:var(--text);border:1px solid var(--line);border-radius:8px;padding:6px 12px;min-height:36px}
+.btn[aria-pressed="true"],.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.pill{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:600;padding:1px 8px;border-radius:999px;border:1px solid var(--line);white-space:nowrap}
+.pill i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--c)}
+.art{aspect-ratio:488/680;border-radius:4.75%/3.4%;background-color:var(--surface-2);background-repeat:no-repeat;display:block;width:100%}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px}
+.tile{all:unset;cursor:pointer;display:block;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:6px}
+.tile .nm{font-weight:600;font-size:13px;margin-top:4px;line-height:1.25}.tile .meta{font-size:12px;color:var(--text-2)}
+.tier{display:grid;grid-template-columns:48px 1fr;gap:12px;margin:0 0 12px;content-visibility:auto;contain-intrinsic-size:auto 300px}
+.tier .lt{border-radius:8px;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:22px;color:#fff}
+.tier .lt.dk{color:#0b0b0b}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:8px}
+.stat{background:var(--surface-2);border-radius:10px;padding:10px}.stat b{display:block;font-size:20px}.stat span{font-size:12px;color:var(--text-2)}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.chart{position:relative;height:240px}
+table{border-collapse:collapse;width:100%}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:14px;vertical-align:top}
+th{color:var(--text-2);font-weight:600}td.n,th.n{text-align:right}
+.bullet{display:grid;grid-template-columns:110px 1fr 96px;gap:8px;align-items:center;margin:4px 0}
+.bullet .num{white-space:nowrap;text-align:right}.bullet .bar{position:relative;height:12px;background:var(--surface-2);border-radius:6px}
+.bullet .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--good) 25%,transparent);border-radius:6px}
+.bullet .val{position:absolute;top:2px;bottom:2px;left:0;background:var(--text-2);border-radius:4px}
+.ok{color:var(--good)}.short{color:var(--warn)}.over{color:var(--bad)}
+.cmdrs{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:10px}
+.cmdr[aria-pressed="true"]{outline:2px solid var(--accent)}
+.decklist .grp{margin:0 0 12px}.decklist .ln{display:grid;grid-template-columns:28px 34px 1fr auto auto;gap:8px;align-items:center;padding:3px 0;border-bottom:1px dashed var(--line)}
+.decklist .ln .art{width:34px}.decklist button.name{all:unset;cursor:pointer;font-weight:600}.decklist button.name:focus-visible{outline:2px solid var(--accent)}
+details summary{cursor:pointer;font-weight:600}
+.strip{overflow-x:auto}.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:12px;color:var(--text-2);margin:6px 0}
+.flag{font-size:12px;padding:1px 6px;border-radius:6px;background:color-mix(in srgb,var(--warn) 18%,transparent)}
+/* viewer */
+dialog{border:0;padding:0;background:transparent;max-width:none;max-height:none;width:100vw;height:100dvh}
+dialog::backdrop{background:#000c}
+.vw{display:grid;grid-template-columns:minmax(0,420px) minmax(0,360px);gap:24px;align-items:center;justify-content:center;height:100%;padding:16px;color:#f0efec}
+.stage{perspective:1200px;touch-action:none}
+.card3d{position:relative;width:min(420px,86vw);aspect-ratio:488/680;transform-style:preserve-3d;transition:transform .45s cubic-bezier(.2,.7,.2,1);margin:0 auto}
+.card3d.dragging{transition:none}
+.face{position:absolute;inset:0;backface-visibility:hidden;border-radius:4.75%/3.4%;overflow:hidden;box-shadow:0 20px 50px #000a}
+.face .art{width:100%;height:100%;border-radius:0}
+.face.back{transform:rotateY(180deg)}
+.sheen{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.0;transition:opacity .2s;
+ background:radial-gradient(circle at var(--mx,50%) var(--my,30%),#fff5 0%,#fff0 40%),linear-gradient(115deg,#0000 30%,#7af3 45%,#f7a3 55%,#0000 70%)}
+.stage:hover .sheen{opacity:1}
+.side{background:#1a1a19ee;border-radius:12px;padding:16px;max-height:80dvh;overflow:auto}
+.side h3{margin-top:0}.side table td,.side table th{color:#f0efec;border-color:#34332f}
+.vbtns{display:flex;gap:8px;justify-content:center;margin-top:12px}
+.vbtns .btn{background:#2b2b29;color:#f0efec;border-color:#444}
+@media (max-width:760px){.vw{grid-template-columns:1fr;align-content:start;overflow:auto}.side{max-height:none}
+ .decklist .ln{grid-template-columns:24px 30px 1fr auto}.decklist .ln .pr{display:none}.bullet{grid-template-columns:74px 1fr 88px}}
+@media (prefers-reduced-motion:reduce){.card3d,.fan .art{transition:none}.sheen{display:none}}
+</style>
+</head>
+<body>
+<header><div><h1 id="title"></h1><p class="sub" id="subtitle"></p></div><div class="row"><div class="fan" id="fan" aria-hidden="true"></div>
+<button class="btn" id="themeBtn" aria-label="Toggle light or dark">◐</button></div></header>
+<nav><div class="in" role="tablist" id="tabs"></div></nav>
+<main id="main"></main>
+<dialog id="viewer" aria-label="Card viewer"><div class="vw">
+ <div><div class="stage" id="stage"><div class="card3d" id="card3d"><div class="face front"><div class="art" id="vFront"></div><div class="sheen"></div></div>
+ <div class="face back"><div class="art" id="vBack"></div><div class="sheen"></div></div></div></div>
+ <div class="vbtns"><button class="btn" id="vPrev" aria-label="Previous card">←</button><button class="btn" id="vFlip">Flip (F)</button>
+ <button class="btn" id="vNext" aria-label="Next card">→</button><button class="btn" id="vClose">Close</button></div></div>
+ <div class="side" id="vSide"></div></div></dialog>
+<script>/*__DATA__*/</script>
+<script>
+"use strict";
+const $=(s,r=document)=>r.querySelector(s), el=(t,a={},...k)=>{const e=document.createElement(t);for(const[n,v]of Object.entries(a)){if(n==="class")e.className=v;else if(n==="style")e.style.cssText=v;else if(n.startsWith("on"))e.addEventListener(n.slice(2),v);else if(v!==false&&v!=null)e.setAttribute(n,v===true?"":v)}for(const c of k.flat()){if(c==null||c===false)continue;e.append(c.nodeType?c:document.createTextNode(c))}return e};
+const store={get(k,d){try{const v=localStorage.getItem("mtgp:"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("mtgp:"+k,JSON.stringify(v))}catch(e){}}};
+const money=v=>v==null?"–":"$"+(v<10?v.toFixed(2):v<1000?v.toFixed(0):Math.round(v).toLocaleString());
+const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
+let D, ATL, charts=[];
+
+/* ---------- images from atlas ---------- */
+function artStyle(key){const a=ATL&&ATL.cards[key];if(!a)return "";const[i,x,y]=a,[w,h]=ATL.cell,c=ATL.cols,r=ATL.rows;
+ return `background-image:url(${ATL.base}${ATL.atlases[i]});background-size:${c*100}% ${r*100}%;background-position:${c>1?x/w/(c-1)*100:0}% ${r>1?y/h/(r-1)*100:0}%`}
+function art(key,alt){return el("div",{class:"art",role:"img","aria-label":alt||"",style:artStyle(key)})}
+
+/* ---------- theme pills ---------- */
+function themeColor(label){const t=D.theme;if(!t)return"var(--muted)";const L=t.labels.find(l=>l.label===label);return L?L.color:"var(--s4)"}
+function pill(label){if(!D.theme||!label)return null;return el("span",{class:"pill",style:`--c:${themeColor(label)}`},el("i"),label==="off-theme"?"Off-theme":label)}
+function themeLegend(){if(!D.theme)return null;return el("div",{class:"legend"},...D.theme.labels.map(l=>pill(l.label)),pill("off-theme"))}
+
+/* ---------- tabs and routing ---------- */
+function tabsList(){const t=[];(D.tiers||[]).forEach(x=>t.push({id:"tier-"+x.id,title:x.title,render:()=>renderTier(x)}));
+ (D.groups||[]).forEach(g=>t.push({id:"decks-"+g.id,title:g.title,render:()=>renderGroup(g)}));
+ t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
+let TABS=[];
+function go(id,push=true){const tab=TABS.find(t=>t.id===id)||TABS.find(t=>(D.aliases||{})[id]===t.id)||TABS[0];
+ document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===tab.id));
+ charts.forEach(c=>c.destroy());charts=[];const m=$("#main");m.replaceChildren();tab.render(m);store.set("tab",tab.id);
+ if(push)history.replaceState(null,"","#"+tab.id)}
+function buildTabs(){TABS=tabsList();const bar=$("#tabs");bar.replaceChildren(...TABS.map(t=>el("button",{role:"tab","data-id":t.id,onclick:()=>go(t.id)},t.title)));
+ bar.addEventListener("keydown",e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;const b=[...bar.children],i=b.indexOf(document.activeElement);if(i<0)return;
+  const n=b[(i+(e.key==="ArrowRight"?1:-1)+b.length)%b.length];n.focus();n.click()})}
+
+/* ---------- charts (Chart.js, one question each) ---------- */
+function baseOpts(extra={}){const tx=cssv("--text-2"),gr=cssv("--line");return Object.assign({responsive:true,maintainAspectRatio:false,animation:matchMedia("(prefers-reduced-motion:reduce)").matches?false:{duration:300},
+ plugins:{legend:{labels:{color:tx,boxWidth:10,font:{size:12}}},tooltip:{intersect:false,mode:"index"}},
+ scales:{x:{ticks:{color:tx,font:{size:11}},grid:{display:false}},y:{beginAtZero:true,ticks:{color:tx,font:{size:11},precision:0},grid:{color:gr}}}},extra)}
+function chart(host,cfg,title){const box=el("div",{},el("h3",{},title),el("div",{class:"chart"},el("canvas",{role:"img","aria-label":title})));host.append(box);
+ if(!window.Chart){box.append(el("p",{class:"muted"},"Charts need Chart.js (offline?)."));return}
+ charts.push(new Chart(box.querySelector("canvas"),cfg))}
+function bars(labels,data,opts={}){return{type:"bar",data:{labels,datasets:data.map((d,i)=>({label:d.label,data:d.values,backgroundColor:d.color||cssv("--s"+(i+1)),borderRadius:4,borderSkipped:"start",maxBarThickness:28,
+ borderColor:cssv("--surface"),borderWidth:{top:0,right:2,left:2,bottom:0},...(d.extra||{})}))},options:baseOpts(opts)}}
+
+/* ---------- tier tabs ---------- */
+const TIERS=["S","A","B","C","D"];
+function tierOf(p,c){return p>=c.S?"S":p>=c.A?"A":p>=c.B?"B":p>=c.C?"C":"D"}
+function renderTier(T,host=$("#main")){const key="tier:"+T.id,st=store.get(key,{sort:"pct",theme:"",q:"",max:""});
+ const cut=T.cutoffs||{S:60,A:40,B:25,C:10};
+ host.append(el("section",{class:"panel"},el("h2",{},T.title),el("p",{class:"t2"},T.method||"Ranked by EDHREC inclusion: the share of decks that could play a card that do."),
+  el("div",{class:"legend"},...TIERS.map(t=>el("span",{},el("b",{},t)," ",t==="D"?`< ${cut.C}%`:`≥ ${cut[t]}%`)),el("span",{},"Tiers are a community convention; cutoffs are ours.")),
+  T.low_n?el("p",{class:"flag"},`Low confidence: fewer than ${T.low_n} decks behind some numbers (n shown on each card).`):null,themeLegend()));
+ const ctl=el("div",{class:"ctrl"});const list=el("div");
+ const sortSel=el("select",{"aria-label":"Sort"},...[["pct","Inclusion (high first)"],["price","Price (cheap first)"],["name","Name"]].map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
+ const q=el("input",{type:"search",placeholder:"Search cards",value:st.q,"aria-label":"Search"});
+ const max=el("input",{type:"number",placeholder:"Max $",min:0,value:st.max,style:"width:90px","aria-label":"Maximum price"});
+ ctl.append(sortSel,q,max);if(D.theme){const th=el("select",{"aria-label":"Theme filter"},el("option",{value:""},"All themes"),...D.theme.labels.map(l=>el("option",{value:l.label,selected:st.theme===l.label},l.label)),el("option",{value:"off-theme",selected:st.theme==="off-theme"},"Off-theme"));th.onchange=draw;ctl.append(th);ctl.th=th}
+ [sortSel,q,max].forEach(i=>i.addEventListener("input",draw));
+ const panel=el("section",{class:"panel"},ctl,list);host.append(panel);
+ const sc=el("section",{class:"panel"});host.append(sc);
+ if(T.cards.some(c=>c.price!=null))chart(sc,{type:"scatter",data:{datasets:[{label:"Cards",data:T.cards.filter(c=>c.price>0).map(c=>({x:c.price,y:c.pct,n:c.name})),backgroundColor:cssv("--s1"),pointRadius:4}]},
+  options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.n}: ${c.raw.y}% · ${money(c.raw.x)}`}}},scales:{x:{type:"logarithmic",title:{display:true,text:"Price (log)",color:cssv("--text-2")},ticks:{color:cssv("--text-2"),callback:v=>[0.1,1,10,100,1000].includes(v)?"$"+v:""}},y:{title:{display:true,text:"Inclusion %",color:cssv("--text-2")},ticks:{color:cssv("--text-2")},grid:{color:cssv("--line")}}}})},"Which cards are cheap but widely played?");
+ if(T.staples&&T.staples.length){sc.append(el("h3",{},"Generic staples (ranked separately)"),el("div",{class:"grid"},...T.staples.map(c=>cardTile(c,T.staples))))}
+ function draw(){const s={sort:sortSel.value,q:q.value,max:max.value,theme:ctl.th?ctl.th.value:""};store.set(key,s);
+  let cs=T.cards.filter(c=>(!s.q||c.name.toLowerCase().includes(s.q.toLowerCase()))&&(!s.max||(c.price??0)<=+s.max)&&(!s.theme||c.theme===s.theme));
+  cs.sort(s.sort==="price"?(a,b)=>(a.price??1e9)-(b.price??1e9):s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>b.pct-a.pct);
+  list.replaceChildren(...TIERS.map(t=>{const inT=cs.filter(c=>tierOf(c.pct,cut)===t);if(!inT.length)return null;
+   return el("div",{class:"tier"},el("div",{class:"lt"+(t==="C"||t==="D"?" dk":""),style:`background:var(--t-${t})`,"aria-label":"Tier "+t},t),el("div",{class:"grid"},...inT.map(c=>cardTile(c,inT))))}).filter(Boolean));
+  if(!cs.length)list.append(el("p",{class:"muted"},"No cards match these filters."))}
+ draw()}
+function cardTile(c,ctx){return el("button",{class:"tile",onclick:e=>openViewer(c,ctx,e.currentTarget),"aria-label":`${c.name}, open card`},art(c.img,c.name),
+ el("div",{class:"nm"},c.name),el("div",{class:"meta num"},c.pct!=null?`${c.pct}%${c.n?` of ${c.n.toLocaleString()}`:""}`:"",c.price!=null?` · ${money(c.price)}`:""),pill(c.theme))}
+
+/* ---------- deck tabs ---------- */
+function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{});
+ const cmdrs=G.commanders;let cur=cmdrs.find(c=>c.slug===st.cmdr)||cmdrs[0];
+ const defB=G.default_bracket||D.default_bracket;
+ // comparison strip
+ if(cmdrs.length>1){const rows=cmdrs.map(c=>{const d=c.decks.find(x=>x.bracket===defB)||c.decks[0];const s=d.stats||{};
+   return el("tr",{},el("td",{},c.name),el("td",{class:"n num"},"B"+d.bracket),el("td",{class:"n num"},money(s.price)),el("td",{class:"n num"},s.avg_mv??"–"),el("td",{class:"n num"},(s.game_changers||[]).length),el("td",{class:"n num"},s.sim?simAt(s.sim,c.mv)+"%":"–"))});
+  host.append(el("section",{class:"panel strip"},el("h2",{},"Compare"),el("table",{},el("thead",{},el("tr",{},el("th",{},"Commander"),el("th",{class:"n"},"Bracket"),el("th",{class:"n"},"Price"),el("th",{class:"n"},"Avg MV"),el("th",{class:"n"},"Game Changers"),el("th",{class:"n"},"On curve"))),el("tbody",{},rows)),
+   el("p",{class:"muted"},"On curve = games where the commander is castable by the turn after its mana value (goldfish simulation).")))}
+ const pick=el("section",{class:"panel"});host.append(pick);const body=el("div");host.append(body);
+ if(cmdrs.length>1)pick.append(el("h2",{},"Commander"),el("div",{class:"cmdrs"},...cmdrs.map(c=>el("button",{class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));drawC()}},art(c.img,c.name),el("div",{class:"nm"},c.name)))));
+ else pick.remove();
+ function drawC(){charts.forEach(c=>c.destroy());charts=[];body.replaceChildren();const brs=cur.decks.map(d=>d.bracket);let b=store.get(key+":"+cur.slug,brs.includes(defB)?defB:brs[0]);
+  const bb=el("div",{class:"row"},el("b",{},"Bracket"),...cur.decks.map(d=>el("button",{class:"btn","aria-pressed":d.bracket===b,onclick:()=>{store.set(key+":"+cur.slug,d.bracket);drawC()}},"B"+d.bracket)));
+  const deck=cur.decks.find(d=>d.bracket===b)||cur.decks[0];
+  body.append(el("section",{class:"panel"},el("div",{class:"row",style:"justify-content:space-between"},el("h2",{},cur.name),bb),deckSummary(deck,cur)));
+  body.append(deckStats(deck,cur));body.append(deckList(deck));
+  const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(sw.length)body.append(swapList(G,cur,b));}
+ drawC()}
+function simAt(sim,mv){const k="turn_"+Math.min((mv||4)+1,8);return sim[k]??"–"}
+function deckSummary(d,c){const s=d.summary||{},w=el("div");
+ if(s.pitch)w.append(el("p",{class:"t2",style:"font-size:16px"},s.pitch));
+ const li=(t,a)=>a&&a.length?el("div",{},el("h3",{},t),el("ul",{},...a.map(x=>el("li",{},x)))):null;
+ w.append(...[s.wins?el("div",{},el("h3",{},"How it wins"),el("p",{},s.wins)):null,li("Key cards",s.key_cards),li("Strengths",s.strengths),li("Weaknesses",s.weaknesses),li("Tips",s.tips)].filter(Boolean));
+ if(d.theme)w.append(el("p",{},el("b",{},`${d.theme.on_theme_pct??"–"}% on theme `),...Object.entries(d.theme.counts||{}).map(([k,v])=>[pill(k)," ",v," "]).flat(),d.theme.theme_premium_usd?` · +${money(d.theme.theme_premium_usd)} for themed printings`:""));
+ if(c.youtube&&c.youtube.length)w.append(el("h3",{},"Watch"),el("ul",{},...c.youtube.map(v=>el("li",{},el("a",{href:v.url,target:"_blank",rel:"noopener"},v.title)," ",el("span",{class:"muted"},`${v.channel||""} · ${v.date||""}`)))));
+ if(s.notes)w.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
+ const ch=d.checks||{};w.append(el("p",{class:"muted"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return w}
+function deckStats(d,c){const s=d.stats||{},sec=el("section",{class:"panel"},el("h2",{},"Numbers"));
+ sec.append(el("div",{class:"stats"},...[["Price",money(s.price)+(s.unpriced&&s.unpriced.length?" +":"")],["Avg MV",s.avg_mv??"–"],["Lands",s.lands??"–"],["Game Changers",(s.game_changers||[]).length],["On curve",s.sim?simAt(s.sim,c.mv)+"%":"–"],s.cost_to_buy!=null?["To buy",money(s.cost_to_buy)]:null].filter(Boolean).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))));
+ if(s.unpriced&&s.unpriced.length)sec.append(el("p",{class:"flag"},`Price excludes ${s.unpriced.length} unpriced card(s): ${s.unpriced.join(", ")}`));
+ if(s.template){sec.append(el("h3",{},"Template check"),...Object.entries(s.template).map(([role,[have,lo,hi]])=>{const mx=Math.max(hi*1.4,have,1),cls=have<lo?"short":have>hi?"over":"ok";
+   return el("div",{class:"bullet"},el("span",{},role),el("div",{class:"bar",role:"img","aria-label":`${role}: ${have}, target ${lo} to ${hi}`},el("div",{class:"band",style:`left:${lo/mx*100}%;width:${(hi-lo)/mx*100}%`}),el("div",{class:"val",style:`width:${have/mx*100}%;height:8px`})),el("span",{class:"num "+cls},`${have} / ${lo}-${hi}`))}),
+  el("p",{class:"muted"},(s.template_source||"Starting ranges, not laws.")+(s.roles_source?` Role counts: ${s.roles_source}.`:"")));
+  if(s.role_compare)sec.append(el("p",{class:"muted"},"Where counts disagree: "+Object.entries(s.role_compare).map(([r,v])=>`${r} ${v.tagger} (Tagger) vs ${v.builder} (builder)`).join(" · ")))}
+ const ch=el("div",{class:"charts"});sec.append(ch);
+ if(s.curve)chart(ch,bars(Object.keys(s.curve),[{label:"Cards",values:Object.values(s.curve)}],{plugins:{legend:{display:false}}}),"Mana curve (nonland)");
+ if(s.types)chart(ch,bars(Object.keys(s.types),[{label:"Cards",values:Object.values(s.types)}],{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:cssv("--text-2"),precision:0},grid:{color:cssv("--line")}},y:{ticks:{color:cssv("--text-2")},grid:{display:false}}}}),"Card types");
+ if(s.pips&&s.sources){const cols=Object.keys(s.pips).filter(k=>s.pips[k]||s.sources[k]);if(cols.length)chart(ch,bars(cols,[{label:"Pips in costs",values:cols.map(k=>s.pips[k])},{label:"Mana sources",values:cols.map(k=>s.sources[k]||0)}]),"Can the mana cast the spells?")}
+ if(s.sim){const ks=Object.keys(s.sim);chart(ch,{type:"line",data:{labels:ks.map(k=>k.replace("turn_","T")),datasets:[{label:"Commander castable",data:ks.map(k=>s.sim[k]),borderColor:cssv("--s1"),backgroundColor:cssv("--s1"),borderWidth:2,pointRadius:4,tension:.2}]},
+  options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>c.raw+"% of games"}}},scales:{x:{ticks:{color:cssv("--text-2")},grid:{display:false}},y:{min:0,max:100,ticks:{color:cssv("--text-2"),callback:v=>v+"%"},grid:{color:cssv("--line")}}}})},"How often is the commander out by each turn?")}
+ return sec}
+const TYPE_ORDER=["Creature","Planeswalker","Battle","Instant","Sorcery","Artifact","Enchantment","Land"];
+function mainType(t){t=t||"";return TYPE_ORDER.find(x=>t.includes(x))||"Other"}
+function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q:"",theme:""});
+ const sec=el("section",{class:"panel decklist"},el("div",{class:"row",style:"justify-content:space-between"},el("h2",{},`Decklist (${d.cards.reduce((a,c)=>a+c.qty,0)})`),
+  el("button",{class:"btn primary",onclick:e=>copyText(d.moxfield||d.cards.map(c=>`${c.qty} ${c.name}${c.set?` (${c.set.toUpperCase()}) ${c.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield")));
+ const grp=el("select",{"aria-label":"Group by"},...[["type","Group: type"],["mv","Group: mana value"],["theme","Group: theme"],["role","Group: role"],["none","No groups"]].filter(([v])=>v!=="theme"||D.theme).map(([v,t])=>el("option",{value:v,selected:st.group===v},t)));
+ const srt=el("select",{"aria-label":"Sort"},...[["mv","Sort: mana value"],["name","Sort: name"],["price","Sort: price (high first)"]].map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
+ const q=el("input",{type:"search",placeholder:"Filter",value:st.q,"aria-label":"Filter decklist"});
+ const ctl=el("div",{class:"ctrl"},grp,srt,q);sec.append(ctl,themeLegend()||"");const out=el("div");sec.append(out);
+ [grp,srt,q].forEach(i=>i.addEventListener("input",draw));
+ function draw(){const s={group:grp.value,sort:srt.value,q:q.value};store.set(key,s);
+  let cs=d.cards.filter(c=>!s.q||c.name.toLowerCase().includes(s.q.toLowerCase()));
+  cs.sort(s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):s.sort==="price"?(a,b)=>(b.price??0)-(a.price??0):(a,b)=>(a.mv-b.mv)||a.name.localeCompare(b.name));
+  const gk=c=>c.commander?"Commander":s.group==="type"?mainType(c.type):s.group==="mv"?(c.land?"Lands":"MV "+Math.min(c.mv,7)+(c.mv>=7?"+":"")):s.group==="theme"?(c.theme||"–"):s.group==="role"?(c.role||"Other"):"All";
+  const groups={};cs.forEach(c=>(groups[gk(c)]=groups[gk(c)]||[]).push(c));
+  const order=Object.keys(groups).sort((a,b)=>(a==="Commander"?-1:b==="Commander"?1:0)||(s.group==="type"?TYPE_ORDER.indexOf(a)-TYPE_ORDER.indexOf(b):a.localeCompare(b,undefined,{numeric:true})));
+  const flat=order.flatMap(g=>groups[g]);  // the viewer browses the whole list in display order
+  out.replaceChildren(...order.map(g=>el("div",{class:"grp"},el("h3",{},`${g} (${groups[g].reduce((a,c)=>a+c.qty,0)})`),...groups[g].map(c=>el("div",{class:"ln"},el("span",{class:"num muted"},c.qty),art(c.img,""),
+   el("button",{class:"name",onclick:e=>openViewer(c,flat,e.currentTarget)},c.name),el("span",{},pill(c.theme)," ",c.flags&&c.flags.length?el("span",{class:"flag",title:c.flags.join(", ")},"!"):""),el("span",{class:"num muted pr"},money(c.price)))))))}
+ draw();return sec}
+function swapList(G,c,b){const sec=el("section",{class:"panel"},el("h2",{},"Cards to consider"),el("p",{class:"t2"},`Shared across this tab. Rows for ${c.name} are highlighted; every swap was re-checked against that deck's bracket.`));
+ const rows=(G.swaps||[]).map(s=>{const mine=s.fits.filter(f=>f.deck===`${c.slug}/b${b}`);
+  return el("tr",{style:mine.length?"background:color-mix(in srgb,var(--accent) 10%,transparent)":""},el("td",{},el("button",{class:"btn",style:"min-height:0;padding:2px 8px",onclick:e=>openViewer(s,G.swaps,e.currentTarget)},s.card)," ",pill(s.theme)),el("td",{},s.why||""),
+   el("td",{},...s.fits.map(f=>el("div",{},el("b",{},f.deck)," → swap out ",f.swap_out,f.note?el("span",{class:"muted"}," · "+f.note):""))))});
+ sec.append(el("div",{class:"strip"},el("table",{},el("thead",{},el("tr",{},el("th",{},"Card"),el("th",{},"Why"),el("th",{},"Fits"))),el("tbody",{},rows))));return sec}
+function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1500)};
+ if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
+ function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}
+
+/* ---------- sources & accuracy ---------- */
+function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||{};
+ host.append(el("section",{class:"panel"},el("h2",{},"Where the data comes from"),el("table",{},el("tbody",{},...Object.entries(dd).map(([k,v])=>el("tr",{},el("th",{},k.replace(/_/g," ")),el("td",{class:"num"},String(v))))))));
+ host.append(el("section",{class:"panel"},el("h2",{},"Accuracy"),el("div",{class:"stats"},...[["Claims verified",A.claims_verified],["Unverified (labelled)",A.claims_unverified],["Decks validated",A.decks_validated]].filter(x=>x[1]!=null).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))),
+  (A.checks||[]).length?el("ul",{},...A.checks.map(c=>el("li",{},c))):null,(A.unverified||[]).length?el("div",{},el("h3",{},"Still unverified"),el("ul",{},...A.unverified.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," · "+u.where):"")))):null));
+ const src=D.sources||[];if(src.length)host.append(el("section",{class:"panel"},el("h2",{},`Sources (${src.length})`),el("ul",{},...src.map(s=>el("li",{},el("a",{href:s.url,target:"_blank",rel:"noopener"},s.title||s.url)," ",el("span",{class:"muted"},[s.kind,s.date,s.locator].filter(Boolean).join(" · ")))))))}
+
+/* ---------- viewer: CSS 3D, drag to rotate, flip, sheen ---------- */
+let V={list:[],i:0,opener:null,ry:0,rx:0,flipped:false};
+function openViewer(c,list,opener){V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
+function cardOf(x){return x.card?{...x,name:x.card}:x}
+function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=0;V.ry=0;apply();
+ $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);
+ $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),el("p",{},pill(c.theme)," ",c.pct!=null?el("span",{class:"num"},`${c.pct}% inclusion${c.n?` (n=${c.n.toLocaleString()})`:""}`):""));
+ if(c.why)side.append(el("p",{},c.why));if(c.reason)side.append(el("p",{},el("b",{},"Off-theme because: "),c.reason));
+ const lad=(D.printings||{})[c.name];if(lad&&lad.length)side.append(el("h3",{},"Printings, cheapest to rarest"),el("table",{},el("tbody",{},...lad.map(p=>el("tr",{style:p.theme?`box-shadow:inset 3px 0 0 ${themeColor(p.theme)}`:""},el("td",{},`${(p.set||"").toUpperCase()} #${p.cn||""}`),el("td",{},p.theme||""),el("td",{class:"n num"},money(p.price)),el("td",{class:"n num muted"},p.foil!=null?"foil "+money(p.foil):""))))),D.data_dates&&D.data_dates.prices?el("p",{class:"muted"},"Prices as of "+D.data_dates.prices):"");
+ side.append(el("p",{class:"muted"},`${V.i+1} / ${V.list.length} · ← → to browse, F to flip, drag to tilt`))}
+function apply(){$("#card3d").style.transform=`rotateX(${V.rx}deg) rotateY(${V.ry+(V.flipped?180:0)}deg)`}
+function flip(){V.flipped=!V.flipped;apply()}
+function step(n){V.i=(V.i+n+V.list.length)%V.list.length;showCard()}
+function closeViewer(){$("#viewer").close()}
+function initViewer(){const dlg=$("#viewer"),stage=$("#stage"),card=$("#card3d");
+ $("#vFlip").onclick=flip;$("#vPrev").onclick=()=>step(-1);$("#vNext").onclick=()=>step(1);$("#vClose").onclick=closeViewer;
+ dlg.addEventListener("close",()=>{if(V.opener)setTimeout(()=>V.opener.focus(),0)});
+ dlg.addEventListener("click",e=>{if(e.target===dlg||e.target.classList.contains("vw"))closeViewer()});
+ dlg.addEventListener("keydown",e=>{if(e.key==="ArrowRight")step(1);else if(e.key==="ArrowLeft")step(-1);else if(e.key.toLowerCase()==="f")flip()});
+ const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;let drag=null,moved=false;
+ stage.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,rx:V.rx,ry:V.ry};moved=false;card.classList.add("dragging");stage.setPointerCapture(e.pointerId)});
+ stage.addEventListener("pointermove",e=>{const r=stage.getBoundingClientRect();stage.querySelectorAll(".sheen").forEach(s=>{s.style.setProperty("--mx",(e.clientX-r.left)/r.width*100+"%");s.style.setProperty("--my",(e.clientY-r.top)/r.height*100+"%")});
+  if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(reduced)return;
+  V.ry=Math.max(-35,Math.min(35,drag.ry+dx/4));V.rx=Math.max(-25,Math.min(25,drag.rx-dy/4));apply()});
+ const end=e=>{if(!drag)return;const dx=e.clientX-drag.x;card.classList.remove("dragging");
+  if(!moved)flip();else if(Math.abs(dx)>120&&e.pointerType==="touch")step(dx<0?1:-1);else{V.rx=0;V.ry=0;apply()}drag=null};
+ stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end)}
+
+/* ---------- boot ---------- */
+async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-data.json")).json()}catch(e){$("#main").textContent="Could not load site-data.json.";return}}
+ ATL=D.atlas?{...D.atlas,base:D.atlas.base??"img/"}:null;
+ document.title=D.title||document.title;$("#title").textContent=D.title||"";$("#subtitle").textContent=D.subtitle||"";
+ const fan=$("#fan"),fc=(D.fan||[]).slice(0,7);fc.forEach((k,i)=>{const a=art(k,"");const m=(fc.length-1)/2;a.style.setProperty("--r",(i-m)*6+"deg");a.style.setProperty("--y",Math.abs(i-m)*4+"px");fan.append(a)});
+ const t=store.get("theme",null);if(t)document.documentElement.dataset.theme=t;
+ $("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;store.set("theme",n);go(store.get("tab"),false)};
+ matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>go(store.get("tab"),false));
+ buildTabs();initViewer();go(location.hash.slice(1)||store.get("tab",""),true)}
+boot();
+</script>
+</body>
+</html>

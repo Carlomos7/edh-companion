@@ -1,0 +1,19 @@
+{
+  "name": "mtg",
+  "description": "Accurate Magic: The Gathering research, Commander deckbuilding and optimizing, and tested deck pages. Card facts come from a local Scryfall index; claims are logged, audited and independently verified.",
+  "version": "4.0.0",
+  "author": {
+    "name": "Carlomos7",
+    "url": "https://github.com/Carlomos7"
+  },
+  "keywords": [
+    "mtg",
+    "magic the gathering",
+    "commander",
+    "edh",
+    "deckbuilding"
+  ],
+  "homepage": "https://github.com/Carlomos7/mtg-skills",
+  "repository": "https://github.com/Carlomos7/mtg-skills",
+  "license": "MIT"
+}

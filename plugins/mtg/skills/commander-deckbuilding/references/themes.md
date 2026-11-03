@@ -1,0 +1,70 @@
+# Themes (optional)
+
+**Default: no theme.** Only apply a theme when the user asks for one. "I want a Spider-Man commander" is a commander choice, not a theme for the other 99 cards: ask once whether they also want the rest on theme.
+
+## Intake question (one, multiple choice)
+"How much should the rest of the deck follow <theme>?"
+- **No theme**: just the best deck for this commander. → `mode: none` (or no theme file)
+- **Theme when free**: best cards, but use themed printings of them. → `mode: power`
+- **Theme first, upgrades allowed**: on theme unless an off-theme card is clearly better, with a reason. → `mode: prefer` (+ optional `max_off_theme`)
+- **Strictly on theme**: nothing off theme. → `mode: strict` (run `theme-pool` first)
+
+Also ask, only if relevant: is the wider franchise OK (`franchise_label`, `max_franchise`), and how much extra are they willing to pay for themed printings (`max_premium_per_card`).
+
+## Factions and sub-themes (heroes vs villains, Sith vs Jedi)
+Factions aren't in card data, so they're a judgment the user confirms:
+1. `theme-build` the franchise first (all Marvel printings).
+2. Propose faction labels from card names, type lines, flavor text and art (`search` with `art:`/`ft:`/name terms), as separate labels in priority order, e.g. `["Spider-Man", "Villain", "Marvel"]` with `franchise_label: "Marvel"`.
+3. Show a `contact-sheet` of everything assigned to the smaller faction plus anything ambiguous (team-ups, antiheroes like Venom). Let the user move disputed cards (picker page or a list), then record them as `include`/`exclude` in the spec and rebuild.
+4. "Only villains" is then `mode: strict` with labels `["Villain"]`, or `prefer` with `franchise_label: "Marvel"` and `max_franchise` for "mostly villains".
+
+## Kinds of theme (all handled the same way)
+| Kind | Example | Spec queries |
+|---|---|---|
+| Printing / IP | Spider-Man, Marvel, Avatar | `e:spm`, `e:sld art:spider-man`, `e:sld ft:"spider"` |
+| Flavor / tribe | Vampires, Dinosaurs, Pirates | `t:vampire`, `o:vampire`, `art:vampire` |
+| Art style | Showcase frames, borderless anime | `frame:showcase`, `is:borderless` |
+| Commander only | "Peter Parker, rest anything" | `mode: none` (+ `commander_must_match` only if they want it checked) |
+
+## Spec → map
+Write `theme-spec.json`, then `mtgdb.py theme-build theme-spec.json --out themed-printings.json`.
+```json
+{"mode": "prefer", "franchise_label": "Marvel", "max_off_theme": 8, "max_franchise": null,
+ "max_premium_per_card": 15, "count_basics": false, "exempt_commanders": true, "commander_must_match": true,
+ "labels": [
+  {"label": "Spider-Man", "queries": ["e:spm", "e:spe", "e:sld art:spider-man"], "include": ["sld#1996"], "exclude": []},
+  {"label": "Marvel", "queries": ["e:mar", "e:sld (art:marvel or ft:marvel)"], "exclude": ["sld#2100"]}]}
+```
+- Labels are in **priority order**. A printing matched by several labels gets the first.
+- `include` / `exclude` keys: Scryfall printing id, `set#cn`, `set:code`, `oracle:<oracle id>`, or `name:<card name>` (any printing of that card counts).
+- **Secret Lair is one set (`sld`)** for every drop, so never use `set:sld`. Use queries plus includes and excludes.
+- Then verify the map before trusting it:
+  - False positives: `contact-sheet` of the matched Secret Lair and promo printings, and look at it.
+  - Gaps: `search` the theme by name, art and flavor across all sets, then diff against the map.
+  - Disputed art goes in `exclude` or `include` with a note.
+
+## What validate does per mode
+| | none | power | prefer | strict |
+|---|---|---|---|---|
+| Theme tags and counts | no | yes | yes | yes |
+| Missed themed printing of the same card (free swap) | no | warn | warn | warn |
+| Off-theme card | – | fine | warn if no reason | **error** |
+| `max_off_theme` / `max_franchise` | – | error if set and exceeded | same | same |
+| `commander_must_match` | – | error if set | same | same |
+
+Always reported: `on_theme_pct`, off-theme list, franchise list, `theme_premium_usd` (extra cost of themed printings over the cheapest playable one).
+
+## Edge cases (handled by the script)
+- **Commanders** are exempt from counts and limits by default (`exempt_commanders`), so any commander works. Set `commander_must_match` to require an on-theme one.
+- **Basic lands** don't count toward limits (`count_basics: false`), but a missed themed basic is still flagged.
+- **Unplayable themed printings** (gold border, digital-only, oversized, memorabilia) never count as an available themed printing.
+- **Price**: themed printings can cost 10x. `max_premium_per_card` warns per card; tell the user the total premium and offer the cheaper themed printing or the plain one.
+- **Budget vs theme**: when both can't hold, ask. Don't silently drop either.
+- **Collection vs theme**: if the user owns a plain copy and the themed one costs money, ask which they prefer (once, for the whole deck).
+- **Reasons**: in prefer mode, every off-theme card needs a one-line reason (`--reasons file.json`, or `off-theme.json` next to vault decks). Missing reasons are warnings.
+- **Stale map**: maps older than `max_map_age_days` (45) warn; rebuild after new sets or Secret Lair drops.
+- **Strict feasibility**: run `theme-pool <commander>` before a strict build. If it says not realistic, tell the user before building, and offer prefer with a `max_off_theme`.
+- **Partners / backgrounds**: both commanders are exempt and both must match if `commander_must_match`.
+
+## Report to the user
+Show the theme line ("82% on theme: 71 Spider-Man · 11 Marvel · 7 off-theme, +$64 for themed printings") and, for prefer and strict, the 3 strongest off-theme cards left out, so they can see what the theme costs.

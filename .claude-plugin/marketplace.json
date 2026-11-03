@@ -1,0 +1,14 @@
+{
+  "name": "carlomos7-mtg-skills",
+  "owner": {
+    "name": "Carlomos7",
+    "url": "https://github.com/Carlomos7"
+  },
+  "plugins": [
+    {
+      "name": "mtg",
+      "source": "./plugins/mtg",
+      "description": "Accurate MTG research, Commander deckbuilding and themed deck vaults with verified data"
+    }
+  ]
+}

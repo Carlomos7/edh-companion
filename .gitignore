@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+.venv/
+site/
+vault/
+*.sqlite
+.DS_Store

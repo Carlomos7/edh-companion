@@ -1,7 +1,7 @@
 # Optimize an existing deck (user journey)
 
 ## 1. Get the deck
-A Moxfield link (through an MTG add-on's Moxfield tool, if installed), a pasted export from any site, or a file. Save it as `before.txt` (Moxfield format, commander first). Never edit the user's original.
+A deck link (read with an installed add-on that supports that site), a pasted export from any site, or a file. Save it as `before.txt` (Moxfield format, commander first). Never edit the user's original.
 
 ## 2. Profile it before asking anything
 `mtg_deck_profile`, `mtg_deck_check` (at the bracket it seems to be), `mtg_simulate` and `mtg_price_plan` (all three totals). A Commander section in the list sets partners automatically. That gives: legality problems, Game Changers, bracket signal, combos, cost, owned share, mana and curve health, and whether the printings already lean on a theme.

@@ -39,7 +39,7 @@ Optional theme limits: <!-- e.g. "at most 8 off-theme cards", "wider franchise i
 
 ## 3. Your cards (optional)
 
-**Collection:** <!-- paste a list, a Moxfield/Archidekt link, a CSV export, or "none" -->
+**Collection:** <!-- paste a list, or the path to a CSV export from Moxfield, Archidekt or ManaBox, or "none" -->
 
 **Prefer owned cards?** <!-- yes, when close in quality | owned only where possible | ignore. Default: yes -->
 

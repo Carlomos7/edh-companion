@@ -25,7 +25,7 @@ One plugin, `mtg`: deckbuilding, research and multi-deck vault skills, plus the 
 - **Checks on every list:** card count, singleton, color identity, legality, Game Changers per bracket, combos, curve, mana sources, and a goldfish simulation of when you cast your commander.
 
 **Sharing**
-- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a Moxfield deck through the MTG add-on below (for Archidekt, paste its export).
+- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a deck if you have an add-on that reads that site (the MTG add-on below reads Moxfield links).
 - **Export:**
   - Moxfield/Archidekt with exact printings and foil marks, so their buy buttons pull the same copies
   - MTG Arena sections
@@ -83,7 +83,7 @@ Everything above works on its own. These add-ons make research richer: popularit
 
 | Add-on | What it adds | Install in Claude Code |
 |---|---|---|
-| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates (all on by default) | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
+| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates (on by default in its code; its README shows how to turn them off) | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
 | [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
 | Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
 
@@ -91,7 +91,6 @@ Everything above works on its own. These add-ons make research richer: popularit
 
 Restart Claude Code after adding one, then `/mcp` shows whether it connected.
 
-**TopDeck.gg (optional, not an MCP server):** for cEDH tournament standings, get a free API key from TopDeck.gg and set it as the `TOPDECK_API_KEY` environment variable *before* starting Claude Code (Windows: `setx TOPDECK_API_KEY yourkey`, then open a new terminal; macOS/Linux: add `export TOPDECK_API_KEY=yourkey` to your shell profile). To check, ask Claude "is my TopDeck key set?".
 
 ## Use
 - "Build me a B3 Krenko deck, I like going wide, under $150"

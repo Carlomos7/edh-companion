@@ -92,6 +92,8 @@ How this applies here:
 
 ---
 
+> **Correction (2026-11-03):** j4th's `config.py` and `.env.example` turn EDHREC, Moxfield, Rules, bulk data and 17Lands on by default. "Behind a flag" below means they *can* be switched off, not that they start off.
+
 ## Part B. Existing MTG MCP servers and data sources
 
 ### B1. Survey of existing servers

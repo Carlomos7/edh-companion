@@ -34,7 +34,7 @@ Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimat
 ## G0 Setup (you)
 - `mtgdb.py status --remote`, then `mtgdb.py sync` for anything stale (cards, tags, rulings, combos, rules; about a minute), then `mtgdb.py selftest`. A failure stops the run until explained.
 - Read the latest Wizards bracket / Game Changers / ban announcement. If it is newer than `commander-deckbuilding/references/brackets.md`, note the changes in `plan.md` and include them in every brief.
-- Check MCPs by calling them, not by reading names: `ping` on the MTG connector, one transcript fetch, one search. Report exactly which server answered. If one is missing, say which checks won't run.
+- Check add-ons by calling them, not by reading names, per the add-on rules in the `mtg-research` skill (references/sources.md, "Optional MCP servers"): one cheap call per capability (EDHREC data, deck links, bracket estimate, transcripts, web search). Write which capabilities answered into `plan.md`; for each missing one, say which checks won't run.
 - Theme (skip when mode is none): write `vault/theme-spec.json` and build `vault/themed-printings.json` with `theme-build` (theme-rules.md). For strict, run `theme-pool` per commander. Then check the map both ways:
   - **False positives**: `contact-sheet` of every mapped Secret Lair printing; look at it yourself and drop anything off theme.
   - **Gaps**: run `search` for the theme in names, art (`art:`) and flavor (`ft:`) across all sets and diff against the map.
@@ -51,7 +51,7 @@ Gate: for each commander, `mtgdb.py audit-claims vault/<slug>/claims.jsonl --sin
 Build the default bracket for one commander first (§2). Run the G2 checks on it. Fix the brief if the agent misread anything. Then fan out.
 Gate, every deck, run by you (never trust the agent's report):
 - `mtgdb.py --themes vault/themed-printings.json validate <deck> --bracket N [--budget X]`
-- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if an MTG add-on offers it, `spellbook_estimate_bracket`
+- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if an add-on offers one, a bracket estimate
 - `themed_printing_available` warnings fixed or justified
 - every `consider.json` pairing passes `swaptest`
 

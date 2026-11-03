@@ -1,72 +1,69 @@
-# mtg-skills: Commander deckbuilding with Claude Code
+# mtg-skills
 
-Build, review, price and share Magic: The Gathering Commander decks **together with Claude**, the way you want them. Claude asks what you enjoy, what your table plays and how you like to spend, shows you a plan before it fills 99 slots, and lets you choose wherever it comes down to taste. Every card fact is checked against current data, never typed from memory.
+[![test](https://github.com/Carlomos7/mtg-skills/actions/workflows/test.yml/badge.svg)](https://github.com/Carlomos7/mtg-skills/actions/workflows/test.yml)
+[![License: MIT](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
-## What you get
+**Build Magic: The Gathering Commander decks together with Claude, the way you want them.**
 
-One plugin, `mtg`: deckbuilding, research and multi-deck vault skills, plus the `mtgdb` MCP server with the card data and deck checks.
+A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, what your table plays and how you like to spend, shows you a plan before it fills 99 slots, and lets you choose wherever it comes down to taste. Every card fact (legality, colors, prices, Game Changers, combos, rules) is checked against current data, never typed from memory.
 
-**Working with you**
-- **Intake first:** starting point, bracket and hard lines (combos, extra turns, land destruction), what's fun for you, budget, and price style.
-- **Price style:**
-  - *budget:* cheapest copies, with cheaper alternatives offered
-  - *balanced:* normal copies
-  - *bling:* foils, borderless, Secret Lair, up to a per-card ceiling you set
-- **Skeleton before the list:** the plan, role targets and key cards for you to approve or change.
-- **Choices where taste matters:** win conditions, pet cards and close calls come to you as options.
-- **Hand-back:** a Rule 0 summary for your table, all three price totals, a direct store link for every card, and an export in the format you need.
+## Contents
+- [Features](#features)
+- [Quick start](#quick-start)
+- [Your first deck](#your-first-deck)
+- [Commands and examples](#commands-and-examples)
+- [Build your own vault](#build-your-own-vault)
+- [Optional add-ons](#optional-add-ons)
+- [Keeping data current](#keeping-data-current)
+- [Troubleshooting](#troubleshooting)
+- [How it works](#how-it-works)
+- [Contributing](#contributing)
+- [Credits and license](#credits-and-license)
 
-**Accurate data**
-- **Card facts:** legality, color identity, Game Changers, printings and prices come from Scryfall's daily bulk data.
-- **Roles:** Scryfall Tagger tags (ramp, draw, removal and more), not guesses.
-- **Combos:** Commander Spellbook's full combo database, checked locally.
-- **Rules:** the current Comprehensive Rules from Wizards, with their effective date.
-- **Always current, or your choice:** Claude shows the date of every source at the start and offers to refresh. One sync takes about a minute.
-- **Checks on every list:** card count, singleton, color identity, legality, Game Changers per bracket, combos, curve, mana sources, and a goldfish simulation of when you cast your commander.
-
-**Sharing**
-- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a deck if you have an add-on that reads that site (the MTG add-on below reads Moxfield links).
-- **Export:**
-  - Moxfield/Archidekt with exact printings and foil marks, so their buy buttons pull the same copies
-  - MTG Arena sections
-  - plain names
-  - CSV
+## Features
+- **Built with you, not for you.** A few multiple-choice questions, a plan you approve, then options wherever it's a matter of taste.
+- **Your budget, your way.** Every deck is priced three ways (cheapest, as listed, bling) with a direct store link for each card. Budget style offers cheaper cards that do the same job.
+- **Always checked.** 100 cards, singleton, color identity, legality, bracket rules, Game Changers, combos, mana, and how often you'll have your commander out on time.
+- **Current data, your call.** Card data, rules and combos come from Scryfall, Wizards and Commander Spellbook. Claude shows how fresh they are and offers to refresh.
+- **Works with your tools.** Paste a list from Moxfield, Archidekt, MTG Arena or anywhere. Export back with exact printings, so Moxfield's and Archidekt's buy buttons pull the same copies.
+- **Vaults.** Full decks for several commanders and power levels on one interactive page.
 
 ## Quick start
-1. **Install uv**, a small helper that runs the card-data tools (one time):
+**You need:** Claude Code, [uv](https://docs.astral.sh/uv/) (a small helper that runs the card-data tools; it installs its own Python), and about 500 MB of disk for card data.
+
+1. **Install uv** (one time):
    - Windows: `winget install astral-sh.uv`
    - macOS: `brew install uv`
    - Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
-2. **Install the plugin** in [Claude Code](https://code.claude.com):
+2. **Install the plugin** from inside Claude Code:
    ```
    /plugin marketplace add Carlomos7/mtg-skills
    /plugin install mtg@carlomos7-mtg-skills
    ```
-3. **Type `/mtg:build`** (or just say "build me a Krenko deck"). The first time, Claude offers to download the card data: about a minute and 400 MB of disk.
+3. **Restart Claude Code and type `/mtg:build`**, or just say "build me a Krenko deck". The first time, Claude offers to download the card data (about a minute).
 
-### Your first deck, step by step
+## Your first deck
 A build is a conversation, usually 10 to 20 minutes. You can stop, change your mind or say "you pick" at any point.
 
-1. **Data check.** Claude shows how fresh its card data and rules are and offers to refresh (one line; about a minute the first time).
+1. **Data check.** One line showing how fresh the card data and rules are, with an offer to refresh.
 2. **A few questions, as options to click.** Usually three short rounds:
    - where you're starting (a commander, colors, a favorite card, a deck to upgrade)
    - your table's power level (bracket 1 to 5) and anything you don't want to see (infinite combos, extra turns, land destruction)
    - what's fun for you, how you like to win, how much interaction
-   - your budget, and your price style: budget, balanced, or bling
+   - your budget and price style: **budget** (cheapest copies), **balanced**, or **bling** (foils, borderless, Secret Lair, up to a per-card ceiling)
    - pet cards and cards you never want
 
    Your answers are saved to `deck-brief.md`, so you can edit them or pick up later.
 3. **A plan before any list.** The deck's plan, roughly when it wins, how many lands, ramp, draw and removal, and 3 to 5 key cards. You say yes, or what to change.
-4. **Filling the deck.** Claude picks the obvious parts (lands, basic ramp) and tells you what it picked. Where it comes down to taste, like win conditions, close calls and your pet-card slots, you get 2 to 4 options with the reason and price for each. In budget style you also get cheaper swaps for expensive cards.
-5. **Checks.** Every version of the list is checked: 100 cards, singleton, colors, legality, bracket rules, combos, mana, and how often you'll have your commander out on time. Problems come back to you as choices, not silent changes.
+4. **Filling the deck.** Claude picks the obvious parts (lands, basic ramp) and says what it picked. Where it's taste (win conditions, close calls, your pet-card slots) you get 2 to 4 options, each with its reason and price.
+5. **Checks.** Every version of the list is checked. Problems come back to you as choices, not silent changes.
 6. **Hand-back.**
-   - the list
-   - a short plan
+   - the list and a short plan
    - a Rule 0 summary to read out at your table
-   - the price three ways (cheapest, as listed, bling), with a store link for every card
-   - an export for Moxfield, Archidekt, Arena or a spreadsheet; import it into Moxfield or Archidekt to get a page you can share
+   - the price three ways, with a store link for every card
+   - an export for Moxfield, Archidekt, MTG Arena or a spreadsheet (import it into Moxfield or Archidekt for a page you can share)
 
-### Commands
+## Commands and examples
 | Type | To |
 |---|---|
 | `/mtg:build` | start a new deck together |
@@ -75,27 +72,12 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 | `/mtg:cheaper` | see what a deck costs and make it cheaper |
 | `/mtg:share` | get a list ready for Moxfield, Archidekt, Arena or a spreadsheet |
 | `/mtg:update-data` | see how fresh the card data and rules are, and refresh |
+| `/mtg:commander-vault` | build a vault (see below) |
 
-You don't need the commands: plain questions work too.
-
-### Optional add-ons (recommended)
-Everything above works on its own. These add-ons make research richer: popularity numbers, deck links, creator videos and news. Claude uses them when they're installed and tells you when a check needed one that isn't. Card facts and deck checks still come from the plugin's own data, even when an add-on has a similar tool.
-
-| Add-on | What it adds | Install in Claude Code |
-|---|---|---|
-| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates (on by default in its code; its README shows how to turn them off) | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
-| [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
-| Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
-
-**Install the MTG server one way, not both.** Either the Claude Code command above, or (if you also use claude.ai or Claude Desktop) the hosted version: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors show up in Claude Code when you're signed in with a Claude account (not with an API key). Having both loads every tool twice.
-
-Restart Claude Code after adding one, then `/mcp` shows whether it connected.
-
-
-## Use
-- "Build me a B3 Krenko deck, I like going wide, under $150"
+You don't need the commands; plain requests work too:
+- "Build me a bracket 3 Krenko deck, I like going wide, under $150"
 - "Here's my list (paste). What bracket is it and what should I cut?"
-- "Make this deck cheaper" / "Show me the bling version, nothing over $40 a card"
+- "Show me the bling version, nothing over $40 a card"
 - "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
 - "Give me this list for Moxfield with the exact printings"
 - "Does deathtouch work with trample?"
@@ -129,37 +111,72 @@ Extras: alternative commanders
 | Collection | paste a list, or a CSV path from Moxfield, Archidekt or ManaBox | none |
 | Extras | alternative commanders, collection planner, splitting a pile between players | none |
 
-Claude asks about anything unclear, shows the plan and the cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. Every option (theme strictness, must-include cards, card labels, look) is in the [full version](vault-request.md).
+Claude asks about anything unclear, shows the plan and a cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. The page is published privately to your claude.ai account when you're signed in, otherwise saved as files you open in a browser. Every option (theme strictness, must-include cards, card labels, look) is in the [full request template](vault-request.md).
 
-## How accuracy works
-1. Computed facts only come from the local index (`mtgdb`), never from memory.
-2. Names from pastes and videos are resolved to real cards before use.
-3. Opinions (must-plays, traps) are logged with dated sources; vault runs audit and independently verify them.
-4. Every suggested swap is re-checked before it's shown.
-5. Anything that couldn't be checked is labelled as unverified.
+## Optional add-ons
+Everything above works on its own. These MCP servers make research richer: popularity numbers, deck links, creator videos and news. Claude uses them when they're installed and says when a check needed one that isn't. Card facts and deck checks always come from the plugin's own data, even when an add-on has a similar tool.
 
-## Data sources
-- [Scryfall](https://scryfall.com) bulk data: cards, prices, rulings, Tagger tags
-- [Commander Spellbook](https://commanderspellbook.com) combo data
-- [Wizards of the Coast](https://magic.wizards.com/en/rules): Comprehensive Rules
-- [MTGJSON](https://mtgjson.com) (optional): multi-vendor prices
+| Add-on | What it adds | Install in Claude Code |
+|---|---|---|
+| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
+| [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
+| Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
 
-This project is unofficial Fan Content permitted under the [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy). Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+- **Install the MTG server one way, not both:** the command above, or (if you also use claude.ai or Claude Desktop) the hosted connector: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors appear in Claude Code when you're signed in with a Claude account (not an API key). Having both loads every tool twice.
+- Restart Claude Code after adding one; `/mcp` shows whether it connected.
 
-## Development
+## Keeping data current
+| What | Source | Refresh |
+|---|---|---|
+| Cards, legality, bans, Game Changers, prices | Scryfall daily bulk data | weekly is plenty |
+| Card roles (ramp, draw, removal...) and rulings | Scryfall Tagger and rulings files | monthly |
+| Combos | Commander Spellbook | weekly |
+| Comprehensive Rules | Wizards' rules page | when a new set releases |
+| Vendor prices (optional: Card Kingdom, Cardmarket, buylists) | MTGJSON | when you want them |
+
+Claude checks these at the start of each deck and offers a refresh. To do it yourself: `/mtg:update-data`, or say "refresh the card data". Vendor prices: "sync vendor prices" (about 300 MB more disk).
+
+**Update the plugin:** `/plugin marketplace update carlomos7-mtg-skills`, then restart Claude Code.
+**Uninstall:** `/plugin uninstall mtg@carlomos7-mtg-skills`, then delete the data folder `~/.cache/mtg` (Windows: `%USERPROFILE%\.cache\mtg`).
+
+**Privacy:** the plugin's tools only download public data (Scryfall, Commander Spellbook, Wizards, and MTGJSON if you ask) and keep your decks, answers and collection on your computer. Vault pages are published privately to your own claude.ai account, and add-ons you install follow their own terms.
+
+## Troubleshooting
+| Problem | Fix |
+|---|---|
+| Claude says the deck tools aren't available | Install uv (Quick start step 1), then restart Claude Code. `/mcp` should list `plugin:mtg:mtgdb` as connected. |
+| "No card index yet" | Say "download the card data" or run `/mtg:update-data` (about a minute). |
+| A brand-new card isn't found | Refresh the data. A card revealed in the last day or so may not be in Scryfall's daily file yet; Claude says so instead of guessing. |
+| A pasted deck has unrecognized lines | Claude lists them and suggests the closest real card names. Check spelling, or paste the site's export instead of copying from a web page. |
+| An add-on check "didn't run" | That add-on isn't installed or didn't connect; see [Optional add-ons](#optional-add-ons). Everything else still works. |
+| Card images fail on a vault page (Windows) | Update the plugin; downloads use an up-to-date certificate bundle. |
+
+## How it works
+- **Skills** (`plugins/mtg/skills/`) hold the workflow: deckbuilding with intake and approval, research rules and sources, the multi-agent vault, and the short `/mtg:*` commands.
+- **The `mtgdb` MCP server** (`plugins/mtg/scripts/server.py`) serves card facts and deck checks from a local SQLite index built from official bulk files. The same code runs as a command-line tool (`mtgdb.py`), so the tools, the hook and the tests can't disagree.
+- **A hook** validates vault decks and research logs the moment they're written, and only runs for files in a `vault/` folder.
+- **Accuracy:** card names from pastes and videos are matched to real cards before use; opinions need two independent dated sources; vault work is re-checked by a separate verifier; anything unchecked is labelled.
+
+Design notes and sources are in [docs/research](docs/research).
+
+## Contributing
+Issues and pull requests are welcome.
+
 ```bash
-claude --plugin-dir ./plugins/mtg                                    # try local changes
-claude plugin validate ./plugins/mtg
-uv run plugins/mtg/scripts/mtgdb.py --help                           # the CLI behind the MCP tools
-uv run plugins/mtg/scripts/mtgdb.py sync                             # all data sources
+claude --plugin-dir ./plugins/mtg              # try local changes
+claude plugin validate --strict ./plugins/mtg  # check the plugin
+uv run plugins/mtg/scripts/mtgdb.py --help     # the CLI behind the MCP tools
+uv run plugins/mtg/scripts/mtgdb.py sync       # download all data sources
 ```
 Tests (unit, MCP server over stdio, and a headless-browser test of the vault page):
 ```bash
-uv run --with pillow --with ijson --with playwright --with "mcp>=2.3" python -m unittest discover -s tests
+uv run --with pillow --with ijson --with certifi --with playwright --with "mcp>=2.3" python -m unittest discover -s tests
 ```
-Behavior evals (cost real usage): see [plugins/mtg/evals/README.md](plugins/mtg/evals/README.md).
+Behavior evals use real Claude runs and cost usage: see [plugins/mtg/evals/README.md](plugins/mtg/evals/README.md). When something goes wrong in a real session, add an eval case for it.
 
-Research notes behind the design are in [docs/research](docs/research).
+## Credits and license
+Card data from [Scryfall](https://scryfall.com) (cards, prices, rulings, Tagger tags), combos from [Commander Spellbook](https://commanderspellbook.com), rules from [Wizards of the Coast](https://magic.wizards.com/en/rules), optional vendor prices from [MTGJSON](https://mtgjson.com). Thanks to all of them for publishing open data.
 
-## License
-[MIT](LICENSE)
+This project is unofficial Fan Content permitted under the [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy). Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+
+Code is [MIT](LICENSE) licensed. Made by [Carlomos7](https://github.com/Carlomos7).

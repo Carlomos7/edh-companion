@@ -64,6 +64,9 @@ class ServerTest(unittest.IsolatedAsyncioTestCase):
                 err, ex = await self.call(s, "mtg_export", deck=DECK, format="arena", printings="bling")
                 self.assertFalse(err)
                 self.assertTrue(ex["text"].startswith("Commander\n1 Darth Vader"))
+                self.assertNotIn("(", ex["text"])  # arena: names only
+                err, ex = await self.call(s, "mtg_export", deck=DECK, format="archidekt", printings="bling")
+                self.assertIn("1x Darth Vader (SWT) 12 [Commander{top}]", ex["text"])
                 self.assertIn("(SLD) 999", ex["text"])  # bling picks the Secret Lair Sol Ring
                 err, msg = await self.call(s, "mtg_export", deck="1 Darth Vadr\n99 Swamp")
                 self.assertTrue(err)  # unresolved names are refused, not silently dropped

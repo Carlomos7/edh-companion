@@ -168,11 +168,13 @@ def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "
 
 
 @mcp.tool(annotations=READ)
-def mtg_export(deck: str, format: Literal["moxfield", "arena", "plain", "csv"] = "moxfield",
+def mtg_export(deck: str, format: Literal["moxfield", "archidekt", "arena", "plain", "csv"] = "moxfield",
                printings: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None) -> dict:
-    """Write a deck for sharing or importing elsewhere. moxfield keeps exact printings and foil marks (Moxfield and
-    Archidekt import it, so their buy buttons pull those copies); arena uses Commander/Deck sections; plain is names only;
-    csv has printing and price per card. printings picks the copy per card: budget, as-listed or bling."""
+    """Write a deck for sharing or importing elsewhere. moxfield and archidekt keep exact printings and foil marks, so
+    those sites' buy buttons pull the same copies (archidekt also marks the commander; on Moxfield the user picks it in
+    the New Deck dialog); arena is names only under Commander/Deck; plain is names only; csv uses Moxfield's collection
+    headers plus price and Scryfall ID. printings picks the copy per card: budget, as-listed or bling. Follow
+    `import_into` when telling the user how to import."""
     with deck_file(deck) as path:
         res, code = run("export", path, "--format", format, "--printings", printings,
                         *(["--max-card", max_card] if max_card is not None else []))

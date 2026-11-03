@@ -1643,12 +1643,13 @@ def cmd_price_plan(a):
     out(res)
 
 
-EXPORT_FORMATS = ("moxfield", "arena", "plain", "csv")
+EXPORT_FORMATS = ("moxfield", "archidekt", "arena", "plain", "csv")
 
 
 def cmd_export(a):
-    """Write a deck for another tool. moxfield: exact printings with foil marks (Moxfield and Archidekt import it);
-    arena: Commander/Deck sections; plain: names only; csv: one row per card with printing and price."""
+    """Write a deck for another tool. moxfield / archidekt: exact printings with foil marks; arena: names only under
+    Commander/Deck; plain: names only; csv: Moxfield collection headers plus price, section and Scryfall ID."""
+    NL = chr(10)
     c = open_db(a.db)
     rows, n_cmdr = parse_deck_sections(a.deck)
     n_cmdr = n_cmdr or a.commanders
@@ -1667,26 +1668,32 @@ def cmd_export(a):
         return export_line(x["qty"], x["name"], x["pick"][0], x["pick"][1])
     cmdrs, main = [x for x in items if x["commander"]], [x for x in items if not x["commander"]]
     if a.format == "moxfield":
-        text = "\n".join(line(x) for x in cmdrs + main)
-    elif a.format == "arena":
-        text = "Commander\n" + "\n".join(line(x) for x in cmdrs) + "\n\nDeck\n" + "\n".join(line(x) for x in main)
+        text = NL.join(line(x) for x in cmdrs + main)
+    elif a.format == "archidekt":  # Archidekt's own export style; the commander goes in its category
+        text = NL.join(line(x).replace(f"{x['qty']} ", f"{x['qty']}x ", 1) + (" [Commander{top}]" if x["commander"] else "")
+                       for x in cmdrs + main)
+    elif a.format == "arena":  # names only: Arena rejects set codes it doesn't have (PLST, SLD...) and has no foil marks
+        text = "Commander" + NL + NL.join(line(x, printing=False) for x in cmdrs) + NL + NL + "Deck" + NL +             NL.join(line(x, printing=False) for x in main)
     elif a.format == "plain":
-        text = "\n".join(line(x, printing=False) for x in cmdrs + main)
-    else:
+        text = NL.join(line(x, printing=False) for x in cmdrs + main)
+    else:  # Moxfield's collection CSV headers, plus columns for spreadsheets and Archidekt (Scryfall ID)
         buf = io.StringIO()
-        w = csv.writer(buf, lineterminator="\n")
-        w.writerow(["Count", "Name", "Section", "Set", "Collector Number", "Finish", "USD"])
+        w = csv.writer(buf, lineterminator=NL)
+        w.writerow(["Count", "Name", "Edition", "Collector Number", "Foil", "Purchase Price", "Section", "Scryfall ID"])
         for x in cmdrs + main:
-            p, fin, usd = x["pick"] or ({"set_code": "", "cn": ""}, "", "")
-            w.writerow([x["qty"], x["name"], "commander" if x["commander"] else "deck", p["set_code"].upper(), p["cn"], fin, usd])
+            p, fin, usd = x["pick"] or ({"set_code": "", "cn": "", "id": ""}, "", "")
+            w.writerow([x["qty"], x["name"], p["set_code"], p["cn"], "" if fin in ("nonfoil", "") else fin, usd,
+                        "commander" if x["commander"] else "deck", p.get("id", "")])
         text = buf.getvalue()
     if a.out:
         with open(a.out, "w", encoding="utf-8", newline="") as f:
             f.write(text + ("" if text.endswith("\n") else "\n"))
     out({"format": a.format, "printings": a.printings, "cards": sum(x["qty"] for x in items), "out": a.out, "text": text,
-         "import_into": {"moxfield": "Moxfield or Archidekt: New deck, Import, paste",
-                         "arena": "Moxfield, Archidekt and most deck sites; MTG Arena (Historic Brawl) only accepts cards it has",
-                         "plain": "anything that takes a card list", "csv": "spreadsheets"}[a.format]})
+         "import_into": {"moxfield": "Moxfield: New deck, paste into Import, then pick the commander in the New Deck dialog",
+                         "archidekt": "Archidekt: New deck, Import, paste (the commander lands in its Commander category)",
+                         "arena": "MTG Arena (Historic Brawl) or any site that reads Arena lists; Arena skips cards it doesn't have",
+                         "plain": "anything that takes a card list",
+                         "csv": "spreadsheets, or a Moxfield/Archidekt collection import (decks don't import from CSV)"}[a.format]})
 
 
 def cmd_alternatives(a):
@@ -1839,7 +1846,7 @@ def main(argv=None):
     s.add_argument("deck"); s.add_argument("--style", choices=PRICE_STYLES, default="as-listed")
     s.add_argument("--max-card", type=float, help="bling only: fanciest printing at or under this price per card")
     s.set_defaults(f=cmd_price_plan)
-    s = sp.add_parser("export", help="write a deck as moxfield (exact printings) / arena / plain / csv")
+    s = sp.add_parser("export", help="write a deck as moxfield / archidekt (exact printings) / arena / plain / csv")
     s.add_argument("deck"); s.add_argument("--format", choices=EXPORT_FORMATS, default="moxfield")
     s.add_argument("--printings", choices=PRICE_STYLES, default="as-listed", help="which printing each card uses")
     s.add_argument("--max-card", type=float); s.add_argument("--commanders", type=int, default=1); s.add_argument("--out")

@@ -12,6 +12,7 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
   status         date and staleness of each source; --remote checks upstream for newer versions
   rules          Comprehensive Rules lookup by number or keyword
   price-plan     a deck priced cheapest / as listed / bling, exact printings, TCGplayer + Cardmarket links, export
+  export         a deck as moxfield (exact printings) / arena / plain / csv, in any price style
   alternatives   cheaper cards that fill the same roles (Tagger tags), inside a color identity
   index          download Scryfall bulk "default_cards", build the SQLite index (sync runs this)
   info           index build date, card count, Game Changer count
@@ -40,7 +41,7 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
 Default DB: $MTGDB or ~/.cache/mtg/cards.sqlite (cache dir: $MTG_CACHE). Exit code 1 means checks failed.
 All api.scryfall.com calls share one cross-process rate limiter, so parallel agents stay under 2 req/s.
 """
-import argparse, csv, difflib, gzip, json, math, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
+import argparse, csv, difflib, gzip, io, json, math, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
 from urllib.parse import quote, urlparse
 
 UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
@@ -1634,6 +1635,52 @@ def cmd_price_plan(a):
     out(res)
 
 
+EXPORT_FORMATS = ("moxfield", "arena", "plain", "csv")
+
+
+def cmd_export(a):
+    """Write a deck for another tool. moxfield: exact printings with foil marks (Moxfield and Archidekt import it);
+    arena: Commander/Deck sections; plain: names only; csv: one row per card with printing and price."""
+    c = open_db(a.db)
+    rows, n_cmdr = parse_deck_sections(a.deck)
+    n_cmdr = n_cmdr or a.commanders
+    bad = [r.get("error") or r["name"] for r in rows if "error" in r or not find_oracle(c, r["name"])]
+    if bad:
+        out({"error": "fix these lines first (mtgdb.py normalize)", "lines": bad}, fail=True)
+    items = []
+    for i, r in enumerate(rows):
+        oid = find_oracle(c, r["name"])
+        name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
+        pk = pick_printing(c, oid, a.printings, (r["set"], r["cn"]) if r["set"] else None, a.max_card)
+        items.append({"qty": r["qty"], "name": name, "commander": i < n_cmdr, "pick": pk})
+    def line(x, printing=True):
+        if not printing or not x["pick"]:
+            return f"{x['qty']} {x['name']}"
+        return export_line(x["qty"], x["name"], x["pick"][0], x["pick"][1])
+    cmdrs, main = [x for x in items if x["commander"]], [x for x in items if not x["commander"]]
+    if a.format == "moxfield":
+        text = "\n".join(line(x) for x in cmdrs + main)
+    elif a.format == "arena":
+        text = "Commander\n" + "\n".join(line(x) for x in cmdrs) + "\n\nDeck\n" + "\n".join(line(x) for x in main)
+    elif a.format == "plain":
+        text = "\n".join(line(x, printing=False) for x in cmdrs + main)
+    else:
+        buf = io.StringIO()
+        w = csv.writer(buf, lineterminator="\n")
+        w.writerow(["Count", "Name", "Section", "Set", "Collector Number", "Finish", "USD"])
+        for x in cmdrs + main:
+            p, fin, usd = x["pick"] or ({"set_code": "", "cn": ""}, "", "")
+            w.writerow([x["qty"], x["name"], "commander" if x["commander"] else "deck", p["set_code"].upper(), p["cn"], fin, usd])
+        text = buf.getvalue()
+    if a.out:
+        with open(a.out, "w", encoding="utf-8", newline="") as f:
+            f.write(text + ("" if text.endswith("\n") else "\n"))
+    out({"format": a.format, "printings": a.printings, "cards": sum(x["qty"] for x in items), "out": a.out, "text": text,
+         "import_into": {"moxfield": "Moxfield or Archidekt: New deck, Import, paste",
+                         "arena": "Moxfield, Archidekt and most deck sites; MTG Arena (Historic Brawl) only accepts cards it has",
+                         "plain": "anything that takes a card list", "csv": "spreadsheets"}[a.format]})
+
+
 def cmd_alternatives(a):
     """Cheaper cards that do the same job: share the card's Scryfall Tagger role tags, fit the color identity,
     are Commander legal, and cost less. A shortlist to read and swaptest, not a verdict."""
@@ -1784,6 +1831,11 @@ def main(argv=None):
     s.add_argument("deck"); s.add_argument("--style", choices=PRICE_STYLES, default="as-listed")
     s.add_argument("--max-card", type=float, help="bling only: fanciest printing at or under this price per card")
     s.set_defaults(f=cmd_price_plan)
+    s = sp.add_parser("export", help="write a deck as moxfield (exact printings) / arena / plain / csv")
+    s.add_argument("deck"); s.add_argument("--format", choices=EXPORT_FORMATS, default="moxfield")
+    s.add_argument("--printings", choices=PRICE_STYLES, default="as-listed", help="which printing each card uses")
+    s.add_argument("--max-card", type=float); s.add_argument("--commanders", type=int, default=1); s.add_argument("--out")
+    s.set_defaults(f=cmd_export)
     s = sp.add_parser("alternatives", help="cheaper cards with the same Tagger roles, inside a color identity")
     s.add_argument("card"); s.add_argument("--identity", help="e.g. WUB (default: the card's own)")
     s.add_argument("--max-price", type=float, help="default: the card's cheapest price"); s.add_argument("--deck", help="skip cards already in it")

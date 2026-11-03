@@ -167,6 +167,20 @@ def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "
 
 
 @mcp.tool(annotations=READ)
+def mtg_export(deck: str, format: Literal["moxfield", "arena", "plain", "csv"] = "moxfield",
+               printings: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None) -> dict:
+    """Write a deck for sharing or importing elsewhere. moxfield keeps exact printings and foil marks (Moxfield and
+    Archidekt import it, so their buy buttons pull those copies); arena uses Commander/Deck sections; plain is names only;
+    csv has printing and price per card. printings picks the copy per card: budget, as-listed or bling."""
+    with deck_file(deck) as path:
+        res, code = run("export", path, "--format", format, "--printings", printings,
+                        *(["--max-card", max_card] if max_card is not None else []))
+    if code:
+        raise ToolError(f"{res.get('error')}: {res.get('lines')}" if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=READ)
 def mtg_cheaper_alternatives(card: str, identity: str | None = None, max_price: float | None = None,
                              deck: str | None = None, no_game_changers: bool = False, limit: int = 8) -> dict:
     """Cheaper cards that do the same job, ranked by shared Scryfall Tagger tags (rare shared tags count more).

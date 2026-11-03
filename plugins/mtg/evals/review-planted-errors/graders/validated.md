@@ -1,5 +1,4 @@
 ---
 type: tool_used
-tool: Bash
-input_match: "mtgdb\\.py.*validate"
+tool: mcp__plugin_mtg_mtgdb__mtg_deck_check
 ---

@@ -5,3 +5,4 @@ site/
 vault/
 *.sqlite
 .DS_Store
+plugins/*/evals/results/

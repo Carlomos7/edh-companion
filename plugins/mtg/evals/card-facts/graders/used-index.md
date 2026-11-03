@@ -1,5 +1,4 @@
 ---
 type: tool_used
-tool: Bash
-input_match: "mtgdb\\.py"
+tool: mcp__plugin_mtg_mtgdb__mtg_card
 ---

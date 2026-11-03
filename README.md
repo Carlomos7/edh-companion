@@ -1,64 +1,94 @@
-# mtg: Magic: The Gathering plugin for Claude Code
+# mtg-skills: Commander deckbuilding with Claude Code
 
-Accurate MTG research, Commander deckbuilding and optimizing, and tested deck pages. Every card fact is computed from a local Scryfall index; opinions are logged with sources, audited, and independently verified.
+Build, review, price and share Magic: The Gathering Commander decks **together with Claude**, the way you want them. Claude asks what you enjoy, what your table plays and how you like to spend, shows you a plan before it fills 99 slots, and lets you choose wherever it comes down to taste. Every card fact is checked against current data, never typed from memory.
 
-## Skills (`plugins/mtg/skills`)
+## What you get
 
-| Skill | Job | Runs |
-|---|---|---|
-| `mtg-research` | Source authority, research loop, video and community protocol, claim ledger, `mtgdb.py` | Automatically on MTG questions |
-| `commander-deckbuilding` | Build, review, optimize an existing deck, themes (optional), card picker | Automatically on deck requests |
-| `mtg-pages` | Data contract + fixed tested template → interactive page / artifact | When a page is wanted |
-| `commander-vault` | Orchestrates multi-commander vaults with agents and gates | `/mtg:commander-vault` only |
+| Plugin | What it does |
+|---|---|
+| `mtg` | Skills for deckbuilding, research and multi-deck vaults, plus the `mtgdb` MCP server with the card data and deck checks |
+| `mtg-pages` (optional) | Turns decks into an interactive page (3D card viewer, charts, filters), published as an artifact or saved as HTML |
 
-Agents: `vault-researcher`, `vault-deckbuilder`, `vault-merger`, `vault-verifier` (Sonnet, can't spawn agents or publish).
-Hook: validates vault deck files and claim ledgers the moment they're written.
+**Working with you**
+- **Intake first:** starting point, bracket and hard lines (combos, extra turns, land destruction), what's fun for you, budget, and price style.
+- **Price style:**
+  - *budget:* cheapest copies, with cheaper alternatives offered
+  - *balanced:* normal copies
+  - *bling:* foils, borderless, Secret Lair, up to a per-card ceiling you set
+- **Skeleton before the list:** the plan, role targets and key cards for you to approve or change.
+- **Choices where taste matters:** win conditions, pet cards and close calls come to you as options.
+- **Hand-back:** a Rule 0 summary for your table, all three price totals, a direct store link for every card, and an export in the format you need.
 
-## Accuracy model
-1. Computed facts (legality, identity, printings, prices, Game Changers, counts, roles via Scryfall Tagger) only from `mtgdb.py`.
-2. Names from transcripts and pastes go through `normalize`; nothing unresolved reaches a deck.
-3. Claims need dated sources, timestamps, 2 independent sources for opinions, sample sizes for stats, and a recency cutoff (`audit-claims`).
-4. The hook bounces bad files back to the writer; an independent verifier re-opens sources; the lead adjudicates; leftovers are labelled on the page.
-5. Measured, not guessed: `simulate` (commander on curve, matches exact math), `theme-pool` (strict theme feasibility), `diff` (what an optimization changed).
-6. Pages are rendered from validated data by a fixed template, so no number on a page is typed by hand.
+**Accurate data**
+- **Card facts:** legality, color identity, Game Changers, printings and prices come from Scryfall's daily bulk data.
+- **Roles:** Scryfall Tagger tags (ramp, draw, removal and more), not guesses.
+- **Combos:** Commander Spellbook's full combo database, checked locally.
+- **Rules:** the current Comprehensive Rules from Wizards, with their effective date.
+- **Always current, or your choice:** Claude shows the date of every source at the start and offers to refresh. One sync takes about a minute.
+- **Checks on every list:** card count, singleton, color identity, legality, Game Changers per bracket, combos, curve, mana sources, and a goldfish simulation of when you cast your commander.
+
+**Sharing**
+- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a Moxfield or Archidekt deck through the companion connector below.
+- **Export:**
+  - Moxfield/Archidekt with exact printings and foil marks, so their buy buttons pull the same copies
+  - MTG Arena sections
+  - plain names
+  - CSV
 
 ## Requirements
-- [uv](https://docs.astral.sh/uv/) (every script runs with `uv run` and installs its own dependencies)
-- Claude Code, with `claude --chrome` for page checks
+- [Claude Code](https://code.claude.com)
+- [uv](https://docs.astral.sh/uv/) (the MCP server and scripts install their own Python dependencies)
+- About 400 MB of disk for the card data in `~/.cache/mtg/`
 
 ## Install
 In Claude Code:
 ```
 /plugin marketplace add Carlomos7/mtg-skills
 /plugin install mtg@carlomos7-mtg-skills
+/plugin install mtg-pages@carlomos7-mtg-skills     # optional
 ```
-Local development: `claude --plugin-dir ./plugins/mtg` and `claude plugin validate ./plugins/mtg`.
+Then just ask, for example "build me a Krenko deck". On first use Claude offers to download the data (about a minute).
 
-MCP servers and connector:
-```bash
-claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp
-claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript
-```
-- Add `j4th/mtg-mcp-server` at claude.ai Settings, Connectors (shows as `claude_ai_mtg-mcp`).
-- Optional: a free TopDeck.gg API key in `TOPDECK_API_KEY`.
-
-## One-time data setup
-```bash
-S=plugins/mtg/skills/mtg-research/scripts/mtgdb.py    # or the installed plugin path
-uv run $S index && uv run $S selftest     # card index (~500 MB download) + golden facts
-uv run $S tags-sync                       # role tags, a few minutes; monthly
-uv run $S prices-sync                     # optional multi-vendor prices (--history = 90 days, large)
-uv run $S collection import my.csv        # optional: Moxfield / Archidekt / ManaBox export
-```
-Re-run `index` weekly (prices, bans).
+**Recommended companion:** [j4th/mtg-mcp-server](https://github.com/j4th/mtg-mcp-server) for EDHREC data, Moxfield and Archidekt links, and Commander Spellbook bracket estimates.
 
 ## Use
-- "Is X good in my Y deck?" · "Build a B3 Vader deck" · "Optimize this list: <paste or Moxfield link>" · "Make a page for it"
-- Vault: empty folder, `claude --chrome`, `/model opus`, copy `vault-request.md` into it and fill it in, then `/mtg:commander-vault @vault-request.md`. Re-run in the same folder to resume.
+- "Build me a B3 Krenko deck, I like going wide, under $150"
+- "Here's my list (paste). What bracket is it and what should I cut?"
+- "Make this deck cheaper" / "Show me the bling version, nothing over $40 a card"
+- "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
+- "Give me this list for Moxfield with the exact printings"
+- "Does deathtouch work with trample?"
+- `/mtg:commander-vault @vault-request.md` builds several commanders and brackets at once with research agents and an independent verifier (copy `vault-request.md` into an empty folder and fill it in).
 
-## Test
+## How accuracy works
+1. Computed facts only come from the local index (`mtgdb`), never from memory.
+2. Names from pastes and videos are resolved to real cards before use.
+3. Opinions (must-plays, traps) are logged with dated sources; vault runs audit and independently verify them.
+4. Every suggested swap is re-checked before it's shown.
+5. Anything that couldn't be checked is labelled as unverified.
+
+## Data sources
+- [Scryfall](https://scryfall.com) bulk data: cards, prices, rulings, Tagger tags
+- [Commander Spellbook](https://commanderspellbook.com) combo data
+- [Wizards of the Coast](https://magic.wizards.com/en/rules): Comprehensive Rules
+- [MTGJSON](https://mtgjson.com) (optional): multi-vendor prices
+
+This project is unofficial Fan Content permitted under the [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy). Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
+
+## Development
 ```bash
-uv run --with pillow --with ijson --with playwright python -m unittest discover -s tests   # 44 tests incl. headless Chrome
-cd plugins/mtg && claude plugin eval .                                                    # behavior evals (costs usage)
+claude --plugin-dir ./plugins/mtg --plugin-dir ./plugins/mtg-pages   # try local changes
+claude plugin validate ./plugins/mtg
+uv run plugins/mtg/scripts/mtgdb.py --help                           # the CLI behind the MCP tools
+uv run plugins/mtg/scripts/mtgdb.py sync                             # all data sources
 ```
-If cdnjs is blocked, set `CHARTJS=/path/to/chart.umd.js` for the browser test.
+Tests (unit, MCP server over stdio, and a headless-browser page test):
+```bash
+uv run --with pillow --with ijson --with playwright --with "mcp>=2.3" python -m unittest discover -s tests
+```
+Behavior evals (cost real usage): see [plugins/mtg/evals/README.md](plugins/mtg/evals/README.md).
+
+Research notes behind the design are in [docs/research](docs/research).
+
+## License
+[MIT](LICENSE)

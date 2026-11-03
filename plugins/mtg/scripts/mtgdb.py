@@ -45,7 +45,8 @@ import argparse, csv, difflib, gzip, io, json, math, os, re, sqlite3, sys, tempf
 from urllib.parse import quote, urlparse
 
 UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
-CACHE = os.path.expanduser(os.environ.get("MTG_CACHE", "~/.cache/mtg"))
+# EVAL_MTG_CACHE: `claude plugin eval` gives each run an empty home and only passes EVAL_* variables through
+CACHE = os.path.expanduser(os.environ.get("MTG_CACHE") or os.environ.get("EVAL_MTG_CACHE") or "~/.cache/mtg")
 DB_DEFAULT = os.environ.get("MTGDB", os.path.join(CACHE, "cards.sqlite"))
 EXTRA_DB = os.environ.get("MTGDB_EXTRA", os.path.join(CACHE, "extra.sqlite"))  # survives re-index
 COLLECTION = os.environ.get("MTG_COLLECTION", os.path.join(CACHE, "collection.json"))
@@ -1294,7 +1295,8 @@ def source_status(db):
         r = rows.get(src)
         if not r:
             res[src] = {"synced": None, "stale": src != "prices",
-                        "note": "never synced" + (" (optional)" if src == "prices" else "")}
+                        "note": ("optional extra vendors (Card Kingdom, Cardmarket, buylist); TCGplayer prices already "
+                                 "come with the cards source, so no sync is needed for pricing") if src == "prices" else "never synced"}
             continue
         age = (time.time() - time.mktime(time.strptime(r["synced"], "%Y-%m-%d"))) / 86400
         res[src] = {"synced": r["synced"], "age_days": round(age, 1), "stale": age > STALE_DAYS[src],

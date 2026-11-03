@@ -146,7 +146,8 @@ def mtg_deck_profile(deck: str, commanders: int = 1) -> dict:
 @mcp.tool(annotations=READ)
 def mtg_simulate(deck: str, commanders: int = 1, on_the_draw: bool = False, turns: int = 8) -> dict:
     """Goldfish simulation: percent of games the commander can be cast by each turn, and how often the opening hand
-    has 2 to 5 lands. Use it to judge ramp and land count, and to compare a deck before and after changes."""
+    has 2 to 5 lands. Use it to judge ramp and land count, and to compare a deck before and after changes.
+    Use this for any "how often / by which turn" question instead of working out odds by hand."""
     with deck_file(deck) as path:
         res, _ = run("simulate", path, "--commanders", commanders, "--turns", turns, *(["--draw"] if on_the_draw else []))
     return res

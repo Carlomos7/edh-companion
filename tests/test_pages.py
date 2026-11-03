@@ -1,7 +1,7 @@
 """End-to-end: fixture index -> site_data.py -> build_site.py -> render in headless Chrome.
 Browser part is skipped when Playwright/Chrome aren't available. Set CHARTJS=/path/chart.umd.js to serve
 Chart.js locally when cdnjs is unreachable."""
-import json, os, shutil, subprocess, sys, tempfile, time, unittest
+import pathlib, json, os, shutil, subprocess, sys, tempfile, time, unittest
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_mtgdb as base
 
@@ -112,12 +112,13 @@ class PagesTest(unittest.TestCase):
         except ImportError:
             self.skipTest("playwright not installed")
         chrome = shutil.which("google-chrome") or shutil.which("chromium")
-        if not chrome:
-            self.skipTest("no Chrome")
         cj = os.environ.get("CHARTJS")
-        url = "file://" + os.path.join(self.out, "index.html")
+        url = pathlib.Path(self.out, "index.html").resolve().as_uri()
         with sync_playwright() as p:
-            b = p.chromium.launch(executable_path=chrome, args=["--no-sandbox"])
+            try:  # a Chrome on PATH, else the installed Chrome found by Playwright (Windows, macOS)
+                b = p.chromium.launch(**({"executable_path": chrome} if chrome else {"channel": "chrome"}), args=["--no-sandbox"])
+            except Exception as e:
+                self.skipTest(f"no Chrome: {str(e)[:80]}")
             for width, name in ((1280, "desktop"), (390, "phone")):
                 pg = b.new_page(viewport={"width": width, "height": 900})
                 errors = []

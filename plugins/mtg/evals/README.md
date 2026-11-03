@@ -3,8 +3,8 @@
 Run from the plugin root (`plugins/mtg`):
 
 ```bash
-claude plugin eval .                         # every case, 3 runs each, with and without the plugin
-claude plugin eval . --case card-facts --runs 1 --ablation none   # quick single check while editing
+EVAL_MTG_CACHE=~/.cache/mtg claude plugin eval . --mocks off --allow-tools "mcp__plugin_mtg_mtgdb__*" Read Write WebSearch WebFetch
+# add --case card-facts --runs 1 --ablation none for a quick single check while editing
 claude plugin eval . --judge-model sonnet    # steadier judging
 ```
 
@@ -17,11 +17,19 @@ claude plugin eval . --judge-model sonnet    # steadier judging
 | transcript-names | garbled names normalized to real cards via the index |
 | curve-check | runs the goldfish simulation, states assumptions, still catches an illegal list |
 | no-theme-default | a themed commander alone doesn't add theme checks |
-| deck-page | uses the page pipeline, not hand-written HTML, and catches a bad list first |
 | not-mtg | no MTG skill fires on an unrelated coding request |
+| alchemy-name | a paper card is not confused with its digital Alchemy namesake (real bug, fixed in 5.0) |
+| moxfield-sections | Moxfield export headers, partners and sideboard are read correctly (real bug, fixed in 5.0) |
+| asks-before-building | asks about bracket, price style and fun before handing over a list |
+| budget-alternatives | cheaper mono-white options with dated prices from mtg_cheaper_alternatives |
+| export-exact | import-ready list with exact printings, commander first |
+| rules-current | trample + deathtouch answered from the current Comprehensive Rules with rule numbers and date |
 
 Notes:
-- Each run starts in an empty workspace. Build the index first (`mtgdb.py index`); runs read it from `~/.cache/mtg/`. If your eval runs can't see your home directory, set `MTGDB` in each prompt's `env` frontmatter.
+- `--mocks off` starts the plugin's real `mtgdb` MCP server (local, reads only the card cache). `--allow-tools` lets runs use it; eval runs deny MCP tools otherwise.
+- `EVAL_MTG_CACHE`: each eval run gets an empty home folder and only `EVAL_*` variables pass through, so this points the server at your synced data.
+- Granting `Bash` makes the eval sandbox Bash; on some Windows setups that sandbox can't start, so the cases are written to work without Bash.
+- Each run starts in an empty workspace. Sync the data first (`uv run scripts/mtgdb.py sync`); runs read it from `~/.cache/mtg/`.
 - Every run and judge call costs real usage. b3-combo-trap is the expensive one.
 - Add a case for every real mistake you find.
-- Script logic is unit tested separately: `python3 -m unittest discover -s tests` from the repo root.
+- Script and server logic are unit tested separately (see the repo README).

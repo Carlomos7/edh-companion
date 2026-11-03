@@ -1,6 +1,6 @@
 ---
 max_turns: 60
-timeout: 1500
+timeout_seconds: 1500
 tags: [deckbuilding, themes]
 ---
 

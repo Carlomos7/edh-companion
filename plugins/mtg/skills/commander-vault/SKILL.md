@@ -1,7 +1,7 @@
 ---
 name: commander-vault
-description: Orchestrates a full themed Commander deck vault published as an artifact (tier lists, bracketed decklists, cards to consider, price ladders, 3D card viewer), leading Sonnet subagents and an independent verifier.
-argument-hint: "[theme | @request-file]"
+description: Orchestrates a Commander deck vault for several commanders (any theme or none) rendered as one page (tier lists, bracketed decklists, cards to consider, price ladders, card viewer), leading Sonnet subagents and an independent verifier.
+argument-hint: "[pasted request | @vault-request.md]"
 disable-model-invocation: true
 effort: high
 ---
@@ -27,7 +27,7 @@ Resuming: continue from the first unchecked gate. Don't redo a passed gate unles
 5. **Disclosure**: the page shows data dates, checks run and what stayed unverified.
 
 ## Intake
-The request usually follows the repo's `vault-request.md` (sections: what it's about, table and wallet, your cards, what goes on the page). Resolve: commanders, brackets + default, budget, price style, hard lines, collection and owned-card preference, must/never include, tab grouping, page extras, label style (default neutral verdicts: Play, Good, Situational, Binder, Bracket 4+; never "weak"), and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium).
+The request is pasted after the command or passed as a file, and usually follows the repo's `vault-request.md` template (lines like `Brackets: 2 and 3`; text in parentheses is a hint, not an answer) (sections: what it's about, table and wallet, your cards, what goes on the page). Resolve: commanders, brackets + default, budget, price style, hard lines, collection and owned-card preference, must/never include, tab grouping, page extras, label style (default neutral verdicts: Play, Good, Situational, Binder, Bracket 4+; never "weak"), and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium).
 Extras the page template can't render yet (alternative commanders, collection planner, splitting a pile between players) go out as Markdown files in `vault/` (`alternatives.md`, `collection-plan.md`): every placement passes `mtgdb.py validate` color identity for that deck, and cards that fit no commander are listed with their colors. Note the template gap in `plan.md`. Ask (AskUserQuestion, multiple choice) only for those; default the rest. If the user asks a question, answer it and don't build. Over 6 commanders or 18 decks: give the scale and confirm.
 Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimate, and the checklist `G0` to `G5`.
 

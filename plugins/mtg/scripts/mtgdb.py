@@ -11,6 +11,8 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
   sync           refresh every data source: cards, tags, rulings, combos, rules (and prices on request)
   status         date and staleness of each source; --remote checks upstream for newer versions
   rules          Comprehensive Rules lookup by number or keyword
+  price-plan     a deck priced cheapest / as listed / bling, exact printings, TCGplayer + Cardmarket links, export
+  alternatives   cheaper cards that fill the same roles (Tagger tags), inside a color identity
   index          download Scryfall bulk "default_cards", build the SQLite index (sync runs this)
   info           index build date, card count, Game Changer count
   card           one card's oracle facts (JSON)
@@ -38,7 +40,7 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
 Default DB: $MTGDB or ~/.cache/mtg/cards.sqlite (cache dir: $MTG_CACHE). Exit code 1 means checks failed.
 All api.scryfall.com calls share one cross-process rate limiter, so parallel agents stay under 2 req/s.
 """
-import argparse, csv, difflib, gzip, json, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
+import argparse, csv, difflib, gzip, json, math, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
 from urllib.parse import quote, urlparse
 
 UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
@@ -62,6 +64,9 @@ CREATE TABLE IF NOT EXISTS combos(id TEXT PRIMARY KEY, cards TEXT, n INTEGER, re
 CREATE TABLE IF NOT EXISTS combo_cards(combo_id TEXT, oracle_id TEXT);
 CREATE INDEX IF NOT EXISTS ix_combo_cards ON combo_cards(oracle_id);
 CREATE TABLE IF NOT EXISTS rules(number TEXT PRIMARY KEY, text TEXT);
+CREATE TABLE IF NOT EXISTS otags(oracle_id TEXT, tag TEXT);
+CREATE INDEX IF NOT EXISTS ix_otags ON otags(oracle_id);
+CREATE INDEX IF NOT EXISTS ix_otags_tag ON otags(tag);
 """
 # Scryfall Tagger oracle tags per deck role. Unknown tag names show up as count 0 in tags-sync.
 ROLE_TAGS = {
@@ -80,7 +85,8 @@ CREATE TABLE oracle(oracle_id TEXT PRIMARY KEY, name TEXT, color_identity TEXT, 
 CREATE TABLE printings(id TEXT PRIMARY KEY, oracle_id TEXT, set_code TEXT, cn TEXT, set_name TEXT,
   border TEXT, digital INTEGER, usd REAL, usd_foil REAL, released TEXT, layout TEXT, back_id TEXT,
   img_front TEXT, img_back TEXT, img_small TEXT, promo_types TEXT, frame_effects TEXT, artist TEXT,
-  oversized INTEGER, set_type TEXT, security_stamp TEXT);
+  oversized INTEGER, set_type TEXT, security_stamp TEXT, usd_etched REAL, finishes TEXT, full_art INTEGER,
+  tcg_url TEXT, cm_url TEXT);
 CREATE TABLE alias(name_lc TEXT, oracle_id TEXT);
 CREATE TABLE meta(k TEXT PRIMARY KEY, v TEXT);
 CREATE INDEX ix_p_or ON printings(oracle_id);
@@ -207,12 +213,14 @@ def index_cards(db, bulk_file):
                 "".join(card.get("produced_mana", [])), card.get("edhrec_rank"), ",".join(card.get("keywords", []))))
             iu = card.get("image_uris") or (faces[0].get("image_uris") if faces else None) or {}
             back = (faces[1].get("image_uris") or {}).get("normal") if len(faces) > 1 else None
-            c.execute("INSERT OR REPLACE INTO printings VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            c.execute("INSERT OR REPLACE INTO printings VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
                 card["id"], oid, card["set"], card["collector_number"], card.get("set_name"), card.get("border_color"),
                 int(bool(card.get("digital"))), price(card, "usd"), price(card, "usd_foil"), card.get("released_at"),
                 card.get("layout"), card.get("card_back_id"), iu.get("normal"), back, iu.get("small"),
                 ",".join(card.get("promo_types", [])), ",".join(card.get("frame_effects", [])), card.get("artist"),
-                int(bool(card.get("oversized"))), card.get("set_type"), card.get("security_stamp")))
+                int(bool(card.get("oversized"))), card.get("set_type"), card.get("security_stamp"), price(card, "usd_etched"),
+                ",".join(card.get("finishes", [])) or None, int(bool(card.get("full_art"))),
+                (card.get("purchase_uris") or {}).get("tcgplayer"), (card.get("purchase_uris") or {}).get("cardmarket")))
             for nm in {card["name"].lower()} | {f["name"].lower() for f in faces if f.get("name")}:
                 c.execute("INSERT INTO alias VALUES(?,?)", (nm, oid))
             n += 1
@@ -1107,6 +1115,9 @@ def sync_tags(x, tags=None):
         by_id[t["id"]] = t
         for nm in [t["label"], t.get("slug", "")] + t.get("aliases", []):
             by_name.setdefault(tag_key(nm), t)
+    x.execute("DELETE FROM otags")  # every tag, direct taggings only: the similarity signal for `alternatives`
+    x.executemany("INSERT INTO otags VALUES(?,?)", ((g["oracle_id"], t["slug"]) for t in by_id.values()
+                                                    for g in t.get("taggings", [])))
     today, report = time.strftime("%Y-%m-%d"), {}
     for tag in tags or sorted({t for ts in ROLE_TAGS.values() for t in ts}):
         root, oids, seen = by_name.get(tag_key(tag)), set(), set()
@@ -1525,6 +1536,148 @@ def cmd_combos(a):
          "note": "also_requires lists extra conditions (e.g. a creature with power 3 or greater): check them against the deck"})
 
 
+# ---------- price styles, buy links, cheaper alternatives ----------
+PRICE_STYLES = ("budget", "as-listed", "bling")
+BLING_PROMOS = {"galaxyfoil", "surgefoil", "textured", "halofoil", "confettifoil", "raisedfoil", "rainbowfoil",
+                "stepandcompleat", "oilslick", "neonink", "gilded", "embossed", "fracturefoil", "doublerainbow"}
+
+
+def direct_link(url):
+    """Scryfall's purchase links go through affiliate redirects; return the store's own product page."""
+    if not url:
+        return None
+    from urllib.parse import parse_qs
+    target = parse_qs(urlparse(url).query).get("u")
+    return target[0] if target else url
+
+
+def finish_prices(p):
+    """(finish, usd) pairs a store sells for this printing, cheapest first."""
+    fin = set((p.get("finishes") or "nonfoil").split(","))
+    pairs = [(f, p[k]) for f, k in (("nonfoil", "usd"), ("foil", "usd_foil"), ("etched", "usd_etched"))
+             if f in fin and p.get(k) is not None]
+    return sorted(pairs, key=lambda x: x[1])
+
+
+def bling_score(p, finish):
+    promos, frames = set((p.get("promo_types") or "").split(",")), set((p.get("frame_effects") or "").split(","))
+    if "serialized" in promos:
+        return -1  # one of a few hundred copies: not something to plan a deck around
+    return ((3 if finish in ("foil", "etched") else 0) + (2 if finish == "etched" else 0)
+            + (2 if p.get("border") == "borderless" else 0) + (2 if frames & {"showcase", "extendedart"} else 0)
+            + (2 if p.get("full_art") else 0) + (2 if p.get("set_code") == "sld" else 0) + (1 if promos & BLING_PROMOS else 0))
+
+
+def pick_printing(c, oid, style, listed=None, max_card=None):
+    """Choose the printing and finish for a price style, at or under max_card when possible.
+    Returns (printing dict, finish, usd) or None."""
+    rows = [dict(r) for r in c.execute("SELECT * FROM printings WHERE oracle_id=?", (oid,))]
+    rows = [p for p in rows if legal_printing(p)]
+    options = [(p, f, usd) for p in rows for f, usd in finish_prices(p)]
+    if not options:
+        return None
+    if max_card is not None:  # nothing under the cap: fall back to the cheapest copy, never the fanciest
+        under = [o for o in options if o[2] <= max_card]
+        options = under or [min(options, key=lambda o: o[2])]
+    if style == "as-listed" and listed:
+        same = [o for o in options if (o[0]["set_code"], o[0]["cn"]) == listed]
+        if same:
+            return same[0]
+    if style == "bling":
+        return max(options, key=lambda o: (bling_score(o[0], o[1]), -o[2]))
+    return min(options, key=lambda o: o[2])
+
+
+def export_line(qty, name, p, finish):
+    mark = {"foil": " *F*", "etched": " *E*"}.get(finish, "")
+    return f"{qty} {name} ({p['set_code'].upper()}) {p['cn']}{mark}"
+
+
+def cmd_price_plan(a):
+    """Price a deck three ways (cheapest, as listed, full bling) and give exact printings with store links."""
+    c = open_db(a.db)
+    rows = [r for r in parse_deck(a.deck) if "error" not in r]
+    col = (load_collection() or {}).get("cards", {})
+    totals, cards, unpriced, lines, to_buy = {s: 0.0 for s in PRICE_STYLES}, [], [], [], 0.0
+    for r in rows:
+        oid = find_oracle(c, r["name"])
+        if not oid:
+            unpriced.append(r["name"])
+            continue
+        name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
+        listed = (r["set"], r["cn"]) if r["set"] else None
+        picks = {s: pick_printing(c, oid, s, listed, a.max_card if s == "bling" else None) for s in PRICE_STYLES}
+        if not picks[a.style]:
+            unpriced.append(name)
+            continue
+        for s, pk in picks.items():
+            if pk:
+                totals[s] += pk[2] * r["qty"]
+        p, finish, usd = picks[a.style]
+        owned = min(r["qty"], (col.get(name) or {}).get("qty", 0))
+        to_buy += usd * (r["qty"] - owned)
+        cards.append({"qty": r["qty"], "name": name, "set": p["set_code"].upper(), "cn": p["cn"], "set_name": p["set_name"],
+                      "finish": finish, "usd": usd, "owned": owned or None,
+                      "tcgplayer": direct_link(p.get("tcg_url")), "cardmarket": direct_link(p.get("cm_url"))})
+        lines.append(export_line(r["qty"], name, p, finish))
+    cards.sort(key=lambda x: -x["usd"] * x["qty"])
+    res = {"deck": a.deck, "style": a.style, "prices_as_of": meta(c, "bulk_updated"),
+           "totals_usd": {s: round(v, 2) for s, v in totals.items()},
+           "total_usd": round(totals[a.style], 2), "unpriced": unpriced,
+           "most_expensive": [{k: x[k] for k in ("qty", "name", "usd", "set", "finish")} for x in cards[:10]],
+           "bling_max_card": a.max_card,
+           "cards": cards, "moxfield_export": "\n".join(lines),
+           "note": "Prices are Scryfall's daily TCGplayer market prices. Links open the exact printing. "
+                   "The export keeps set, collector number and finish, so Moxfield/Archidekt buy buttons pull the same copies."}
+    if col:
+        res["to_buy_usd"] = round(to_buy, 2)
+    out(res)
+
+
+def cmd_alternatives(a):
+    """Cheaper cards that do the same job: share the card's Scryfall Tagger role tags, fit the color identity,
+    are Commander legal, and cost less. A shortlist to read and swaptest, not a verdict."""
+    c = open_db(a.db)
+    oid = find_oracle(c, a.card)
+    if not oid:
+        out({"error": "not found", "suggestions": suggest(c, a.card)}, fail=True)
+    base = dict(c.execute("SELECT * FROM oracle WHERE oracle_id=?", (oid,)).fetchone())
+    x = open_extra()
+    tags = {r[0] for r in x.execute("SELECT tag FROM otags WHERE oracle_id=?", (oid,))}
+    if not tags:
+        out({"error": f"{base['name']} has no Tagger tags yet (run `mtgdb.py sync tags`)"}, fail=True)
+    ident = set(a.identity.upper()) if a.identity else set(base["color_identity"])
+    base_pick = pick_printing(c, oid, "budget", max_card=None)
+    cap = a.max_price if a.max_price is not None else (base_pick[2] if base_pick else 1e9)
+    in_deck = {find_oracle(c, r["name"]) for r in parse_deck(a.deck) if "error" not in r} if a.deck else set()
+    q = ",".join("?" * len(tags))
+    weight = {t: 1 / math.log(2 + n) for t, n in x.execute(f"SELECT tag, COUNT(*) FROM otags WHERE tag IN ({q}) GROUP BY tag", [*tags])}
+    cands = x.execute(f"SELECT oracle_id, GROUP_CONCAT(tag) FROM otags WHERE tag IN ({q}) AND oracle_id != ? GROUP BY oracle_id",
+                      [*tags, oid]).fetchall()
+    res = []
+    for cand, ctags in cands:
+        shared = set(ctags.split(","))
+        score = sum(weight.get(t, 0) for t in shared)
+        if score < a.min_score:
+            continue
+        o = c.execute("SELECT * FROM oracle WHERE oracle_id=?", (cand,)).fetchone()
+        if not o or o["commander_legal"] != "legal" or cand in in_deck or not set(o["color_identity"]) <= ident:
+            continue
+        if a.no_game_changers and o["gc"]:
+            continue
+        pk = pick_printing(c, cand, "budget", max_card=None)
+        if not pk or pk[2] > cap:
+            continue
+        res.append({"name": o["name"], "usd": pk[2], "mana_cost": o["mana_cost"], "type_line": o["type_line"],
+                    "similarity": round(score, 2), "shared_tags": sorted(shared, key=lambda t: -weight.get(t, 0))[:6],
+                    "gc": bool(o["gc"]), "_key": (-score, o["edhrec_rank"] or 1e9)})
+    res.sort(key=lambda r: r.pop("_key"))
+    out({"card": base["name"], "card_usd": base_pick[2] if base_pick else None,
+         "card_tags": sorted(tags, key=lambda t: -weight.get(t, 0))[:8],
+         "identity": "".join(sorted(ident)) or "C", "max_price": cap, "alternatives": res[:a.limit],
+         "next": "Read each candidate's text (mtgdb.py card) before offering it, then swaptest it in the deck."})
+
+
 # ---------- hook (PostToolUse on Write/Edit) ----------
 def find_vault(path):
     d = os.path.dirname(os.path.abspath(path))
@@ -1627,6 +1780,16 @@ def main(argv=None):
     s.add_argument("sources", nargs="*", metavar="SOURCE"); s.set_defaults(f=cmd_sync)
     s = sp.add_parser("status", help="date and staleness of every data source (--remote: check for newer versions)")
     s.add_argument("--remote", action="store_true"); s.set_defaults(f=cmd_status)
+    s = sp.add_parser("price-plan", help="price a deck cheapest / as listed / bling, with exact printings and store links")
+    s.add_argument("deck"); s.add_argument("--style", choices=PRICE_STYLES, default="as-listed")
+    s.add_argument("--max-card", type=float, help="bling only: fanciest printing at or under this price per card")
+    s.set_defaults(f=cmd_price_plan)
+    s = sp.add_parser("alternatives", help="cheaper cards with the same Tagger roles, inside a color identity")
+    s.add_argument("card"); s.add_argument("--identity", help="e.g. WUB (default: the card's own)")
+    s.add_argument("--max-price", type=float, help="default: the card's cheapest price"); s.add_argument("--deck", help="skip cards already in it")
+    s.add_argument("--no-game-changers", action="store_true"); s.add_argument("--limit", type=int, default=10)
+    s.add_argument("--min-score", type=float, default=0.5, help="tag similarity floor (rare shared tags count more)")
+    s.set_defaults(f=cmd_alternatives)
     s = sp.add_parser("rules", help="Comprehensive Rules lookup by number (702.19) or keyword (trample)")
     s.add_argument("query"); s.add_argument("--limit", type=int, default=15); s.set_defaults(f=cmd_rules)
     sp.add_parser("hook", help="Claude Code PostToolUse hook entry (reads JSON on stdin)").set_defaults(f=cmd_hook)

@@ -7,7 +7,7 @@ import test_mtgdb as base
 SERVER = os.path.join(os.path.dirname(base.SCRIPT), "server.py")
 DECK = "1 Darth Vader\n1 Sol Ring\n1 Demonic Tutor\n97 Swamp\n"
 TOOLS = {"mtg_card", "mtg_resolve_names", "mtg_deck_check", "mtg_deck_swap", "mtg_deck_profile", "mtg_simulate",
-         "mtg_rules", "mtg_data_status", "mtg_data_sync"}
+         "mtg_rules", "mtg_data_status", "mtg_data_sync", "mtg_price_plan", "mtg_cheaper_alternatives"}
 
 
 class ServerTest(unittest.IsolatedAsyncioTestCase):
@@ -55,6 +55,11 @@ class ServerTest(unittest.IsolatedAsyncioTestCase):
 
                 err, names = await self.call(s, "mtg_resolve_names", names=["Rhystic Studdy"])
                 self.assertEqual(names["names"][0]["name"], "Rhystic Study")
+
+                err, plan = await self.call(s, "mtg_price_plan", deck=DECK, style="budget")
+                self.assertFalse(err)
+                self.assertLess(plan["totals_usd"]["budget"], plan["totals_usd"]["bling"])
+                self.assertIn("(C21) 263", plan["moxfield_export"])
 
                 err, msg = await self.call(s, "mtg_rules", query="trample")
                 self.assertTrue(err)  # no rules synced in the fixture: clear error, not a crash

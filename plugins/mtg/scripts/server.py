@@ -153,6 +153,40 @@ def mtg_simulate(deck: str, commanders: int = 1, on_the_draw: bool = False, turn
 
 
 @mcp.tool(annotations=READ)
+def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None,
+                   response_format: Format = "concise") -> dict:
+    """Price a deck three ways at once (budget = cheapest legal copy of each card, as-listed = the printings in the list,
+    bling = foil, borderless, showcase, Secret Lair) and give the chosen style's exact printing per card (set, number,
+    finish) with TCGplayer and Cardmarket links, plus a Moxfield/Archidekt export that keeps those printings.
+    max_card caps bling per card. Shows to_buy_usd when the user has imported a collection."""
+    with deck_file(deck) as path:
+        res, _ = run("price-plan", path, "--style", style, *(["--max-card", max_card] if max_card is not None else []))
+    if response_format == "concise":
+        res.pop("cards", None)
+    return res
+
+
+@mcp.tool(annotations=READ)
+def mtg_cheaper_alternatives(card: str, identity: str | None = None, max_price: float | None = None,
+                             deck: str | None = None, no_game_changers: bool = False, limit: int = 8) -> dict:
+    """Cheaper cards that do the same job, ranked by shared Scryfall Tagger tags (rare shared tags count more).
+    identity is the commander's color identity (e.g. "WUB"); max_price defaults to the card's cheapest price; deck skips
+    cards already in it. A shortlist: read each card before offering it, then test it with mtg_deck_swap."""
+    args = ["alternatives", card, "--limit", limit]
+    args += ["--identity", identity] if identity else []
+    args += ["--max-price", max_price] if max_price is not None else []
+    args += ["--no-game-changers"] if no_game_changers else []
+    if deck:
+        with deck_file(deck) as path:
+            res, code = run(*args, "--deck", path)
+    else:
+        res, code = run(*args)
+    if code:
+        raise ToolError(res.get("error", "alternatives failed") if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=READ)
 def mtg_rules(query: str, limit: int = 10) -> dict:
     """Comprehensive Rules lookup with the effective date. `query` is a rule number (702.19, 903.8) for that rule and
     its subrules, or a keyword or phrase (trample, commander tax) for the glossary entry and every rule that mentions it."""

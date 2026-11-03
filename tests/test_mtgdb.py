@@ -309,3 +309,77 @@ class MtgdbTest(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class LogicTest(unittest.TestCase):
+    """In-process tests for parsing and matching logic that has no CLI-only behavior."""
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, os.path.dirname(SCRIPT))
+        import mtgdb
+        cls.m = mtgdb
+
+    def write(self, text):
+        f = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
+        f.write(text); f.close()
+        self.addCleanup(os.unlink, f.name)
+        return f.name
+
+    def test_moxfield_sections(self):
+        path = self.write("Deck\n1 Sol Ring\n\nCommander\n1 Tymna the Weaver\n1 Kraum, Ludevic's Opus\n\n"
+                          "Sideboard\n1 Black Lotus\n\nMaybeboard\n1 Mana Crypt\n")
+        rows, n = self.m.parse_deck_sections(path)
+        self.assertEqual(n, 2)
+        self.assertEqual([r["name"] for r in rows], ["Tymna the Weaver", "Kraum, Ludevic's Opus", "Sol Ring"])
+
+    def test_plain_list_unchanged(self):
+        rows, n = self.m.parse_deck_sections(self.write("1 Darth Vader (SWT) 12\n1 Sol Ring *F*\n"))
+        self.assertEqual((n, rows[0]["set"], rows[0]["cn"]), (0, "swt", "12"))
+
+    def test_tag_key(self):
+        self.assertEqual(self.m.tag_key("board-wipe"), self.m.tag_key("Board Wipe"))
+        self.assertEqual(self.m.tag_key("mana rock"), "manarock")
+
+    def test_parse_rules(self):
+        text = ("Magic: The Gathering Comprehensive Rules\n\nThese rules are effective as of September 25, 2026.\n\n"
+                "Contents\n\nGlossary\n\n" + "\n" * 100 +
+                "702.19. Trample\n\n702.19a Trample is a static ability.\n\n903.8. A commander costs {2} more.\n\n"
+                "Glossary\n\nCommander Tax\nInformal term. See rule 903.8.\n\nTrample\nA keyword ability.\n\nCredits\n")
+        eff, rows = self.m.parse_rules(text)
+        self.assertEqual(eff, "September 25, 2026")
+        self.assertEqual(rows["702.19a"], "Trample is a static ability.")
+        self.assertEqual(rows["glossary:Commander Tax"], "Informal term. See rule 903.8.")
+        self.assertNotIn("glossary:Contents", rows)
+
+    def test_bling_and_finish(self):
+        p = {"finishes": "nonfoil,foil", "usd": 1.0, "usd_foil": 4.0, "usd_etched": None, "border": "borderless",
+             "frame_effects": "", "promo_types": "", "set_code": "sld", "full_art": 0}
+        self.assertEqual(self.m.finish_prices(p), [("nonfoil", 1.0), ("foil", 4.0)])
+        self.assertGreater(self.m.bling_score(p, "foil"), self.m.bling_score(p, "nonfoil"))
+        self.assertEqual(self.m.bling_score(dict(p, promo_types="serialized"), "foil"), -1)
+
+    def test_direct_link(self):
+        aff = "https://partner.tcgplayer.com/c/1/2/3?subId1=api&u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F671258%3Fpage%3D1"
+        self.assertEqual(self.m.direct_link(aff), "https://www.tcgplayer.com/product/671258?page=1")
+
+
+class NameCollisionTest(unittest.TestCase):
+    run_cmd = MtgdbTest.__dict__["run_cmd"]
+    """A paper card and a digital-only Alchemy card share a name: lookups must return the paper card."""
+    @classmethod
+    def setUpClass(cls):
+        cls.tmp = tempfile.mkdtemp()
+        alchemy = card("Heroic Sacrifice", "W", "Instant", "amsh", "31", None, digital=True, legal="not_legal")
+        alchemy["oracle_id"], alchemy["name"] = "o-alchemy", "Heroic Sacrifice // Heroic Sacrifice"
+        alchemy["card_faces"] = [{"name": "Heroic Sacrifice", "oracle_text": ""}, {"name": "Heroic Sacrifice", "oracle_text": ""}]
+        paper = card("Heroic Sacrifice", "W", "Instant", "msc", "18", "0.5")
+        bulk = os.path.join(cls.tmp, "bulk.json")
+        open(bulk, "w", encoding="utf-8").write("[\n" + ",\n".join(json.dumps(c) for c in (alchemy, paper)) + "\n]\n")
+        cls.db = os.path.join(cls.tmp, "c.sqlite")
+        cls.themes = None
+        cls.env = dict(os.environ, MTG_CACHE=os.path.join(cls.tmp, "cache"))
+        cls.run_cmd(["index", "--bulk-file", bulk])
+
+    def test_paper_card_wins(self):
+        code, res = self.run_cmd(["card", "Heroic Sacrifice"])
+        self.assertEqual((code, res["name"], res["commander_legal"]), (0, "Heroic Sacrifice", "legal"))

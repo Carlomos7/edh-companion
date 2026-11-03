@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["ijson", "pillow"]
+# dependencies = ["ijson", "pillow", "certifi"]
 # ///
 """mtgdb: local Scryfall index and deterministic MTG checks. Stdlib only.
 
@@ -43,6 +43,12 @@ All api.scryfall.com calls share one cross-process rate limiter, so parallel age
 """
 import argparse, csv, difflib, gzip, io, json, math, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
 from urllib.parse import quote, urlparse
+
+try:  # certifi's CA bundle: Windows certificate stores can hold an outdated root that breaks newer Let's Encrypt chains
+    import certifi, ssl
+    SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    SSL_CTX = None
 
 UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
 # EVAL_MTG_CACHE: `claude plugin eval` gives each run an empty home and only passes EVAL_* variables through
@@ -134,7 +140,7 @@ def http_get(url, data=None, headers=None):
     req = urllib.request.Request(url, data=data, headers=h, method="POST" if data else "GET")
     for _ in range(4):
         try:
-            with urllib.request.urlopen(req, timeout=120) as r:
+            with urllib.request.urlopen(req, timeout=120, context=SSL_CTX) as r:
                 return r.read()
         except urllib.error.HTTPError as e:
             if e.code == 429:  # Scryfall locks you out for 30s; never hammer
@@ -189,7 +195,7 @@ def index_cards(db, bulk_file):
         raw, updated = os.path.join(os.path.dirname(db), "default_cards.download"), entry["updated_at"]
         print(f"Downloading {size / 1e6:.0f} MB ({updated})", file=sys.stderr)
         req = urllib.request.Request(uri, headers=UA)
-        with urllib.request.urlopen(req, timeout=900) as r, open(raw, "wb") as f:
+        with urllib.request.urlopen(req, timeout=900, context=SSL_CTX) as r, open(raw, "wb") as f:
             while chunk := r.read(1 << 20):
                 f.write(chunk)
     tmp = db + ".tmp"
@@ -1085,7 +1091,7 @@ def bulk_entry(kind):
 
 def download(url, dst):
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=900) as r, open(dst, "wb") as f:
+    with urllib.request.urlopen(req, timeout=900, context=SSL_CTX) as r, open(dst, "wb") as f:
         while chunk := r.read(1 << 20):
             f.write(chunk)
     return dst
@@ -1413,7 +1419,7 @@ def stream_kv(path):
 
 def fetch_to(url, dst):
     req = urllib.request.Request(url, headers=UA)
-    with urllib.request.urlopen(req, timeout=1800) as r, open(dst, "wb") as f:
+    with urllib.request.urlopen(req, timeout=1800, context=SSL_CTX) as r, open(dst, "wb") as f:
         while chunk := r.read(1 << 20):
             f.write(chunk)
 

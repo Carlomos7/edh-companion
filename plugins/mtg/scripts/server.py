@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.11"
-# dependencies = ["mcp>=2.3,<3", "ijson", "pillow"]
+# dependencies = ["mcp>=2.3,<3", "ijson", "pillow", "certifi"]
 # ///
 """mtgdb MCP server: card facts, deck checks, combos, rules and data freshness from the local index.
 

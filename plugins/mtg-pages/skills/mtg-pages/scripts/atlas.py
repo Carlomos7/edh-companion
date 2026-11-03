@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pillow"]
+# dependencies = ["pillow", "certifi"]
 # ///
 """Pack card images for resolved decks into WebP atlases + atlas.json (needs Pillow).
 
@@ -12,6 +12,12 @@ Keys in atlas.json: <printing id>_f (front), <printing id>_b (real back of DFC),
 import argparse, json, os, sys, time, urllib.request, urllib.error
 from concurrent.futures import ThreadPoolExecutor
 
+try:  # certifi's CA bundle: Windows certificate stores can hold an outdated root that breaks newer Let's Encrypt chains
+    import certifi, ssl
+    SSL_CTX = ssl.create_default_context(cafile=certifi.where())
+except ImportError:
+    SSL_CTX = None
+
 UA = {"User-Agent": "mtgdb-atlas/1.0", "Accept": "*/*"}
 
 
@@ -19,7 +25,7 @@ def http_get(url):
     req = urllib.request.Request(url, headers=UA)
     for _ in range(3):
         try:
-            with urllib.request.urlopen(req, timeout=60) as r:
+            with urllib.request.urlopen(req, timeout=60, context=SSL_CTX) as r:
                 return r.read()
         except urllib.error.HTTPError as e:
             if e.code == 429:

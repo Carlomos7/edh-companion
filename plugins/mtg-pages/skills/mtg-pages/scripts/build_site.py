@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pillow"]
+# dependencies = ["pillow", "certifi"]
 # ///
 """Validate site-data.json, pack images into WebP atlases, and render the fixed template into a site folder.
 

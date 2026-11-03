@@ -99,7 +99,37 @@ Restart Claude Code after adding one, then `/mcp` shows whether it connected.
 - "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
 - "Give me this list for Moxfield with the exact printings"
 - "Does deathtouch work with trample?"
-- `/mtg:commander-vault @vault-request.md` builds several commanders and brackets at once with research agents and an independent verifier, and renders them as one interactive page (copy `vault-request.md` into an empty folder and fill it in). Takes 30 minutes or more.
+
+## Build your own vault
+A vault is one page with full decks for several commanders at the power levels you play, plus card rankings, cards to consider and price ladders. Any theme works, or none.
+
+1. Open Claude Code in an empty folder (the vault's files go there).
+2. Copy the block below, change the answers after each colon, and delete any line you don't need (its default is used).
+3. Type `/mtg:commander-vault`, a space, paste your block, and press Enter.
+
+```text
+Commanders: Krenko, Mob Boss; Edgar Markov
+Theme: none
+Brackets: 2 and 3, open on 3
+Budget per deck: $150
+Price style: balanced
+Hard lines: no infinite combos
+Collection: none
+Extras: alternative commanders
+```
+
+| Line | What to put | Default |
+|---|---|---|
+| Commanders | names, or "the 6 most-built Dragon commanders on EDHREC" | (required) |
+| Theme | a franchise, tribe or art style, e.g. "Lord of the Rings", "vampires" | none |
+| Brackets | which power levels to build, and which the page opens on | your bracket plus one above |
+| Budget per deck | e.g. "$150" | no limit, price always shown |
+| Price style | budget, balanced, or bling (with a per-card ceiling) | balanced |
+| Hard lines | what you never want: infinite combos, extra turns, land destruction, stax | what the bracket allows |
+| Collection | paste a list, or a CSV path from Moxfield, Archidekt or ManaBox | none |
+| Extras | alternative commanders, collection planner, splitting a pile between players | none |
+
+Claude asks about anything unclear, shows the plan and the cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. Every option (theme strictness, must-include cards, card labels, look) is in the [full version](vault-request.md).
 
 ## How accuracy works
 1. Computed facts only come from the local index (`mtgdb`), never from memory.

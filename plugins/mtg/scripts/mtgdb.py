@@ -238,6 +238,10 @@ def index_cards(db, bulk_file):
         c.execute("INSERT OR REPLACE INTO meta VALUES(?,?)", (k, v))
     c.commit()
     c.close()
+    global _names
+    _names = None  # fuzzy-name cache belongs to the old index
+    import gc
+    gc.collect()  # commands exit via sys.exit, leaving connections to the old file for the collector (Windows locks it)
     os.replace(tmp, db)
     if not gc_field:
         print("Bulk data lacks game_changer: run `mtgdb.py gamechangers --refresh`", file=sys.stderr)
@@ -277,10 +281,13 @@ _names = None
 
 
 def all_names(c):
+    """Every card name, cached per index file and version (the MCP server lives across re-indexes)."""
     global _names
-    if _names is None:
-        _names = [r[0] for r in c.execute("SELECT DISTINCT name_lc FROM alias")]
-    return _names
+    path = c.execute("PRAGMA database_list").fetchone()[2]
+    key = (path, os.path.getmtime(path) if path and os.path.exists(path) else None)
+    if _names is None or _names[0] != key:
+        _names = (key, [r[0] for r in c.execute("SELECT DISTINCT name_lc FROM alias")])
+    return _names[1]
 
 
 def suggest(c, name, n=3, cutoff=0.82):
@@ -423,29 +430,42 @@ def cmd_gamechangers(a):
 
 
 # ---------- decks ----------
-LINE = re.compile(r"^\s*(\d+)x?\s+(.+?)(?:\s+\(([A-Za-z0-9]+)\)\s*([^\s*]+))?(?:\s+\*[A-Z]+\*)*\s*$")
+LINE = re.compile(r"^\s*(?:(\d+)x?\s+)?(.+?)(?:\s+\(([A-Za-z0-9]+)\)\s*([^\s*]+))?((?:\s+\*[A-Z]+\*)*)\s*$")
+CATEGORY = re.compile(r"\s*\[([^\]]*)\]\s*$")  # Archidekt: 1x Sol Ring (cmm) 410 [Ramp]
+FINISH_MARKS = {"*F*": "foil", "*E*": "etched"}
 
 
 SECTION = re.compile(r"^(?://\s*)?(commanders?|deck|main(?:board)?|sideboard|maybeboard|considering|companions?|tokens?)\s*:?\s*(?:\(\d+\))?$", re.I)
 OUTSIDE_99 = ("sideboard", "maybeboard", "considering", "companion", "token")
 
 
+def is_land_type(type_line):
+    return "Land" in (type_line or "").split(" // ")[0]
+
+
 def parse_deck_sections(path):
     """Plain lists (commander first) or Moxfield/Archidekt exports with section headers. Returns (rows, commanders):
     Commander-section cards come first; sideboard, maybeboard, companion and token sections are not part of the deck."""
     cmdrs, rows, section = [], [], "deck"
-    for ln in open(path, encoding="utf-8"):
+    for ln in open(path, encoding="utf-8-sig"):
         s = ln.strip()
+        cat = CATEGORY.search(s)
+        if cat:
+            s = s[:cat.start()].rstrip()
         h = SECTION.match(s)
         if h:
             section = h[1].lower()
             continue
         if not s or s.startswith(("//", "#")) or s.endswith(":") or section.startswith(OUTSIDE_99):
             continue
+        if s == "About" or s.startswith("Name "):  # Arena export header
+            continue
         m = LINE.match(s)
-        row = ({"qty": int(m[1]), "name": m[2].strip(), "set": (m[3] or "").lower(), "cn": m[4] or ""}
+        row = ({"qty": int(m[1] or 1), "name": m[2].strip(), "set": (m[3] or "").lower(), "cn": m[4] or "",
+                "finish": next((f for k, f in FINISH_MARKS.items() if k in (m[5] or "")), "")}
                if m else {"error": f"unparsed line: {s}"})
-        (cmdrs if section.startswith("commander") and m else rows).append(row)
+        in_cmdr = section.startswith("commander") or bool(cat and "commander" in cat[1].lower())
+        (cmdrs if in_cmdr and m else rows).append(row)
     return cmdrs + rows, sum(r["qty"] for r in cmdrs)
 
 
@@ -678,7 +698,7 @@ def cmd_stats(a):
     curve, pips, sources, roles, lands, mv = {}, {k: 0 for k in "WUBRG"}, {k: 0 for k in "WUBRGC"}, {}, 0, []
     for x in cards[a.commanders:]:
         o, q = x["oracle"], x["qty"]
-        is_land = "Land" in o["type_line"] and "//" not in o["type_line"]
+        is_land = is_land_type(o["type_line"])
         if is_land:
             lands += q
         else:
@@ -726,7 +746,7 @@ def cmd_swaptest(a):
             continue
         lines[idx] = f"1 {in_c}"
         applied.append(sw)
-    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False) as t:
+    with tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8") as t:
         t.write("\n".join(lines) + "\n")
     theme, reasons = theme_args(a)
     _, rep = check(c, t.name, load_themes(a.themes) if theme and theme["spec"]["mode"] != "none" else {},
@@ -980,7 +1000,7 @@ def cmd_simulate(a):
     ramp_tags = set(ROLE_TAGS["ramp"])
     for x in cards[a.commanders:]:
         o = x["oracle"]
-        is_land = "Land" in o["type_line"] and not o["type_line"].startswith(("Instant", "Sorcery", "Creature"))
+        is_land = is_land_type(o["type_line"])
         tagged = bool(tagmap.get(o["oracle_id"], set()) & ramp_tags) if tagmap else False
         ramp = not is_land and (o["cmc"] or 0) <= 3 and (bool(o["produced_mana"]) or tagged or
                                                        bool(re.search(r"search your library for .*land", o["oracle_text"] or "", re.I)))
@@ -1261,6 +1281,11 @@ def cmd_rules(a):
         hits = x.execute("SELECT number, text FROM rules WHERE number=? COLLATE NOCASE", (f"glossary:{q}",)).fetchall()
         hits += x.execute("SELECT number, text FROM rules WHERE number NOT LIKE 'glossary:%' AND text LIKE ? ORDER BY number",
                           (f"%{q}%",)).fetchall()
+    def rule_key(r):
+        m = re.match(r"(\d+)(?:\.(\d+)([a-z]?))?", r["number"])
+        return (0, int(m[1]), int(m[2] or 0), m[3] or "") if m else (1, 0, 0, r["number"])
+    if re.fullmatch(r"\d{3}(\.\d+[a-z]?)?\.?", a.query.strip()):
+        hits = sorted(hits, key=rule_key)
     out({"query": a.query, "effective": json.loads(src["detail"]).get("effective"), "source": src["upstream"],
          "count": len(hits), "rules": [dict(r) for r in hits[:a.limit]]}, fail=not hits)
 
@@ -1583,15 +1608,19 @@ def pick_printing(c, oid, style, listed=None, max_card=None):
     rows = [dict(r) for r in c.execute("SELECT * FROM printings WHERE oracle_id=?", (oid,))]
     rows = [p for p in rows if legal_printing(p)]
     options = [(p, f, usd) for p in rows for f, usd in finish_prices(p)]
+    if style == "as-listed" and listed:
+        set_, cn, fin = (tuple(listed) + ("",))[:3]
+        same = [p for p in rows if (p["set_code"], p["cn"]) == (set_, cn)]
+        if same:  # the player's copy wins, even with no price (it's then reported as unpriced)
+            p = same[0]
+            priced = dict(finish_prices(p))
+            fin = fin or (min(priced, key=priced.get) if priced else "nonfoil")
+            return p, fin, priced.get(fin)
     if not options:
         return None
     if max_card is not None:  # nothing under the cap: fall back to the cheapest copy, never the fanciest
         under = [o for o in options if o[2] <= max_card]
         options = under or [min(options, key=lambda o: o[2])]
-    if style == "as-listed" and listed:
-        same = [o for o in options if (o[0]["set_code"], o[0]["cn"]) == listed]
-        if same:
-            return same[0]
     if style == "bling":
         return max(options, key=lambda o: (bling_score(o[0], o[1]), -o[2]))
     return min(options, key=lambda o: o[2])
@@ -1605,24 +1634,29 @@ def export_line(qty, name, p, finish):
 def cmd_price_plan(a):
     """Price a deck three ways (cheapest, as listed, full bling) and give exact printings with store links."""
     c = open_db(a.db)
-    rows = [r for r in parse_deck(a.deck) if "error" not in r]
+    parsed = parse_deck(a.deck)
+    errors = [r["error"] for r in parsed if "error" in r]
+    rows = [r for r in parsed if "error" not in r]
     col = (load_collection() or {}).get("cards", {})
     totals, cards, unpriced, lines, to_buy = {s: 0.0 for s in PRICE_STYLES}, [], [], [], 0.0
     for r in rows:
         oid = find_oracle(c, r["name"])
         if not oid:
-            unpriced.append(r["name"])
+            errors.append(f"unknown card: {r['name']} (run mtg_resolve_names)")
             continue
         name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
-        listed = (r["set"], r["cn"]) if r["set"] else None
+        listed = (r["set"], r["cn"], r.get("finish", "")) if r["set"] else None
         picks = {s: pick_printing(c, oid, s, listed, a.max_card if s == "bling" else None) for s in PRICE_STYLES}
-        if not picks[a.style]:
-            unpriced.append(name)
-            continue
         for s, pk in picks.items():
-            if pk:
+            if pk and pk[2] is not None:
                 totals[s] += pk[2] * r["qty"]
+        if not picks[a.style] or picks[a.style][2] is None:
+            unpriced.append(name)
+        if not picks[a.style]:
+            lines.append(f"{r['qty']} {name}")
+            continue
         p, finish, usd = picks[a.style]
+        usd = usd or 0.0
         owned = min(r["qty"], (col.get(name) or {}).get("qty", 0))
         to_buy += usd * (r["qty"] - owned)
         cards.append({"qty": r["qty"], "name": name, "set": p["set_code"].upper(), "cn": p["cn"], "set_name": p["set_name"],
@@ -1632,7 +1666,7 @@ def cmd_price_plan(a):
     cards.sort(key=lambda x: -x["usd"] * x["qty"])
     res = {"deck": a.deck, "style": a.style, "prices_as_of": meta(c, "bulk_updated"),
            "totals_usd": {s: round(v, 2) for s, v in totals.items()},
-           "total_usd": round(totals[a.style], 2), "unpriced": unpriced,
+           "total_usd": round(totals[a.style], 2), "unpriced": unpriced, "errors": errors,
            "most_expensive": [{k: x[k] for k in ("qty", "name", "usd", "set", "finish")} for x in cards[:10]],
            "bling_max_card": a.max_card,
            "cards": cards, "moxfield_export": "\n".join(lines),
@@ -1660,7 +1694,7 @@ def cmd_export(a):
     for i, r in enumerate(rows):
         oid = find_oracle(c, r["name"])
         name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
-        pk = pick_printing(c, oid, a.printings, (r["set"], r["cn"]) if r["set"] else None, a.max_card)
+        pk = pick_printing(c, oid, a.printings, (r["set"], r["cn"], r.get("finish", "")) if r["set"] else None, a.max_card)
         items.append({"qty": r["qty"], "name": name, "commander": i < n_cmdr, "pick": pk})
     def line(x, printing=True):
         if not printing or not x["pick"]:
@@ -1696,6 +1730,22 @@ def cmd_export(a):
                          "csv": "spreadsheets, or a Moxfield/Archidekt collection import (decks don't import from CSV)"}[a.format]})
 
 
+COLOR_NAMES = {
+    "white": "W", "blue": "U", "black": "B", "red": "R", "green": "G", "colorless": "",
+    "azorius": "WU", "dimir": "UB", "rakdos": "BR", "gruul": "RG", "selesnya": "GW", "orzhov": "WB", "izzet": "UR",
+    "golgari": "BG", "boros": "RW", "simic": "GU", "bant": "GWU", "esper": "WUB", "grixis": "UBR", "jund": "BRG",
+    "naya": "RGW", "abzan": "WBG", "jeskai": "URW", "sultai": "BGU", "mardu": "RWB", "temur": "GUR"}
+
+
+def parse_identity(text):
+    t = text.strip().lower()
+    if t in COLOR_NAMES:
+        return set(COLOR_NAMES[t])
+    if not re.fullmatch(r"[wubrgc]+", t):
+        out({"error": f"identity '{text}' isn't colors: use letters like WUB, or a name like Esper or Gruul"}, fail=True)
+    return set(t.upper()) - {"C"}
+
+
 def cmd_alternatives(a):
     """Cheaper cards that do the same job: share the card's Scryfall Tagger role tags, fit the color identity,
     are Commander legal, and cost less. A shortlist to read and swaptest, not a verdict."""
@@ -1708,7 +1758,7 @@ def cmd_alternatives(a):
     tags = {r[0] for r in x.execute("SELECT tag FROM otags WHERE oracle_id=?", (oid,))}
     if not tags:
         out({"error": f"{base['name']} has no Tagger tags yet (run `mtgdb.py sync tags`)"}, fail=True)
-    ident = set(a.identity.upper()) if a.identity else set(base["color_identity"])
+    ident = parse_identity(a.identity) if a.identity else set(base["color_identity"])
     base_pick = pick_printing(c, oid, "budget", max_card=None)
     cap = a.max_price if a.max_price is not None else (base_pick[2] if base_pick else 1e9)
     in_deck = {find_oracle(c, r["name"]) for r in parse_deck(a.deck) if "error" not in r} if a.deck else set()

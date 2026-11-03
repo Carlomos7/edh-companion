@@ -24,7 +24,14 @@ Use the `mtgdb` MCP tools (from this plugin) for every card fact. Never state le
 | Share or import elsewhere | `mtg_export` |
 | Rules questions | `mtg_rules` |
 
-No MCP connection? The same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.
+No `mtg_*` tools available? The plugin's data server needs `uv`. Tell the player in one line: "The deck tools need a small helper called uv: install it (Windows: `winget install astral-sh.uv`, macOS: `brew install uv`, Linux: see docs.astral.sh/uv), then restart Claude Code." If `uv` is installed, the same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.
+
+## Talking to the player
+Many players aren't deep in Commander jargon. Write like a friend at the table:
+- Explain a term in a few words the first time it comes up: bracket ("Wizards' 1 to 5 power scale; 3 is a typical upgraded deck"), Game Changer ("a card Wizards lists as unusually strong; bracket 3 allows up to 3"), Rule 0 ("the quick pregame chat about power level"), on curve ("castable on the turn its cost allows").
+- Lead with what matters to them (is it legal, how strong, what it costs, what to change), then the detail.
+- Keep each reply short; offer more ("want the full numbers?") instead of dumping every stat.
+- Questions always come as options to pick, never as a form to fill in.
 For EDHREC numbers, Moxfield or Archidekt links and live searches, use the j4th `mtg-mcp-server` connector if it is installed (`edhrec_*`, `moxfield_*`, `scryfall_search_cards`). Load the `mtg-research` skill for anything beyond card facts.
 
 ## 1. Freshness (every new deck)

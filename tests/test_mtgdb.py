@@ -336,6 +336,25 @@ class LogicTest(unittest.TestCase):
         rows, n = self.m.parse_deck_sections(self.write("1 Darth Vader (SWT) 12\n1 Sol Ring *F*\n"))
         self.assertEqual((n, rows[0]["set"], rows[0]["cn"]), (0, "swt", "12"))
 
+    def test_pastes_from_other_sites(self):
+        # Arena header, Archidekt categories (commander by category), finish marks, a bare name, a BOM
+        path = self.write("\ufeffAbout\nName My Deck\n\n1x Krenko, Mob Boss (rvr) 109 [Commander{top}]\n1x Sol Ring (cmm) 410 *F* [Ramp]\n1 Sol Ring (cmm) 703 *E*\nArcane Signet\n")
+        rows, n = self.m.parse_deck_sections(path)
+        self.assertEqual(n, 1)
+        self.assertEqual([(r["name"], r["qty"], r["finish"]) for r in rows],
+                         [("Krenko, Mob Boss", 1, ""), ("Sol Ring", 1, "foil"), ("Sol Ring", 1, "etched"), ("Arcane Signet", 1, "")])
+        self.assertFalse(any("error" in r for r in rows))
+
+    def test_land_rule(self):
+        self.assertTrue(self.m.is_land_type("Land // Land"))  # Pathways
+        self.assertFalse(self.m.is_land_type("Sorcery // Land"))  # modal spells count as spells
+        self.assertTrue(self.m.is_land_type("Basic Land — Swamp"))
+
+    def test_identity_names(self):
+        self.assertEqual(self.m.parse_identity("Esper"), set("WUB"))
+        self.assertEqual(self.m.parse_identity("rg"), set("RG"))
+        self.assertEqual(self.m.parse_identity("C"), set())
+
     def test_tag_key(self):
         self.assertEqual(self.m.tag_key("board-wipe"), self.m.tag_key("Board Wipe"))
         self.assertEqual(self.m.tag_key("mana rock"), "manarock")

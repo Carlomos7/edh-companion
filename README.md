@@ -35,19 +35,30 @@ Build, review, price and share Magic: The Gathering Commander decks **together w
   - plain names
   - CSV
 
-## Requirements
-- [Claude Code](https://code.claude.com)
-- [uv](https://docs.astral.sh/uv/) (the MCP server and scripts install their own Python dependencies)
-- About 400 MB of disk for the card data in `~/.cache/mtg/`
+## Quick start
+1. **Install uv**, a small helper that runs the card-data tools (one time):
+   - Windows: `winget install astral-sh.uv`
+   - macOS: `brew install uv`
+   - Linux: `curl -LsSf https://astral.sh/uv/install.sh | sh`
+2. **Install the plugin** in [Claude Code](https://code.claude.com):
+   ```
+   /plugin marketplace add Carlomos7/mtg-skills
+   /plugin install mtg@carlomos7-mtg-skills
+   ```
+   Optional deck pages: `/plugin install mtg-pages@carlomos7-mtg-skills`
+3. **Type `/mtg:build`** (or just say "build me a Krenko deck"). The first time, Claude offers to download the card data: about a minute and 400 MB of disk.
 
-## Install
-In Claude Code:
-```
-/plugin marketplace add Carlomos7/mtg-skills
-/plugin install mtg@carlomos7-mtg-skills
-/plugin install mtg-pages@carlomos7-mtg-skills     # optional
-```
-Then just ask, for example "build me a Krenko deck". On first use Claude offers to download the data (about a minute).
+### Commands
+| Type | To |
+|---|---|
+| `/mtg:build` | start a new deck together |
+| `/mtg:check` | check a deck: legal? bracket? weak spots? cost? |
+| `/mtg:upgrade` | improve a deck you have |
+| `/mtg:cheaper` | see what a deck costs and make it cheaper |
+| `/mtg:share` | get a list ready for Moxfield, Archidekt, Arena or a spreadsheet |
+| `/mtg:update-data` | see how fresh the card data and rules are, and refresh |
+
+You don't need the commands: plain questions work too.
 
 **Recommended companion:** [j4th/mtg-mcp-server](https://github.com/j4th/mtg-mcp-server) for EDHREC data, Moxfield and Archidekt links, and Commander Spellbook bracket estimates.
 

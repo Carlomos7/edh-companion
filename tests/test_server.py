@@ -71,6 +71,11 @@ class ServerTest(unittest.IsolatedAsyncioTestCase):
                 err, msg = await self.call(s, "mtg_export", deck="1 Darth Vadr\n99 Swamp")
                 self.assertTrue(err)  # unresolved names are refused, not silently dropped
 
+                err, ex = await self.call(s, "mtg_export", deck="1 Sol Ring (SLD) 999 *F*\n1 Darth Vader", commanders=1)
+                self.assertIn("1 Sol Ring (SLD) 999 *F*", ex["text"])  # as-listed keeps the player's copy and finish
+                err, msg = await self.call(s, "mtg_resolve_names", names=[])
+                self.assertTrue(err)  # never falls back to reading the protocol stream
+
                 err, msg = await self.call(s, "mtg_rules", query="trample")
                 self.assertTrue(err)  # no rules synced in the fixture: clear error, not a crash
                 self.assertIn("sync", msg)

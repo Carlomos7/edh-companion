@@ -7,7 +7,7 @@
 
 Every tool runs the same code as the `mtgdb.py` CLI (one source of truth). Started by the plugin's .mcp.json over stdio.
 """
-import contextlib, io, json, os, sys, tempfile, threading
+import contextlib, gc, io, json, os, sys, tempfile, threading
 from typing import Literal
 
 import anyio
@@ -36,7 +36,9 @@ def run(*argv):
     """Run one mtgdb CLI command in-process. Returns (parsed JSON or text, exit code)."""
     out, err = io.StringIO(), io.StringIO()
     code = 0
+    stdin = sys.stdin
     with _lock, contextlib.redirect_stdout(out), contextlib.redirect_stderr(err):
+        sys.stdin = io.StringIO("")  # stdin is the JSON-RPC stream: no command may read it
         try:
             mtgdb.main([str(a) for a in argv])
         except SystemExit as e:
@@ -45,6 +47,9 @@ def run(*argv):
                 code = 1
             else:
                 code = e.code or 0
+        finally:
+            sys.stdin = stdin
+            gc.collect()  # close the SQLite handles a command left behind, so a re-index can replace the file
     text = out.getvalue().strip()
     if not text:
         raise ToolError((err.getvalue().strip() or f"mtgdb {argv[0]} returned nothing")[-1500:])
@@ -95,6 +100,8 @@ def mtg_card(name: str, response_format: Format = "concise") -> dict:
 def mtg_resolve_names(names: list[str]) -> dict:
     """Map messy card names (typos, transcripts, partial names) to real card names. Each result is exact, fuzzy,
     ambiguous (pick from candidates) or none. Run this before putting any name from a video or paste into a deck."""
+    if not names:
+        raise ToolError("pass at least one name")
     res, _ = run("normalize", *names)
     return {"names": res, "unresolved": [r["input"] for r in res if r["match"] in ("ambiguous", "none")]}
 
@@ -169,14 +176,15 @@ def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "
 
 @mcp.tool(annotations=READ)
 def mtg_export(deck: str, format: Literal["moxfield", "archidekt", "arena", "plain", "csv"] = "moxfield",
-               printings: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None) -> dict:
+               printings: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None,
+               commanders: int = 1) -> dict:
     """Write a deck for sharing or importing elsewhere. moxfield and archidekt keep exact printings and foil marks, so
     those sites' buy buttons pull the same copies (archidekt also marks the commander; on Moxfield the user picks it in
     the New Deck dialog); arena is names only under Commander/Deck; plain is names only; csv uses Moxfield's collection
     headers plus price and Scryfall ID. printings picks the copy per card: budget, as-listed or bling. Follow
     `import_into` when telling the user how to import."""
     with deck_file(deck) as path:
-        res, code = run("export", path, "--format", format, "--printings", printings,
+        res, code = run("export", path, "--format", format, "--printings", printings, "--commanders", commanders,
                         *(["--max-card", max_card] if max_card is not None else []))
     if code:
         raise ToolError(f"{res.get('error')}: {res.get('lines')}" if isinstance(res, dict) else str(res))
@@ -187,7 +195,7 @@ def mtg_export(deck: str, format: Literal["moxfield", "archidekt", "arena", "pla
 def mtg_cheaper_alternatives(card: str, identity: str | None = None, max_price: float | None = None,
                              deck: str | None = None, no_game_changers: bool = False, limit: int = 8) -> dict:
     """Cheaper cards that do the same job, ranked by shared Scryfall Tagger tags (rare shared tags count more).
-    identity is the commander's color identity (e.g. "WUB"); max_price defaults to the card's cheapest price; deck skips
+    identity is the commander's color identity: letters ("WUB") or a name ("Esper", "Gruul"); max_price defaults to the card's cheapest price; deck skips
     cards already in it. A shortlist: read each card before offering it, then test it with mtg_deck_swap."""
     args = ["alternatives", card, "--limit", limit]
     args += ["--identity", identity] if identity else []

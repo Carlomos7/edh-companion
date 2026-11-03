@@ -25,16 +25,11 @@ HERE = os.path.dirname(os.path.abspath(__file__))
 
 
 def find_mtgdb():
-    """mtgdb.py ships in the core `mtg` plugin. Order: $MTGDB_SCRIPT, the repo checkout, then the path the mtg plugin's
-    MCP server records in its cache each time it starts (installed plugins live in versioned folders)."""
-    cache = os.path.expanduser(os.environ.get("MTG_CACHE", "~/.cache/mtg"))
-    recorded = os.path.join(cache, "mtgdb-path.txt")
-    for cand in (os.environ.get("MTGDB_SCRIPT"),
-                 os.path.join(HERE, "..", "..", "..", "..", "mtg", "scripts", "mtgdb.py"),
-                 open(recorded, encoding="utf-8").read().strip() if os.path.exists(recorded) else None):
+    """mtgdb.py lives in the plugin's scripts folder (three levels up); $MTGDB_SCRIPT overrides."""
+    for cand in (os.environ.get("MTGDB_SCRIPT"), os.path.join(HERE, "..", "..", "..", "scripts", "mtgdb.py")):
         if cand and os.path.isfile(cand):
             return os.path.normpath(cand)
-    sys.exit("mtgdb.py not found: install the `mtg` plugin and start a session once, or set MTGDB_SCRIPT")
+    sys.exit("mtgdb.py not found next to this plugin; set MTGDB_SCRIPT")
 
 
 MTGDB = None

@@ -35,7 +35,7 @@ Write `after.txt`, then run `mtg_deck_check` (CLI `validate --themes/--reasons` 
 - Before vs after: bracket, Game Changers, commander-on-curve %, role counts, price, theme line.
 - The new list via `mtg_export` in the format they want (Moxfield keeps exact printings), plus buy links for the adds from `mtg_price_plan`.
 - What wasn't checked, if anything.
-- Offer one next step: a page for the deck (the optional `mtg-pages` plugin renders before and after as B<target> next to the original), or another pass at a different bracket.
+- Offer one next step: another pass at a different bracket, or the export for Moxfield / Archidekt to share it.
 
 ## Edge cases
 - **Illegal deck**: fix legality first (banned, identity, count) and list those fixes separately. They don't count toward the change budget.

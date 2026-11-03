@@ -72,7 +72,7 @@ If a tool is down, say which check didn't run. Never present an unchecked list a
 - The list (commander first), and the plan in 3 to 5 lines.
 - **Rule 0 summary** the player can read out before a game: bracket, how it wins and roughly when, Game Changers, combos, anything the table might want to know (stax, extra turns).
 - **Price:** `mtg_price_plan` in their style. Show all three totals ("cheapest $212 · as listed $340 · bling $1,180"), the most expensive cards, `to_buy_usd` if they imported a collection, and the date prices are from. Offer the cheaper alternatives you found.
-- **Getting the cards and sharing:** `mtg_export` in the format they want. Moxfield format keeps exact printings, so Moxfield or Archidekt buy buttons pull the same copies; each card in the price plan also has a direct TCGplayer and Cardmarket link. Offer a page if the `mtg-pages` plugin is installed.
+- **Getting the cards and sharing:** `mtg_export` in the format they want. Moxfield format keeps exact printings, so Moxfield or Archidekt buy buttons pull the same copies; each card in the price plan also has a direct TCGplayer and Cardmarket link. For a link to send friends, suggest importing the export into Moxfield or Archidekt.
 - An "Unverified" line for anything you couldn't check.
 
 ## Other requests

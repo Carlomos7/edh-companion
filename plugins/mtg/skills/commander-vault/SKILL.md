@@ -11,7 +11,7 @@ effort: high
 Request: $ARGUMENTS
 
 Load now: `mtg-research` and `commander-deckbuilding` (the knowledge), then read [references/theme-rules.md](references/theme-rules.md).
-Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs: `MTGDB=${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py` (the same commands as the `mtgdb` MCP tools; subagents may use either). Pages need the optional `mtg-pages` plugin; without it, deliver decks as `mtgdb.py export` files. Run every script with `uv run`. Pass `--themes vault/themed-printings.json` (and `--reasons vault/<slug>/off-theme.json`) in vault runs that have a theme.
+Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs: `MTGDB=${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py` (the same commands as the `mtgdb` MCP tools; subagents may use either). Page scripts: `PAGES=${CLAUDE_SKILL_DIR}/scripts` (see [references/pages.md](references/pages.md)). Run every script with `uv run`. Pass `--themes vault/themed-printings.json` (and `--reasons vault/<slug>/off-theme.json`) in vault runs that have a theme.
 
 ## Current state
 ```!
@@ -27,7 +27,8 @@ Resuming: continue from the first unchecked gate. Don't redo a passed gate unles
 5. **Disclosure**: the page shows data dates, checks run and what stayed unverified.
 
 ## Intake
-Resolve: commanders, brackets + default, budget, tab grouping, notes, and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium). Ask (AskUserQuestion, multiple choice) only for those; default the rest. If the user asks a question, answer it and don't build. Over 6 commanders or 18 decks: give the scale and confirm.
+The request usually follows the repo's `vault-request.md` (sections: what it's about, table and wallet, your cards, what goes on the page). Resolve: commanders, brackets + default, budget, price style, hard lines, collection and owned-card preference, must/never include, tab grouping, page extras, label style (default neutral verdicts: Play, Good, Situational, Binder, Bracket 4+; never "weak"), and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium).
+Extras the page template can't render yet (alternative commanders, collection planner, splitting a pile between players) go out as Markdown files in `vault/` (`alternatives.md`, `collection-plan.md`): every placement passes `mtgdb.py validate` color identity for that deck, and cards that fit no commander are listed with their colors. Note the template gap in `plan.md`. Ask (AskUserQuestion, multiple choice) only for those; default the rest. If the user asks a question, answer it and don't build. Over 6 commanders or 18 decks: give the scale and confirm.
 Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimate, and the checklist `G0` to `G5`.
 
 ## G0 Setup (you)
@@ -61,10 +62,10 @@ Gate, every deck, run by you (never trust the agent's report):
 §4. It verifies 100% of high-impact claims and a 20% sample of the rest, re-runs every deck check, and checks disputed printings by looking at the art.
 Gate: `mtgdb.py audit-claims vault/<slug>/claims.verified.jsonl --since SINCE --require-verified` passes, and every `refuted` / `unverifiable` item in `verification.md` is resolved by you: fixed, removed, or kept with a visible "unverified" label.
 
-## G5 Page (you, with the `mtg-pages` skill)
+## G5 Page (you, following [references/pages.md](references/pages.md))
 1. `site_data.py init vault/site-data.json` (with `--themes` if themed), then for each deck `add-deck` (agents' `deck-notes.md` condensed into `notes.json` per deck), `add-tier` per tier tab (EDHREC numbers with `n`), `add-swaps` per tab, `add-claims` with every `claims.verified.jsonl`.
 2. `build_site.py vault/site-data.json --out vault/site`. Fix every error.
-3. Follow mtg-pages steps 4 and 5: look at it at desktop and 390 px, spot-check 10 random cards against `mtgdb.py`, publish.
+3. Follow pages.md steps 4 and 5: look at it at desktop and 390 px, spot-check 10 random cards against `mtgdb.py`, publish.
 4. Reply in a few lines: what's in it, theme counts (themed vaults), accuracy summary (claims verified / labelled unverified, data dates), accepted exceptions.
 
 Don't hand-build or restyle the page. If the template is missing something every vault needs, note it in `plan.md` as a template change for later.

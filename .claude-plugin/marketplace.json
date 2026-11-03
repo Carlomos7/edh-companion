@@ -9,12 +9,7 @@
       "name": "mtg",
       "source": "./plugins/mtg",
       "description": "Build, review, price and share Commander decks with the player: local Scryfall, Tagger, Spellbook and Comprehensive Rules data through an MCP server, always refreshable."
-    },
-    {
-      "name": "mtg-pages",
-      "source": "./plugins/mtg-pages",
-      "description": "Optional: interactive deck and tier-list pages (3D card viewer, charts) from the mtg plugin's validated data."
     }
   ],
-  "description": "Magic: The Gathering Commander tools for Claude Code: collaborative deckbuilding on verified card data, plus optional deck pages."
+  "description": "Magic: The Gathering Commander deckbuilding for Claude Code, built with the player on verified card data."
 }

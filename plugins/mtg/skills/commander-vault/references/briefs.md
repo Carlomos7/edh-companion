@@ -44,7 +44,7 @@ Then:
 - vault/<slug>/deck-notes.md: per bracket plan, intended win turn, combos (Spellbook ids), off-theme reasons,
   B5 cEDH realism with evidence.
 - vault/<slug>/off-theme.json (themed runs): {"Card": "one-line reason"} for every off-theme card.
-- vault/<slug>/b<N>.notes.json for the page: pitch, wins, key_cards, strengths, weaknesses, tips, youtube, checks (format: mtg-pages site_data.py --help).
+- vault/<slug>/b<N>.notes.json for the page: pitch, wins, key_cards, strengths, weaknesses, tips, youtube, checks (format: `site_data.py --help` in the vault skill's scripts folder).
 - vault/<slug>/consider.json: 10 to 15 per deck,
   [{"card","why","bracket","swap_out","theme","claim_ids":[]}], every pairing passes swaptest.
 - Append any new claims to vault/<slug>/claims.jsonl.

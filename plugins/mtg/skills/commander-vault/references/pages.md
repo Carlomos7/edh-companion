@@ -1,18 +1,14 @@
----
-name: mtg-pages
-description: Render MTG Commander results (one deck, an optimized deck, or a whole vault) as an interactive page from a fixed, tested template, then publish it as an artifact or hand over the HTML. Use when the user wants a page, site, artifact or shareable view of decks or tier lists.
-when_to_use: After building or optimizing a deck when the user says yes to "want a page for this?", at the vault's artifact gate, or when asked to make a deck page, tier list page or shareable deck view.
----
+# Vault pages (G5)
 
-# MTG pages
+Used only at the vault's G5 gate. Single decks are shared with `mtg_export` (Moxfield / Archidekt give players a shareable page).
 
-You don't write the page. You assemble validated data, and a fixed template renders it. That keeps every page consistent, cheap and tested, and every number traceable to `mtgdb.py` from the core `mtg` plugin (install it first; the scripts find it automatically, or set `MTGDB_SCRIPT`).
+You don't write the page. You assemble validated data, and a fixed template renders it. That keeps every page consistent, cheap and tested, and every number traceable to `mtgdb.py` (found automatically; set `MTGDB_SCRIPT` to override).
 
 Scripts (run with `uv run`, which installs their dependencies):
 - `${CLAUDE_SKILL_DIR}/scripts/site_data.py`: builds `site-data.json` from mtgdb output (`init`, `add-deck`, `add-tier`, `add-swaps`, `add-claims`, `summary`).
 - `${CLAUDE_SKILL_DIR}/scripts/build_site.py`: validates the data, packs card images into WebP atlases, renders `assets/template.html`, checks the artifact limits.
 
-Page design and its reasons: [references/page-spec.md](references/page-spec.md). Read it only when changing the template.
+Page design and its reasons: [page-spec.md](page-spec.md). Read it only when changing the template.
 
 ## Steps
 1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json]`. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.

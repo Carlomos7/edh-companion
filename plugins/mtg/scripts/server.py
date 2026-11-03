@@ -249,16 +249,5 @@ async def mtg_data_sync(ctx: Context, sources: list[Literal["cards", "tags", "ru
     return {"synced": synced, "failed": failed}
 
 
-def record_path():
-    """mtg-pages and other plugins find mtgdb.py through this file, since installed plugin paths change per version."""
-    try:
-        os.makedirs(mtgdb.CACHE, exist_ok=True)
-        with open(os.path.join(mtgdb.CACHE, "mtgdb-path.txt"), "w", encoding="utf-8") as f:
-            f.write(os.path.abspath(mtgdb.__file__))
-    except OSError:
-        pass
-
-
 if __name__ == "__main__":
-    record_path()
     mcp.run("stdio")

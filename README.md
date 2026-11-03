@@ -4,10 +4,7 @@ Build, review, price and share Magic: The Gathering Commander decks **together w
 
 ## What you get
 
-| Plugin | What it does |
-|---|---|
-| `mtg` | Skills for deckbuilding, research and multi-deck vaults, plus the `mtgdb` MCP server with the card data and deck checks |
-| `mtg-pages` (optional) | Turns decks into an interactive page (3D card viewer, charts, filters), published as an artifact or saved as HTML |
+One plugin, `mtg`: deckbuilding, research and multi-deck vault skills, plus the `mtgdb` MCP server with the card data and deck checks.
 
 **Working with you**
 - **Intake first:** starting point, bracket and hard lines (combos, extra turns, land destruction), what's fun for you, budget, and price style.
@@ -45,8 +42,29 @@ Build, review, price and share Magic: The Gathering Commander decks **together w
    /plugin marketplace add Carlomos7/mtg-skills
    /plugin install mtg@carlomos7-mtg-skills
    ```
-   Optional deck pages: `/plugin install mtg-pages@carlomos7-mtg-skills`
 3. **Type `/mtg:build`** (or just say "build me a Krenko deck"). The first time, Claude offers to download the card data: about a minute and 400 MB of disk.
+
+### Your first deck, step by step
+A build is a conversation, usually 10 to 20 minutes. You can stop, change your mind or say "you pick" at any point.
+
+1. **Data check.** Claude shows how fresh its card data and rules are and offers to refresh (one line; about a minute the first time).
+2. **A few questions, as options to click.** Usually three short rounds:
+   - where you're starting (a commander, colors, a favorite card, a deck to upgrade)
+   - your table's power level (bracket 1 to 5) and anything you don't want to see (infinite combos, extra turns, land destruction)
+   - what's fun for you, how you like to win, how much interaction
+   - your budget, and your price style: budget, balanced, or bling
+   - pet cards and cards you never want
+
+   Your answers are saved to `deck-brief.md`, so you can edit them or pick up later.
+3. **A plan before any list.** The deck's plan, roughly when it wins, how many lands, ramp, draw and removal, and 3 to 5 key cards. You say yes, or what to change.
+4. **Filling the deck.** Claude picks the obvious parts (lands, basic ramp) and tells you what it picked. Where it comes down to taste, like win conditions, close calls and your pet-card slots, you get 2 to 4 options with the reason and price for each. In budget style you also get cheaper swaps for expensive cards.
+5. **Checks.** Every version of the list is checked: 100 cards, singleton, colors, legality, bracket rules, combos, mana, and how often you'll have your commander out on time. Problems come back to you as choices, not silent changes.
+6. **Hand-back.**
+   - the list
+   - a short plan
+   - a Rule 0 summary to read out at your table
+   - the price three ways (cheapest, as listed, bling), with a store link for every card
+   - an export for Moxfield, Archidekt, Arena or a spreadsheet; import it into Moxfield or Archidekt to get a page you can share
 
 ### Commands
 | Type | To |
@@ -69,7 +87,7 @@ You don't need the commands: plain questions work too.
 - "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
 - "Give me this list for Moxfield with the exact printings"
 - "Does deathtouch work with trample?"
-- `/mtg:commander-vault @vault-request.md` builds several commanders and brackets at once with research agents and an independent verifier (copy `vault-request.md` into an empty folder and fill it in).
+- `/mtg:commander-vault @vault-request.md` builds several commanders and brackets at once with research agents and an independent verifier, and renders them as one interactive page (copy `vault-request.md` into an empty folder and fill it in). Takes 30 minutes or more.
 
 ## How accuracy works
 1. Computed facts only come from the local index (`mtgdb`), never from memory.
@@ -88,12 +106,12 @@ This project is unofficial Fan Content permitted under the [Fan Content Policy](
 
 ## Development
 ```bash
-claude --plugin-dir ./plugins/mtg --plugin-dir ./plugins/mtg-pages   # try local changes
+claude --plugin-dir ./plugins/mtg                                    # try local changes
 claude plugin validate ./plugins/mtg
 uv run plugins/mtg/scripts/mtgdb.py --help                           # the CLI behind the MCP tools
 uv run plugins/mtg/scripts/mtgdb.py sync                             # all data sources
 ```
-Tests (unit, MCP server over stdio, and a headless-browser page test):
+Tests (unit, MCP server over stdio, and a headless-browser test of the vault page):
 ```bash
 uv run --with pillow --with ijson --with playwright --with "mcp>=2.3" python -m unittest discover -s tests
 ```

@@ -1,0 +1,8 @@
+{
+  "mcpServers": {
+    "mtgdb": {
+      "command": "uv",
+      "args": ["run", "--quiet", "--script", "${CLAUDE_PLUGIN_ROOT}/scripts/server.py"]
+    }
+  }
+}

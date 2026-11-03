@@ -51,7 +51,7 @@ Gate: for each commander, `mtgdb.py audit-claims vault/<slug>/claims.jsonl --sin
 Build the default bracket for one commander first (§2). Run the G2 checks on it. Fix the brief if the agent misread anything. Then fan out.
 Gate, every deck, run by you (never trust the agent's report):
 - `mtgdb.py --themes vault/themed-printings.json validate <deck> --bracket N [--budget X]`
-- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if the j4th connector is up, `spellbook_estimate_bracket`
+- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if an MTG add-on offers it, `spellbook_estimate_bracket`
 - `themed_printing_available` warnings fixed or justified
 - every `consider.json` pairing passes `swaptest`
 

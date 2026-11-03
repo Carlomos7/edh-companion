@@ -25,7 +25,7 @@ One plugin, `mtg`: deckbuilding, research and multi-deck vault skills, plus the 
 - **Checks on every list:** card count, singleton, color identity, legality, Game Changers per bracket, combos, curve, mana sources, and a goldfish simulation of when you cast your commander.
 
 **Sharing**
-- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a Moxfield or Archidekt deck through the companion connector below.
+- **Import:** paste from Moxfield, Archidekt, MTG Arena or a plain list (section headers, partners and sideboards are understood), or link a Moxfield deck through the MTG add-on below (for Archidekt, paste its export).
 - **Export:**
   - Moxfield/Archidekt with exact printings and foil marks, so their buy buttons pull the same copies
   - MTG Arena sections
@@ -79,18 +79,19 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 You don't need the commands: plain questions work too.
 
 ### Optional add-ons (recommended)
-Everything above works on its own. These extra MCP servers make research richer. Claude uses them when they're installed and tells you when a check needed one that isn't. They run alongside the plugin with no conflicts.
+Everything above works on its own. These add-ons make research richer: popularity numbers, deck links, creator videos and news. Claude uses them when they're installed and tells you when a check needed one that isn't. Card facts and deck checks still come from the plugin's own data, even when an add-on has a similar tool.
 
 | Add-on | What it adds | Install in Claude Code |
 |---|---|---|
-| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield and Archidekt deck links, Commander Spellbook bracket estimates | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
+| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates (all on by default) | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
 | [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
 | Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
-| [TopDeck.gg](https://topdeck.gg) API key | Tournament standings for cEDH questions | free key from TopDeck.gg, set as the `TOPDECK_API_KEY` environment variable |
 
-Using claude.ai or Claude Desktop too? The MTG server is also hosted: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors added there show up in Claude Code when you're signed in.
+**Install the MTG server one way, not both.** Either the Claude Code command above, or (if you also use claude.ai or Claude Desktop) the hosted version: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors show up in Claude Code when you're signed in with a Claude account (not with an API key). Having both loads every tool twice.
 
 Restart Claude Code after adding one, then `/mcp` shows whether it connected.
+
+**TopDeck.gg (optional, not an MCP server):** for cEDH tournament standings, get a free API key from TopDeck.gg and set it as the `TOPDECK_API_KEY` environment variable *before* starting Claude Code (Windows: `setx TOPDECK_API_KEY yourkey`, then open a new terminal; macOS/Linux: add `export TOPDECK_API_KEY=yourkey` to your shell profile). To check, ask Claude "is my TopDeck key set?".
 
 ## Use
 - "Build me a B3 Krenko deck, I like going wide, under $150"

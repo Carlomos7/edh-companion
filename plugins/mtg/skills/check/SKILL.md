@@ -1,7 +1,7 @@
 ---
 name: check
 description: Check a deck: is it legal, what bracket it plays at, what's weak, what it costs.
-argument-hint: "[paste a decklist or a Moxfield/Archidekt link]"
+argument-hint: "[paste a decklist from any site, or a Moxfield link]"
 disable-model-invocation: true
 ---
 

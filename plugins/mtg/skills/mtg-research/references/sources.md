@@ -8,8 +8,8 @@ Players install these under their own names (the README suggests some), so look 
 
 | Capability (example install) | Use for | Notes |
 |---|---|---|
-| MTG server: tools named `edhrec_*`, `moxfield_*`, `spellbook_*` (j4th `mtg-mcp-server`, or its claude.ai connector) | `edhrec_commander_staples`, `edhrec_card_synergy`, `commander_overview`, `spellbook_find_combos`, `spellbook_find_decklist_combos`, `spellbook_estimate_bracket`, `spellbook_combo_details`, `rules_*`, `scryfall_card_rulings`, `moxfield_*` | EDHREC tools are beta. Scryfall tools only for rulings or cards missing from the index. |
-| YouTube transcripts: a `get_transcript` tool (`youtube-transcript`) | Deck-tech transcripts | Auto captions mangle names; see youtube.md |
+| MTG server: any of `edhrec_*`, `moxfield_*`, `spellbook_*` tools (e.g. j4th `mtg-mcp-server` or its claude.ai connector; its backends can be switched off, so use whichever of these tools exist) | `edhrec_commander_staples`, `edhrec_card_synergy`, `commander_overview`, `spellbook_find_combos`, `spellbook_find_decklist_combos`, `spellbook_estimate_bracket`, `spellbook_combo_details`, `rules_*`, `scryfall_card_rulings`, `moxfield_*` | EDHREC tools are beta. Scryfall tools only for rulings or cards missing from the index. |
+| YouTube transcripts: any tool that returns a video's transcript (e.g. `get_transcript` from `youtube-transcript`) | Deck-tech transcripts | Auto captions mangle names; see youtube.md |
 | Web search and fetch: any search MCP (e.g. `parallel-search`) or the built-in WebSearch / WebFetch | Web search and page reads (Wizards announcements, articles, cEDH DB, Secret Lair drop pages) | |
 
 ## Optional local data (all in `~/.cache/mtg/`, survives re-index)
@@ -24,7 +24,7 @@ Players install these under their own names (the README suggests some), so look 
 - **TopDeck.gg**: tournament platform API (free key from their developer portal, `Authorization` header). Tournaments, standings with win rates, decklists after events end, and the `leader` field for commanders. Limits: 50/min on single-tournament endpoints, 100/min elsewhere. Read `https://topdeck.gg/openapi.json` before the first call. Use when EDHTop16 lacks the detail (specific events, recent results). Key goes in `TOPDECK_API_KEY`; never write it into files.
 - **cEDH Decklist Database** (cedh-db): curated competitive lists per commander. If a commander isn't there, say so.
 - **Wizards announcements** (magic.wizards.com): only authority for bans, Game Changers and bracket rule changes.
-- **Commander Spellbook**: `mtg_deck_check` lists every combo from the local copy of Spellbook's combo file. `combos --live` asks the API instead. Bracket estimates come from the j4th connector's `spellbook_estimate_bracket`.
+- **Commander Spellbook**: `mtg_deck_check` lists every combo from the local copy of Spellbook's combo file. `combos --live` asks the API instead. Bracket estimates come from an MTG add-on's `spellbook_estimate_bracket`, when one is installed.
 
 ## Community sources (supporting only)
 - r/EDH, r/CompetitiveEDH, Moxfield/Archidekt primers and comments, Discord write-ups.

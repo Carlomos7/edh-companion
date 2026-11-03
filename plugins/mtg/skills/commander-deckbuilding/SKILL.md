@@ -32,7 +32,7 @@ Many players aren't deep in Commander jargon. Write like a friend at the table:
 - Lead with what matters to them (is it legal, how strong, what it costs, what to change), then the detail.
 - Keep each reply short; offer more ("want the full numbers?") instead of dumping every stat.
 - Questions always come as options to pick, never as a form to fill in.
-For EDHREC numbers, Moxfield or Archidekt links and live searches, use the j4th `mtg-mcp-server` connector if it is installed (`edhrec_*`, `moxfield_*`, `scryfall_search_cards`). Load the `mtg-research` skill for anything beyond card facts.
+Optional add-ons, found by what they offer rather than by name: for EDHREC numbers, Moxfield links and bracket estimates use an MTG add-on server, if one is installed (any server offering tools like `edhrec_*`, `moxfield_*` or `spellbook_*`, e.g. j4th's `mtg-mcp-server` under any name). An add-on's own card lookups or deck checks (e.g. `scryfall_*`, `deck_validate`) never replace the `mtgdb` tools for card facts: they are live, rate limited and can disagree with the index. If an add-on is missing, say which check didn't run. Load the `mtg-research` skill for anything beyond card facts.
 
 ## 1. Freshness (every new deck)
 Call `mtg_data_status`. Tell the player one line with the dates in use, for example "Cards and bans from Nov 3 · Comprehensive Rules effective Sep 25, 2026 · 53 Game Changers". If `refresh` is not empty, ask once whether to sync now. A missing index means sync first (about a minute).
@@ -63,7 +63,7 @@ Build in order: lands and ramp, card advantage, interaction, wipes, then the pla
 ## 5. Check loop (repeat until clean)
 1. `mtg_deck_check` with the target bracket and budget. Fix every error. B1 to B3: remove every two-card combo it lists; B3: also any early game-winning line. Read `also_requires` on combos: those need extra pieces.
 2. `mtg_simulate`. If the commander is castable in under about half of games by the turn after its mana value, add ramp or lands.
-3. If the j4th connector is available, compare with `spellbook_estimate_bracket`. If it disagrees, fix it or explain why.
+3. If an MTG add-on offers `spellbook_estimate_bracket`, compare with it. If it disagrees, fix it or explain why.
 4. Every suggested change goes through `mtg_deck_swap` first. Drop any that fail.
 
 If a tool is down, say which check didn't run. Never present an unchecked list as checked.
@@ -80,4 +80,4 @@ If a tool is down, say which check didn't run. Never present an unchecked list a
 - **Optimize or upgrade:** follow [references/optimize.md](references/optimize.md). Every add names a specific cut and passes `mtg_deck_swap`. Never cut a combo piece, a commander enabler or the last card in a role without saying so.
 - **Make it cheaper:** `mtg_price_plan` (budget style shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
 - **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md).
-- **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a Moxfield or Archidekt link, fetch it with the j4th connector (`moxfield_decklist` or similar) and pass the text on. Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.
+- **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a Moxfield link, fetch it with the MTG add-on's Moxfield tool (e.g. `moxfield_decklist`) if one is installed. For Archidekt or any other site, ask the player to paste the export (no add-on reads Archidekt links). Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.

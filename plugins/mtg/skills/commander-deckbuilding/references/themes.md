@@ -1,6 +1,6 @@
 # Themes (optional)
 
-**Default: no theme.** Only apply a theme when the user asks for one. "I want a Spider-Man commander" is a commander choice, not a theme for the other 99 cards: ask once whether they also want the rest on theme.
+**Default: no theme.** Only apply a theme when the user asks for one. "I want Frodo as my commander" is a commander choice, not a theme for the other 99 cards: ask once whether they also want the rest on theme.
 
 ## Intake question (one, multiple choice)
 "How much should the rest of the deck follow <theme>?"
@@ -11,29 +11,29 @@
 
 Also ask, only if relevant: is the wider franchise OK (`franchise_label`, `max_franchise`), and how much extra are they willing to pay for themed printings (`max_premium_per_card`).
 
-## Factions and sub-themes (heroes vs villains, Sith vs Jedi)
+## Factions and sub-themes (Fellowship vs Sauron's forces, Jedi vs Sith)
 Factions aren't in card data, so they're a judgment the user confirms:
-1. `theme-build` the franchise first (all Marvel printings).
-2. Propose faction labels from card names, type lines, flavor text and art (`search` with `art:`/`ft:`/name terms), as separate labels in priority order, e.g. `["Spider-Man", "Villain", "Marvel"]` with `franchise_label: "Marvel"`.
-3. Show a `contact-sheet` of everything assigned to the smaller faction plus anything ambiguous (team-ups, antiheroes like Venom). Let the user move disputed cards (picker page or a list), then record them as `include`/`exclude` in the spec and rebuild.
-4. "Only villains" is then `mode: strict` with labels `["Villain"]`, or `prefer` with `franchise_label: "Marvel"` and `max_franchise` for "mostly villains".
+1. `theme-build` the franchise first (every Middle-earth printing).
+2. Propose faction labels from card names, type lines, flavor text and art (`search` with `art:`/`ft:`/name terms), as separate labels in priority order, e.g. `["Fellowship", "Sauron", "Middle-earth"]` with `franchise_label: "Middle-earth"`.
+3. Show a `contact-sheet` of everything assigned to the smaller faction plus anything ambiguous (characters who switch sides, like Gollum). Let the user move disputed cards (picker page or a list), then record them as `include`/`exclude` in the spec and rebuild.
+4. "Only Sauron's side" is then `mode: strict` with labels `["Sauron"]`, or `prefer` with `franchise_label: "Middle-earth"` and `max_franchise` for "mostly Sauron's side".
 
 ## Kinds of theme (all handled the same way)
 | Kind | Example | Spec queries |
 |---|---|---|
-| Printing / IP | Spider-Man, Marvel, Avatar | `e:spm`, `e:sld art:spider-man`, `e:sld ft:"spider"` |
+| Printing / IP | Middle-earth, Final Fantasy, Doctor Who | `e:ltr`, `e:fin`, `e:sld art:hobbit`, `e:sld ft:"shire"` |
 | Flavor / tribe | Vampires, Dinosaurs, Pirates | `t:vampire`, `o:vampire`, `art:vampire` |
 | Art style | Showcase frames, borderless anime | `frame:showcase`, `is:borderless` |
-| Commander only | "Peter Parker, rest anything" | `mode: none` (+ `commander_must_match` only if they want it checked) |
+| Commander only | "Frodo, rest anything" | `mode: none` (+ `commander_must_match` only if they want it checked) |
 
 ## Spec → map
-Write `theme-spec.json`, then `mtgdb.py theme-build theme-spec.json --out themed-printings.json`.
+Write `theme-spec.json`, then `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" theme-build theme-spec.json --out themed-printings.json`.
 ```json
-{"mode": "prefer", "franchise_label": "Marvel", "max_off_theme": 8, "max_franchise": null,
+{"mode": "prefer", "franchise_label": "Middle-earth", "max_off_theme": 8, "max_franchise": null,
  "max_premium_per_card": 15, "count_basics": false, "exempt_commanders": true, "commander_must_match": true,
  "labels": [
-  {"label": "Spider-Man", "queries": ["e:spm", "e:spe", "e:sld art:spider-man"], "include": ["sld#1996"], "exclude": []},
-  {"label": "Marvel", "queries": ["e:mar", "e:sld (art:marvel or ft:marvel)"], "exclude": ["sld#2100"]}]}
+  {"label": "Fellowship", "queries": ["e:ltr t:legendary (frodo or sam or gandalf or aragorn)"], "include": [], "exclude": []},
+  {"label": "Middle-earth", "queries": ["e:ltr", "e:ltc", "e:sld (art:hobbit or ft:shire)"], "exclude": []}]}
 ```
 - Labels are in **priority order**. A printing matched by several labels gets the first.
 - `include` / `exclude` keys: Scryfall printing id, `set#cn`, `set:code`, `oracle:<oracle id>`, or `name:<card name>` (any printing of that card counts).
@@ -67,4 +67,4 @@ Always reported: `on_theme_pct`, off-theme list, franchise list, `theme_premium_
 - **Partners / backgrounds**: both commanders are exempt and both must match if `commander_must_match`.
 
 ## Report to the user
-Show the theme line ("82% on theme: 71 Spider-Man · 11 Marvel · 7 off-theme, +$64 for themed printings") and, for prefer and strict, the 3 strongest off-theme cards left out, so they can see what the theme costs.
+Show the theme line ("82% on theme: 71 Fellowship · 11 Middle-earth · 7 off-theme, +$64 for themed printings") and, for prefer and strict, the 3 strongest off-theme cards left out, so they can see what the theme costs.

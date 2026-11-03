@@ -6,7 +6,7 @@ when_to_use: After building or optimizing a deck when the user says yes to "want
 
 # MTG pages
 
-You don't write the page. You assemble validated data, and a fixed template renders it. That keeps every page consistent, cheap and tested, and every number traceable to `mtgdb.py`.
+You don't write the page. You assemble validated data, and a fixed template renders it. That keeps every page consistent, cheap and tested, and every number traceable to `mtgdb.py` from the core `mtg` plugin (install it first; the scripts find it automatically, or set `MTGDB_SCRIPT`).
 
 Scripts (run with `uv run`, which installs their dependencies):
 - `${CLAUDE_SKILL_DIR}/scripts/site_data.py`: builds `site-data.json` from mtgdb output (`init`, `add-deck`, `add-tier`, `add-swaps`, `add-claims`, `summary`).
@@ -24,8 +24,8 @@ Page design and its reasons: [references/page-spec.md](references/page-spec.md).
 3. **Build**: `uv run build_site.py site-data.json --out site/`. Fix every error it prints. It refuses 101-card decks, missing images, unknown theme labels, swaps pointing at missing decks, and base64 images.
 4. **Look at it**: open `site/index.html` in the browser (chrome-browser skill) at desktop and 390 px width. Click a card, flip it (F), switch brackets, check the console. Spot-check 5 random cards' prices and pills against `mtgdb.py printings`.
 5. **Deliver**:
-   - Artifact tool available: publish `site/index.html` with everything else in `site/` as supporting files (`img/atlas_*.webp`, and `site-data.json` if the build put data in a separate file). One sentence in reply.
-   - No artifact tool: send `site/` as a zip. `index.html` opens locally when data is inline; the default inlines data under 3 MB.
+   - Artifact tool available (needs a claude.ai login on a paid plan; not available in `claude -p`): publish `site/index.html` with everything else in `site/` as supporting files (`img/atlas_*.webp`, and `site-data.json` if the build put data in a separate file). One sentence in reply.
+   - Otherwise: hand over `site/` as a folder or zip. `index.html` opens locally when data is inline; the default inlines data under 3 MB.
 
 ## Sizes (checked by build_site.py)
 16 MB page · 15 MB per file · 511 files · 256 MB total. One atlas holds 100 cards at 488 px (roughly 4 to 8 MB). If a build fails a limit: `--width 366` or split the vault into two pages.

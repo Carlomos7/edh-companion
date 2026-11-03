@@ -1,7 +1,7 @@
 # Sources and tools
 
 ## Local (preferred for every card fact)
-`mtgdb.py`: card, printings, normalize, gamechangers, validate, stats, swaptest, audit-claims, selftest. Built from Scryfall bulk data, so no rate limits.
+The plugin's `mtgdb` MCP server: `mtg_card`, `mtg_resolve_names`, `mtg_deck_check`, `mtg_deck_swap`, `mtg_deck_profile`, `mtg_simulate`, `mtg_price_plan`, `mtg_cheaper_alternatives`, `mtg_export`, `mtg_rules`, `mtg_data_status`, `mtg_data_sync`. The same commands (plus `search`, `audit-claims`, `selftest`, `theme-build`, `contact-sheet`, `collection`) run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command>`. Built from official bulk files, so no rate limits.
 
 ## MCP servers
 | Server | Use for | Notes |
@@ -11,7 +11,8 @@
 | `parallel-search` | Web search and page reads (Wizards announcements, articles, cEDH DB, Secret Lair drop pages) | |
 
 ## Optional local data (all in `~/.cache/mtg/`, survives re-index)
-- **Scryfall Tagger tags**: `tags-sync` pulls `otag:` role tags (ramp, card-advantage, removal, board-wipe, tutor, ...) once; `stats` then counts real roles. Tag names live in `ROLE_TAGS` in mtgdb.py; a tag that returns 0 cards is probably misnamed (check tagger.scryfall.com). Refresh monthly.
+- **Scryfall Tagger tags**: part of `sync`, from Scryfall's daily oracle-tags bulk file. Role counts in `stats` use `ROLE_TAGS` in mtgdb.py (a role tag with 0 cards was probably renamed; check tagger.scryfall.com). Every tag is also stored for `alternatives`.
+- **Rulings, combos, Comprehensive Rules**: also part of `sync`, from Scryfall's rulings file, Commander Spellbook's combo file and Wizards' rules page.
 - **Art tags**: `search "e:sld art:<thing>"` finds printings by what their art shows. Good for building theme maps; still eyeball disputed ones.
 - **MTGJSON prices**: `prices-sync` maps MTGJSON's daily prices (paper vendors: TCGplayer, Card Kingdom, Cardmarket, Cardsphere; retail and buylist) to Scryfall printings. `--history` loads 90 days. Needs `pip install ijson` for the large files. Quote the vendor and date with any price.
 - **Collection**: `collection import <csv or list>` (Moxfield, Archidekt, ManaBox CSV exports, or `1 Card Name` lines). Validate then reports owned cards and cost to buy.
@@ -21,7 +22,7 @@
 - **TopDeck.gg**: tournament platform API (free key from their developer portal, `Authorization` header). Tournaments, standings with win rates, decklists after events end, and the `leader` field for commanders. Limits: 50/min on single-tournament endpoints, 100/min elsewhere. Read `https://topdeck.gg/openapi.json` before the first call. Use when EDHTop16 lacks the detail (specific events, recent results). Key goes in `TOPDECK_API_KEY`; never write it into files.
 - **cEDH Decklist Database** (cedh-db): curated competitive lists per commander. If a commander isn't there, say so.
 - **Wizards announcements** (magic.wizards.com): only authority for bans, Game Changers and bracket rule changes.
-- **Commander Spellbook**: MCP first; if it's down, `mtgdb.py combos deck.txt` calls the public find-my-combos API directly and lists included combos (two-card ones separately) with links.
+- **Commander Spellbook**: `mtg_deck_check` lists every combo from the local copy of Spellbook's combo file. `combos --live` asks the API instead. Bracket estimates come from the j4th connector's `spellbook_estimate_bracket`.
 
 ## Community sources (supporting only)
 - r/EDH, r/CompetitiveEDH, Moxfield/Archidekt primers and comments, Discord write-ups.

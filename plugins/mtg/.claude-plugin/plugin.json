@@ -1,7 +1,7 @@
 {
   "name": "mtg",
-  "description": "Accurate Magic: The Gathering research, Commander deckbuilding and optimizing, and tested deck pages. Card facts come from a local Scryfall index; claims are logged, audited and independently verified.",
-  "version": "4.0.0",
+  "description": "Build, review, price and share Commander decks together with the player. Card facts, bans, Game Changers, roles, combos and the Comprehensive Rules come from a local, refreshable index served by an MCP server.",
+  "version": "5.0.0",
   "author": {
     "name": "Carlomos7",
     "url": "https://github.com/Carlomos7"

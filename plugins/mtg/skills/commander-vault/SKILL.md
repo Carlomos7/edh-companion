@@ -11,7 +11,7 @@ effort: high
 Request: $ARGUMENTS
 
 Load now: `mtg-research` and `commander-deckbuilding` (the knowledge), then read [references/theme-rules.md](references/theme-rules.md).
-Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs: `MTGDB=${CLAUDE_SKILL_DIR}/../mtg-research/scripts/mtgdb.py`, `PAGES=${CLAUDE_SKILL_DIR}/../mtg-pages/scripts`. Run every script with `uv run`. Pass `--themes vault/themed-printings.json` (and `--reasons vault/<slug>/off-theme.json`) in vault runs that have a theme.
+Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs: `MTGDB=${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py` (the same commands as the `mtgdb` MCP tools; subagents may use either). Pages need the optional `mtg-pages` plugin; without it, deliver decks as `mtgdb.py export` files. Run every script with `uv run`. Pass `--themes vault/themed-printings.json` (and `--reasons vault/<slug>/off-theme.json`) in vault runs that have a theme.
 
 ## Current state
 ```!
@@ -31,7 +31,7 @@ Resolve: commanders, brackets + default, budget, tab grouping, notes, and theme 
 Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimate, and the checklist `G0` to `G5`.
 
 ## G0 Setup (you)
-- `mtgdb.py info` (index if missing or older than 7 days) and `mtgdb.py selftest`. A failure stops the run until explained.
+- `mtgdb.py status --remote`, then `mtgdb.py sync` for anything stale (cards, tags, rulings, combos, rules; about a minute), then `mtgdb.py selftest`. A failure stops the run until explained.
 - Read the latest Wizards bracket / Game Changers / ban announcement. If it is newer than `commander-deckbuilding/references/brackets.md`, note the changes in `plan.md` and include them in every brief.
 - Check MCPs by calling them, not by reading names: `ping` on the MTG connector, one transcript fetch, one search. Report exactly which server answered. If one is missing, say which checks won't run.
 - Theme (skip when mode is none): write `vault/theme-spec.json` and build `vault/themed-printings.json` with `theme-build` (theme-rules.md). For strict, run `theme-pool` per commander. Then check the map both ways:
@@ -40,7 +40,7 @@ Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimat
   - Show the user the final drop/set list in one line.
 - Set the recency cutoff `SINCE` = date of the latest bans/Game Changers update.
 - Write `vault/config.json`: `{"since": SINCE, "budget": <number or null>, "commanders": {"<slug>": 1 or 2}}`. The plugin's hook reads it: every time anyone writes `vault/<slug>/b<N>.txt` or a `claims*.jsonl`, the hook validates it and feeds failures straight back to the writer. Hooks don't replace your gates; they stop bad files early.
-- Data extras: run `mtgdb.py tags-sync` if `stats` reports regex roles; `prices-sync` (once per run) for vendor prices on the price ladder; if the user has a collection, `collection show` and ask whether owned cards should be preferred.
+- Data extras: `mtgdb.py sync prices` (once per run) for vendor prices on the price ladder; if the user has a collection, `collection show` and ask whether owned cards should be preferred.
 
 ## G1 Research (vault-researcher, parallel, 2 to 3 commanders each)
 Brief: [references/briefs.md](references/briefs.md) §1.
@@ -50,7 +50,7 @@ Gate: for each commander, `mtgdb.py audit-claims vault/<slug>/claims.jsonl --sin
 Build the default bracket for one commander first (§2). Run the G2 checks on it. Fix the brief if the agent misread anything. Then fan out.
 Gate, every deck, run by you (never trust the agent's report):
 - `mtgdb.py --themes vault/themed-printings.json validate <deck> --bracket N [--budget X]`
-- `spellbook_find_decklist_combos` (B1 to B3: no 2-card infinites) and `spellbook_estimate_bracket`
+- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if the j4th connector is up, `spellbook_estimate_bracket`
 - `themed_printing_available` warnings fixed or justified
 - every `consider.json` pairing passes `swaptest`
 
@@ -79,7 +79,7 @@ Rough agent time: about 10 to 20 minutes per commander for research, about 10 pe
 - **Default scope**: the user's bracket plus one above. B5 only when asked, and only for commanders with real cEDH evidence (EDHTop16 entries). For others, say "not a real cEDH commander" instead of building a B5 list nobody will play.
 - **Default size**: up to 6 commanders. Above that, confirm the estimate first, or split into several vaults.
 - **Verifier scope**: 100% of high-impact claims, but cap at 40 per commander. If there are more, verify the 40 that appear on the page (must-plays, combos, cEDH) and label the rest unverified.
-- **Optional heavy data**: `prices-sync --history` (a large download) only if the page shows price trends. `tags-sync` once a month, not per run.
+- **Optional heavy data**: `prices-sync --history` (a large download) only if the page shows price trends.
 - **Skip what's cheap to skip**: no community pass for B5 (tournament data decides), no YouTube research for commanders with fewer than about 200 EDHREC decks (little content exists; data and Spellbook only).
 - **Never cut**: validate, Spellbook combo checks, the hook, the theme map checks, the G5 render check.
 

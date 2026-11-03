@@ -1,53 +1,76 @@
 ---
 name: commander-deckbuilding
-description: Build, review or upgrade a Commander/EDH deck that is legal, hits its target bracket and holds up to scrutiny. Use when the user wants a decklist built, a deck reviewed, cuts or upgrades suggested, a bracket checked, or a swap tested. Every list is machine-validated and combo-checked before it is shown.
-when_to_use: Requests like build me a <commander> deck, what bracket is this, what should I cut, upgrade my precon, is this swap OK, or a pasted or linked decklist.
+description: Build, review, upgrade or price a Commander (EDH) deck together with the player, the way they want it. Asks what they enjoy, their table's bracket and their budget style before building, shows a skeleton for approval, offers choices where taste matters, and checks every card with the mtgdb tools. Use for "build me a deck", "upgrade my precon", "what should I cut", "what bracket is this", "make it cheaper", "share my list", or a pasted or linked decklist.
 ---
 
-# Commander deckbuilding
+# Commander deckbuilding, together with the player
 
-Script: `uv run ${CLAUDE_SKILL_DIR}/../mtg-research/scripts/mtgdb.py` (shared with `mtg-research`; load that skill too for any research).
-Rules: [references/brackets.md](references/brackets.md), [references/construction.md](references/construction.md), and [references/themes.md](references/themes.md) only when the user wants a theme.
+The player owns the deck. Your job is to find out what they want, bring options and evidence, and make sure the result is legal, on-bracket and priced the way they asked. Never hand over a finished 99 they didn't shape.
 
-## Intake (ask only what changes the build)
-Commander(s), target bracket, budget, must-include / must-avoid. Default the rest and say what you assumed.
-- **Theme: default none.** A themed commander is not a themed deck. Only if the user mentions a theme or flavor for the deck, ask the themes.md intake question, build the map with `theme-build`, and pass `--themes` to every validate. Otherwise never add theme checks, tags or "off-theme" language.
-- If `mtgdb.py collection show` finds a collection, ask whether to prefer owned cards. When yes: favor owned cards when close in quality, and report "cost to buy" alongside total price.
-- Role counts are accurate only after `mtgdb.py tags-sync` (one time, about 5 minutes). If `stats` says "regex guesses", offer to run it.
+## Tools
+Use the `mtgdb` MCP tools (from this plugin) for every card fact. Never state legality, color identity, price, Game Changer status or what a card does from memory.
 
-## Build
-1. Research the commander with `mtg-research` (plan, staples, combos, traps). Log claims if it is a long build.
-2. Draft by role: lands, ramp, draw, interaction, wipes, then the plan cards (construction.md).
-3. Write the list to a `.txt` (Moxfield format, commander first, `1 Name (SET) cn` once printings are chosen).
-4. **Validate loop** (repeat until clean):
-   - `mtgdb.py validate deck.txt --bracket N [--budget X] [--commanders 2] [--themes map.json --reasons off-theme.json]`. Fix every error.
-   - `spellbook_find_decklist_combos`. For B1 to B3, remove every 2-card infinite; for B3, also any early game-winning combo.
-   - `spellbook_estimate_bracket`. If it disagrees with the target, fix or explain.
-   - `mtgdb.py stats deck.txt`. Check curve, lands, color sources vs pips, role counts against construction.md.
-   - `mtgdb.py simulate deck.txt`. Report the turn-by-turn cast percentage for the commander. If it's under about 50% by the turn after its MV, add ramp or lands. Compare before and after when upgrading ("Doom by turn 4: 47% to 61%").
-5. Present: the list, the plan in 3 to 5 lines, an offer of a page (`mtg-pages`), bracket reasoning (Game Changers, combos, intended win turn), price with `prices_as_of`, and anything unverified.
+| Need | Tool |
+|---|---|
+| Data freshness at the start | `mtg_data_status`, then `mtg_data_sync` if the player agrees |
+| One card's facts, roles, rulings | `mtg_card` (`response_format: "detailed"` adds printings and prices) |
+| Messy names from pastes or videos | `mtg_resolve_names` |
+| Full deck check (legality, bracket, curve, mana, roles, combos) | `mtg_deck_check` |
+| Test a swap before suggesting it | `mtg_deck_swap` |
+| Existing deck snapshot | `mtg_deck_profile` |
+| Commander on curve | `mtg_simulate` |
+| Price styles, exact printings, buy links | `mtg_price_plan` |
+| Cheaper card that does the same job | `mtg_cheaper_alternatives` |
+| Share or import elsewhere | `mtg_export` |
+| Rules questions | `mtg_rules` |
 
-## Close calls: let the user choose
-When 2 to 4 cards are close for a slot (or the user wants to pick), write candidates JSON and run
-`uv run ${CLAUDE_SKILL_DIR}/scripts/picker.py candidates.json --out picker.html` (format in the script's help). Each option carries the why, price, theme and evidence. The user opens it, picks, and pastes the picks back. Then swaptest them.
+No MCP connection? The same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.
+For EDHREC numbers, Moxfield or Archidekt links and live searches, use the j4th `mtg-mcp-server` connector if it is installed (`edhrec_*`, `moxfield_*`, `scryfall_search_cards`). Load the `mtg-research` skill for anything beyond card facts.
 
-## Optimize an existing deck
-Follow [references/optimize.md](references/optimize.md): profile first, then ask target bracket, theme (only if relevant), change size and money in one question card, then diagnose, propose tested swaps, verify, and hand back a diff.
+## 1. Freshness (every new deck)
+Call `mtg_data_status`. Tell the player one line with the dates in use, for example "Cards and bans from Nov 3 · Comprehensive Rules effective Sep 25, 2026 · 53 Game Changers". If `refresh` is not empty, ask once whether to sync now. A missing index means sync first (about a minute).
 
-## Review a deck
-Import it (Moxfield/Archidekt via MCP, or pasted text), run validate + stats + Spellbook, then report: legality problems, bracket (with reasons), role gaps, mana problems, weakest cards (read each card before calling it weak), combos present or one card away.
+## 2. Intake (ask, don't assume)
+Ask with AskUserQuestion, a few questions at a time, each with 2 to 4 concrete options. Follow [references/intake.md](references/intake.md) for the question bank, order and defaults. Skip anything the player already told you. A pasted deck answers some questions: run `mtg_deck_profile` first and ask only what it can't tell you.
 
-## Upgrade / cuts
-- Every suggested add names a specific cut. Test each pairing with `mtgdb.py swaptest deck.txt --bracket N --swap "-Out +In"`; drop pairings that fail.
-- Never cut a combo piece, a commander-enabling card or the last source of a role without saying so.
-- Rank adds by: fixes a gap, fits the plan, data support (EDHREC lift/inclusion with n), price.
+Always settle, at minimum: starting point, bracket and hard lines, what they find fun, budget and **price style** (budget, balanced, or bling), and pet cards or cards they refuse to play. Theme is optional; never assume one from the commander.
 
-## Don't miss the commander's own payoffs
-Before finalizing, run the mtg-research commander-text search. Any card that copies, doubles or scales the commander's ability must be either in the deck or listed with a clear reason it's out. Never park such a card in "cards to consider" without saying why.
+Write the answers to `deck-brief.md` (template in intake.md) next to the deck file. Every later step reads it. If the player changes their mind, update the brief first.
 
-## Accuracy rules
-- Never write a card into a list without it resolving in the index (`normalize` first if unsure).
-- Combos not in Spellbook: rules citation and the full piece list (mtg-research rules check) before calling it a combo.
-- Never state bracket, legality, price or Game Changer status from memory.
-- Read the actual oracle text (`mtgdb.py card`) before claiming what a card does or which role it fills. Regex role hints are guesses.
-- If a tool is down, say which check didn't run. Don't present an unchecked list as checked.
+## 3. Skeleton before the 99
+Propose, in under 15 lines:
+- the plan in 2 to 3 sentences, and the turn it should threaten to win at this bracket
+- role targets adjusted to their answers ([references/construction.md](references/construction.md)), with any deviation explained
+- 3 to 5 key cards with a reason each (read each with `mtg_card` first)
+- what the bracket allows and what you'll keep out ([references/brackets.md](references/brackets.md))
+
+Ask "Is this the deck you want?" with options (yes, adjust the plan, more interaction, different win style). Do not fill the list until they agree.
+
+## 4. Fill by role, with choices where taste matters
+Build in order: lands and ramp, card advantage, interaction, wipes, then the plan cards.
+- **Decide yourself, and say so:** basics, obvious fixing in budget, staple ramp. List what you auto-picked so the player can override.
+- **Offer choices** for win conditions, theme cards, pet-card slots, and any slot where 2 to 4 cards are close. Use AskUserQuestion, or for many slots at once the picker page: write candidates JSON and run `uv run "${CLAUDE_SKILL_DIR}/scripts/picker.py" candidates.json --out picker.html` (format in its `--help`). Each option carries its reason, price and evidence.
+- **Price style decides the copies.** Budget: for any card over their per-card comfort, run `mtg_cheaper_alternatives` (with the commander's identity and the deck) and offer the best one or two next to the original, with the price gap. Bling: ask their per-card ceiling and pass it as `max_card`. Balanced: offer alternatives only for the most expensive 5 to 10 cards.
+- Before finalizing, run the mtg-research commander-text search: any card that copies, doubles or scales the commander's ability must be in the deck or named with the reason it's out.
+
+## 5. Check loop (repeat until clean)
+1. `mtg_deck_check` with the target bracket and budget. Fix every error. B1 to B3: remove every two-card combo it lists; B3: also any early game-winning line. Read `also_requires` on combos: those need extra pieces.
+2. `mtg_simulate`. If the commander is castable in under about half of games by the turn after its mana value, add ramp or lands.
+3. If the j4th connector is available, compare with `spellbook_estimate_bracket`. If it disagrees, fix it or explain why.
+4. Every suggested change goes through `mtg_deck_swap` first. Drop any that fail.
+
+If a tool is down, say which check didn't run. Never present an unchecked list as checked.
+
+## 6. Hand back
+- The list (commander first), and the plan in 3 to 5 lines.
+- **Rule 0 summary** the player can read out before a game: bracket, how it wins and roughly when, Game Changers, combos, anything the table might want to know (stax, extra turns).
+- **Price:** `mtg_price_plan` in their style. Show all three totals ("cheapest $212 · as listed $340 · bling $1,180"), the most expensive cards, `to_buy_usd` if they imported a collection, and the date prices are from. Offer the cheaper alternatives you found.
+- **Getting the cards and sharing:** `mtg_export` in the format they want. Moxfield format keeps exact printings, so Moxfield or Archidekt buy buttons pull the same copies; each card in the price plan also has a direct TCGplayer and Cardmarket link. Offer a page if the `mtg-pages` plugin is installed.
+- An "Unverified" line for anything you couldn't check.
+
+## Other requests
+- **Review a deck:** `mtg_deck_profile` + `mtg_deck_check` + `mtg_simulate`, then report legality, bracket (with reasons), role gaps, mana problems, weakest cards (read each before calling it weak), and combos present or one card away. Ask before changing anything.
+- **Optimize or upgrade:** follow [references/optimize.md](references/optimize.md). Every add names a specific cut and passes `mtg_deck_swap`. Never cut a combo piece, a commander enabler or the last card in a role without saying so.
+- **Make it cheaper:** `mtg_price_plan` (budget style shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
+- **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md).
+- **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a Moxfield or Archidekt link, fetch it with the j4th connector (`moxfield_decklist` or similar) and pass the text on. Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.

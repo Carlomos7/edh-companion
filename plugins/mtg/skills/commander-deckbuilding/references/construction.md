@@ -15,7 +15,7 @@ Starting points, not laws. Adjust for the commander and say why when you deviate
 The Command Zone's template ("Commander Deckbuilding Template for the New Era", episode 658, Feb 2025) is the common reference. If you show "template check" numbers to a user, cite that episode and pull its current numbers from the episode, not from memory.
 
 ## Mana
-- Check `mtgdb.py stats`: color sources vs pips. As a rule of thumb, a color you need early wants about 15+ sources in 99 cards for a single-pip early play, more for double pips (Frank Karsten's analysis is the reference for exact numbers).
+- Check `mtg_deck_check` sources vs pips. As a rule of thumb, a color you need early wants about 15+ sources in 99 cards for a single-pip early play, more for double pips (Frank Karsten's analysis is the reference for exact numbers).
 - Count only untapped-enough lands for low brackets' tempo needs; avoid more than a few taplands at B3+.
 - Commander tax: if the plan depends on the commander, include protection or recursion.
 

@@ -6,10 +6,10 @@
 """Assemble site-data.json from mtgdb output, so no number on the page is typed by hand.
 
   site_data.py init site-data.json --title "..." [--subtitle ...] [--bracket 3] [--themes map.json]
-  site_data.py add-deck site-data.json --group "Spider-Man decks" --slug peter --deck b3.txt --bracket 3
+  site_data.py add-deck site-data.json --group "Atraxa decks" --slug atraxa --deck b3.txt --bracket 3
                [--notes notes.json] [--commanders 2] [--budget 300] [--reasons off-theme.json]
-  site_data.py add-tier site-data.json --id spidey --title "Spider-Man cards" --cards edhrec.json [--staples staples.json]
-  site_data.py add-swaps site-data.json --group "Spider-Man decks" --merged merged.json
+  site_data.py add-tier site-data.json --id atraxa --title "Atraxa staples" --cards edhrec.json [--staples staples.json]
+  site_data.py add-swaps site-data.json --group "Atraxa decks" --merged merged.json
   site_data.py add-claims site-data.json --ledger claims.verified.jsonl [...]
   site_data.py summary site-data.json
 

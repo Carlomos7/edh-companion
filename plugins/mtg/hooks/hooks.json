@@ -1,14 +1,21 @@
 {
-  "description": "Validate Commander vault decks and claim ledgers the moment they are written. Exits silently for every other file.",
+  "description": "Validate Commander vault decks and claim ledgers the moment they are written. Only spawns for files under a vault/ folder.",
   "hooks": {
     "PostToolUse": [
       {
-        "matcher": "Write|Edit",
+        "matcher": "^(Write|Edit)$",
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --quiet --script \"${CLAUDE_PLUGIN_ROOT}/skills/mtg-research/scripts/mtgdb.py\" hook",
-            "timeout": 30
+            "if": "Write(**/vault/**)",
+            "command": "uv run --quiet --script \"${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py\" hook",
+            "timeout": 60
+          },
+          {
+            "type": "command",
+            "if": "Edit(**/vault/**)",
+            "command": "uv run --quiet --script \"${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py\" hook",
+            "timeout": 60
           }
         ]
       }

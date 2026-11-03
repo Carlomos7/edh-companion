@@ -2,7 +2,7 @@
 import json, os, subprocess, sys, tempfile, unittest, uuid
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-SCRIPT = os.path.normpath(os.path.join(HERE, "../plugins/mtg/skills/mtg-research/scripts/mtgdb.py"))
+SCRIPT = os.path.normpath(os.path.join(HERE, "../plugins/mtg/scripts/mtgdb.py"))
 
 
 def card(name, ci, type_, set_, cn, usd, gc=False, border="black", digital=False, legal="legal", text="",

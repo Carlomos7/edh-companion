@@ -8,7 +8,10 @@
 The index is the single source of truth for card facts (text, legality, printings,
 prices, Game Changer status, images). Build it once, reuse it everywhere.
 
-  index          download Scryfall bulk "default_cards", build the SQLite index
+  sync           refresh every data source: cards, tags, rulings, combos, rules (and prices on request)
+  status         date and staleness of each source; --remote checks upstream for newer versions
+  rules          Comprehensive Rules lookup by number or keyword
+  index          download Scryfall bulk "default_cards", build the SQLite index (sync runs this)
   info           index build date, card count, Game Changer count
   card           one card's oracle facts (JSON)
   printings      legal printings of a card, themed first, then by price
@@ -21,11 +24,11 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
   audit-claims   check a claims.jsonl ledger (sources, dates, independence, card names)
   selftest       golden facts against the live index (catches a stale or broken index)
   search         cached, rate-limited Scryfall search (any syntax, e.g. "e:sld art:lightsaber")
-  tags-sync      Scryfall Tagger role tags (otag:ramp, ...) so stats counts real roles
+  tags-sync      Scryfall Tagger role tags from the daily bulk file (sync runs this)
   collection     import (Moxfield/Archidekt/ManaBox CSV or text list) / show owned cards
   prices-sync    MTGJSON multi-vendor prices (today, or --history for 90 days)
   price-history  retail price series for a card's printings
-  combos         Commander Spellbook find-my-combos (fallback when the MCP is down)
+  combos         combos in a deck, from the local Commander Spellbook file (--live: API)
   profile        existing deck snapshot for optimizing (bracket signals, cost, printing sets / theme hint)
   diff           before/after of an optimized deck (cuts, adds, printing swaps, cost to buy)
   theme-build    resolve a theme spec (Scryfall queries + includes/excludes, label priority) into a theme map
@@ -38,7 +41,7 @@ All api.scryfall.com calls share one cross-process rate limiter, so parallel age
 import argparse, csv, difflib, gzip, json, os, re, sqlite3, sys, tempfile, time, urllib.error, urllib.request
 from urllib.parse import quote, urlparse
 
-UA = {"User-Agent": "mtgdb/1.0 (personal deckbuilding tool)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
+UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Accept": "application/json;q=0.9,*/*;q=0.8"}
 CACHE = os.path.expanduser(os.environ.get("MTG_CACHE", "~/.cache/mtg"))
 DB_DEFAULT = os.environ.get("MTGDB", os.path.join(CACHE, "cards.sqlite"))
 EXTRA_DB = os.environ.get("MTGDB_EXTRA", os.path.join(CACHE, "extra.sqlite"))  # survives re-index
@@ -51,16 +54,24 @@ CREATE TABLE IF NOT EXISTS tag_sync(tag TEXT PRIMARY KEY, synced TEXT, count INT
 CREATE TABLE IF NOT EXISTS prices(scryfall_id TEXT, date TEXT, vendor TEXT, kind TEXT, finish TEXT, price REAL, currency TEXT,
   PRIMARY KEY(scryfall_id, date, vendor, kind, finish));
 CREATE TABLE IF NOT EXISTS search_cache(query TEXT PRIMARY KEY, fetched REAL, body TEXT);
+CREATE TABLE IF NOT EXISTS sources(source TEXT PRIMARY KEY, synced TEXT, upstream TEXT, detail TEXT);
+CREATE TABLE IF NOT EXISTS rulings(oracle_id TEXT, published TEXT, source TEXT, comment TEXT);
+CREATE INDEX IF NOT EXISTS ix_rulings ON rulings(oracle_id);
+CREATE TABLE IF NOT EXISTS combos(id TEXT PRIMARY KEY, cards TEXT, n INTEGER, requires TEXT, produces TEXT,
+  bracket_tag TEXT, identity TEXT, popularity INTEGER);
+CREATE TABLE IF NOT EXISTS combo_cards(combo_id TEXT, oracle_id TEXT);
+CREATE INDEX IF NOT EXISTS ix_combo_cards ON combo_cards(oracle_id);
+CREATE TABLE IF NOT EXISTS rules(number TEXT PRIMARY KEY, text TEXT);
 """
 # Scryfall Tagger oracle tags per deck role. Unknown tag names show up as count 0 in tags-sync.
 ROLE_TAGS = {
     "ramp": ["ramp", "mana-rock", "mana-dork", "land-ramp"],
     "draw": ["card-advantage", "draw", "repeatable-draw"],
-    "removal": ["removal", "spot-removal", "counterspell", "creature-removal", "artifact-removal", "enchantment-removal"],
-    "wipe": ["board-wipe", "sweeper", "mass-removal"],
+    "removal": ["removal", "spot-removal", "counterspell", "removal-creature", "removal-artifact", "removal-enchantment"],
+    "wipe": ["sweeper"],
     "tutor": ["tutor"],
     "protection": ["protection", "gives-hexproof", "gives-indestructible"],
-    "recursion": ["recursion", "reanimation"],
+    "recursion": ["recursion", "reanimate"],
 }
 SCHEMA = """
 CREATE TABLE oracle(oracle_id TEXT PRIMARY KEY, name TEXT, color_identity TEXT, type_line TEXT,
@@ -158,22 +169,22 @@ def price(card, k):
     return float(v) if v else None
 
 
-def cmd_index(a):
-    os.makedirs(os.path.dirname(a.db) or ".", exist_ok=True)
-    raw, updated = a.bulk_file, "local file"
+def index_cards(db, bulk_file):
+    os.makedirs(os.path.dirname(db) or ".", exist_ok=True)
+    raw, updated = bulk_file, "local file"
     if not raw:
         entry = next(d for d in json.loads(http_get("https://api.scryfall.com/bulk-data"))["data"]
                      if d["type"] == "default_cards")
         # Scryfall replaced download_uri/size with gzipped JSON Lines (jsonl_download_uri/compressed_size) in 2026
         uri = entry.get("jsonl_download_uri") or entry["download_uri"]
         size = entry.get("compressed_size") or entry.get("size") or 0
-        raw, updated = os.path.join(os.path.dirname(a.db), "default_cards.download"), entry["updated_at"]
+        raw, updated = os.path.join(os.path.dirname(db), "default_cards.download"), entry["updated_at"]
         print(f"Downloading {size / 1e6:.0f} MB ({updated})", file=sys.stderr)
         req = urllib.request.Request(uri, headers=UA)
         with urllib.request.urlopen(req, timeout=900) as r, open(raw, "wb") as f:
             while chunk := r.read(1 << 20):
                 f.write(chunk)
-    tmp = a.db + ".tmp"
+    tmp = db + ".tmp"
     if os.path.exists(tmp):
         os.remove(tmp)
     c = sqlite3.connect(tmp)
@@ -211,10 +222,16 @@ def cmd_index(a):
         c.execute("INSERT OR REPLACE INTO meta VALUES(?,?)", (k, v))
     c.commit()
     c.close()
-    os.replace(tmp, a.db)
-    print(f"Indexed {n} English printings -> {a.db}")
+    os.replace(tmp, db)
     if not gc_field:
         print("Bulk data lacks game_changer: run `mtgdb.py gamechangers --refresh`", file=sys.stderr)
+    mark_source(open_extra(), "cards", updated, {"printings": n})
+    return n
+
+
+def cmd_index(a):
+    n = index_cards(a.db, a.bulk_file)
+    print(f"Indexed {n} English printings -> {a.db}")
 
 
 def cmd_info(a):
@@ -230,7 +247,13 @@ def cmd_info(a):
 
 # ---------- lookups ----------
 def find_oracle(c, name):
-    r = c.execute("SELECT oracle_id FROM alias WHERE name_lc=?", (name.lower().strip(),)).fetchone()
+    """About 2,700 names belong to two cards (usually a paper card and its digital-only Alchemy version).
+    Prefer the exact full name, then a card with a paper printing, then a Commander-legal one."""
+    nm = name.lower().strip()
+    r = c.execute("""SELECT a.oracle_id FROM alias a JOIN oracle o USING(oracle_id) WHERE a.name_lc=?
+                     ORDER BY lower(o.name)=? DESC,
+                              EXISTS(SELECT 1 FROM printings p WHERE p.oracle_id=a.oracle_id AND p.digital=0) DESC,
+                              o.commander_legal='legal' DESC""", (nm, nm)).fetchone()
     return r[0] if r else None
 
 
@@ -260,7 +283,12 @@ def cmd_card(a):
     oid = find_oracle(c, a.name)
     if not oid:
         out({"error": "not found", "suggestions": suggest(c, a.name)}, fail=True)
-    out(dict(c.execute("SELECT * FROM oracle WHERE oracle_id=?", (oid,)).fetchone()))
+    res = dict(c.execute("SELECT * FROM oracle WHERE oracle_id=?", (oid,)).fetchone())
+    res["role_tags"] = sorted(tags_for([oid]).get(oid, set()))
+    if os.path.exists(EXTRA_DB):
+        res["rulings"] = [dict(r) for r in open_extra().execute(
+            "SELECT published, source, comment FROM rulings WHERE oracle_id=? ORDER BY published", (oid,))]
+    out(res)
 
 
 def cmd_normalize(a):
@@ -382,16 +410,31 @@ def cmd_gamechangers(a):
 LINE = re.compile(r"^\s*(\d+)x?\s+(.+?)(?:\s+\(([A-Za-z0-9]+)\)\s*([^\s*]+))?(?:\s+\*[A-Z]+\*)*\s*$")
 
 
-def parse_deck(path):
-    rows = []
+SECTION = re.compile(r"^(?://\s*)?(commanders?|deck|main(?:board)?|sideboard|maybeboard|considering|companions?|tokens?)\s*:?\s*(?:\(\d+\))?$", re.I)
+OUTSIDE_99 = ("sideboard", "maybeboard", "considering", "companion", "token")
+
+
+def parse_deck_sections(path):
+    """Plain lists (commander first) or Moxfield/Archidekt exports with section headers. Returns (rows, commanders):
+    Commander-section cards come first; sideboard, maybeboard, companion and token sections are not part of the deck."""
+    cmdrs, rows, section = [], [], "deck"
     for ln in open(path, encoding="utf-8"):
         s = ln.strip()
-        if not s or s.startswith(("//", "#")) or s.endswith(":"):
+        h = SECTION.match(s)
+        if h:
+            section = h[1].lower()
+            continue
+        if not s or s.startswith(("//", "#")) or s.endswith(":") or section.startswith(OUTSIDE_99):
             continue
         m = LINE.match(s)
-        rows.append({"qty": int(m[1]), "name": m[2].strip(), "set": (m[3] or "").lower(), "cn": m[4] or ""}
-                    if m else {"error": f"unparsed line: {s}"})
-    return rows
+        row = ({"qty": int(m[1]), "name": m[2].strip(), "set": (m[3] or "").lower(), "cn": m[4] or ""}
+               if m else {"error": f"unparsed line: {s}"})
+        (cmdrs if section.startswith("commander") and m else rows).append(row)
+    return cmdrs + rows, sum(r["qty"] for r in cmdrs)
+
+
+def parse_deck(path):
+    return parse_deck_sections(path)[0]
 
 
 def resolve(c, path, themes):
@@ -1026,23 +1069,244 @@ def cmd_search(a):
     out({"query": a.query, "unique": a.unique, "count": len(res), "cards": res[:a.limit] if a.limit else res})
 
 
-def cmd_tags_sync(a):
-    x, today = open_extra(), time.strftime("%Y-%m-%d")
-    tags = a.tags or sorted({t for ts in ROLE_TAGS.values() for t in ts})
-    report = {}
-    for tag in tags:
-        cards = scryfall_search(f"otag:{tag}", unique="cards", max_age_days=0 if a.fresh else 30)
-        x.execute("DELETE FROM tags WHERE tag=?", (tag,))
-        x.executemany("INSERT INTO tags VALUES(?,?,?,?)", [(c["oracle_id"], c["name"], tag, today) for c in cards])
-        x.execute("INSERT OR REPLACE INTO tag_sync VALUES(?,?,?)", (tag, today, len(cards)))
-        x.commit()  # scryfall_search writes through its own connection; an open transaction here locks it out
-        report[tag] = len(cards)
-        print(f"{tag}: {len(cards)}", file=sys.stderr)
+def bulk_entry(kind):
+    return next(d for d in json.loads(http_get("https://api.scryfall.com/bulk-data"))["data"] if d["type"] == kind)
+
+
+def download(url, dst):
+    req = urllib.request.Request(url, headers=UA)
+    with urllib.request.urlopen(req, timeout=900) as r, open(dst, "wb") as f:
+        while chunk := r.read(1 << 20):
+            f.write(chunk)
+    return dst
+
+
+def read_jsonl_gz(path):
+    with gzip.open(path, "rt", encoding="utf-8") as fp:
+        yield from iter_bulk(fp)
+
+
+def mark_source(x, source, upstream, detail):
+    x.execute("INSERT OR REPLACE INTO sources VALUES(?,?,?,?)",
+              (source, time.strftime("%Y-%m-%d"), upstream, json.dumps(detail)))
     x.commit()
+
+
+def tag_key(name):
+    """Tagger names match ignoring case, spaces and hyphens, like Scryfall search does (board-wipe = boardwipe)."""
+    return re.sub(r"[\s_-]", "", name.lower())
+
+
+def sync_tags(x, tags=None):
+    """Scryfall publishes Tagger oracle tags as a daily bulk file. A role tag counts cards tagged with it or any
+    child tag, which matches what an otag: search returns."""
+    e = bulk_entry("oracle_tags")
+    path = download(e["jsonl_download_uri"], os.path.join(CACHE, "oracle_tags.jsonl.gz"))
+    by_id, by_name = {}, {}
+    for t in read_jsonl_gz(path):
+        by_id[t["id"]] = t
+        for nm in [t["label"], t.get("slug", "")] + t.get("aliases", []):
+            by_name.setdefault(tag_key(nm), t)
+    today, report = time.strftime("%Y-%m-%d"), {}
+    for tag in tags or sorted({t for ts in ROLE_TAGS.values() for t in ts}):
+        root, oids, seen = by_name.get(tag_key(tag)), set(), set()
+        todo = [root] if root else []
+        while todo:
+            t = todo.pop()
+            if t["id"] in seen:
+                continue
+            seen.add(t["id"])
+            oids |= {g["oracle_id"] for g in t.get("taggings", [])}
+            todo += [by_id[i] for i in t.get("child_ids", []) if i in by_id]
+        x.execute("DELETE FROM tags WHERE tag=?", (tag,))
+        x.executemany("INSERT INTO tags VALUES(?,?,?,?)", [(o, None, tag, today) for o in oids])
+        x.execute("INSERT OR REPLACE INTO tag_sync VALUES(?,?,?)", (tag, today, len(oids)))
+        report[tag] = len(oids)
+    mark_source(x, "tags", e["updated_at"], {"role_tags": report})
+    return report
+
+
+def cmd_tags_sync(a):
+    report = sync_tags(open_extra(), a.tags or None)
     empty = [t for t, n in report.items() if n == 0]
-    out({"synced": today, "counts": report,
-         "empty_tags": empty, "hint": "Empty tags are probably wrong names: check tagger.scryfall.com and edit ROLE_TAGS"},
+    out({"synced": time.strftime("%Y-%m-%d"), "counts": report, "empty_tags": empty,
+         "hint": "Empty tags are probably renamed: check tagger.scryfall.com and edit ROLE_TAGS"},
         fail=bool(empty) and len(empty) == len(report))
+
+
+def sync_rulings(x):
+    e = bulk_entry("rulings")
+    path = download(e["jsonl_download_uri"], os.path.join(CACHE, "rulings.jsonl.gz"))
+    x.execute("DELETE FROM rulings")
+    x.executemany("INSERT INTO rulings VALUES(?,?,?,?)", ((r["oracle_id"], r.get("published_at"), r.get("source"),
+                  r.get("comment")) for r in read_jsonl_gz(path)))
+    n = x.execute("SELECT COUNT(*) FROM rulings").fetchone()[0]
+    mark_source(x, "rulings", e["updated_at"], {"rulings": n})
+    return n
+
+
+SPELLBOOK_BULK = "https://json.commanderspellbook.com/variants.json.gz"
+
+
+def sync_combos(x):
+    """Commander Spellbook publishes every combo in one file and asks people to use it instead of the API for bulk use."""
+    path = download(SPELLBOOK_BULK, os.path.join(CACHE, "variants.json.gz"))
+    with gzip.open(path, "rt", encoding="utf-8") as fp:
+        data = json.load(fp)
+    x.execute("DELETE FROM combos")
+    x.execute("DELETE FROM combo_cards")
+    n = 0
+    for v in data["variants"]:
+        if v.get("status") != "OK" or v.get("spoiler"):
+            continue
+        cards = [(u["card"]["name"], u["card"].get("oracleId")) for u in v.get("uses", [])]
+        if not cards or not all(o for _, o in cards):
+            continue
+        x.execute("INSERT OR REPLACE INTO combos VALUES(?,?,?,?,?,?,?,?)", (
+            v["id"], json.dumps([nm for nm, _ in cards]), len({o for _, o in cards}),
+            json.dumps([r.get("template", {}).get("name") for r in v.get("requires", [])]),
+            json.dumps([p.get("feature", {}).get("name") for p in v.get("produces", [])]),
+            v.get("bracketTag"), v.get("identity"), v.get("popularity")))
+        x.executemany("INSERT INTO combo_cards VALUES(?,?)", [(v["id"], o) for o in {o for _, o in cards}])
+        n += 1
+    mark_source(x, "combos", data.get("timestamp"), {"combos": n, "version": data.get("version")})
+    return n
+
+
+RULES_PAGE = "https://magic.wizards.com/en/rules"
+RULE_LINE = re.compile(r"^(\d{3}(?:\.\d+[a-z]?)?)\.?\s+(\S.*)$")
+
+
+def latest_rules_url():
+    page = http_get(RULES_PAGE).decode("utf-8", "replace")
+    m = re.search(r"https://media\.wizards\.com/[^\"']+?MagicCompRules(?:%20| )\d{8}\.txt", page)
+    if not m:
+        raise RuntimeError(f"no Comprehensive Rules TXT link on {RULES_PAGE}; the page layout changed")
+    return m.group(0).replace(" ", "%20")
+
+
+def parse_rules(text):
+    lines = text.replace("\r\n", "\n").replace("\r", "\n").split("\n")
+    eff = next((m.group(1) for ln in lines[:30] if (m := re.search(r"effective as of (.+?)\.?\s*$", ln.strip()))), None)
+    gl = [i for i, ln in enumerate(lines) if ln.strip() == "Glossary"]
+    glossary_at = gl[-1] if gl and gl[-1] > 100 else None  # the first "Glossary" is in the table of contents
+    rows = {}
+    for ln in lines[:glossary_at] if glossary_at else lines:
+        m = RULE_LINE.match(ln.strip())
+        if m:
+            rows[m.group(1)] = m.group(2)
+    if glossary_at:
+        term, buf = None, []
+        for ln in lines[glossary_at + 1:] + [""]:
+            if ln.strip() == "Credits":
+                break
+            if not ln.strip():
+                if term and buf:
+                    rows[f"glossary:{term}"] = " ".join(buf)
+                term, buf = None, []
+            elif term is None:
+                term = ln.strip()
+            else:
+                buf.append(ln.strip())
+    return eff, rows
+
+
+def sync_rules(x):
+    """Comprehensive Rules TXT, found via Wizards' rules page (the file name date is not always the effective date)."""
+    url = latest_rules_url()
+    raw = http_get(url)
+    try:
+        text = raw.decode("utf-8-sig")
+    except UnicodeDecodeError:
+        text = raw.decode("cp1252")
+    eff, rows = parse_rules(text)
+    if len(rows) < 1000:
+        raise RuntimeError(f"parsed only {len(rows)} rules from {url}; the file format changed")
+    x.execute("DELETE FROM rules")
+    x.executemany("INSERT INTO rules VALUES(?,?)", rows.items())
+    mark_source(x, "rules", url, {"effective": eff, "rules": len(rows)})
+    return {"effective": eff, "rules": len(rows), "url": url}
+
+
+def cmd_rules(a):
+    x = open_extra()
+    src = x.execute("SELECT detail, upstream FROM sources WHERE source='rules'").fetchone()
+    if not src:
+        out({"error": "no rules synced; run: mtgdb.py sync rules"}, fail=True)
+    q = a.query.strip()
+    if re.fullmatch(r"\d{3}(\.\d+[a-z]?)?\.?", q):
+        q = q.rstrip(".")
+        hits = x.execute("SELECT number, text FROM rules WHERE number=? OR number LIKE ? OR number GLOB ? ORDER BY number",
+                         (q, q + ".%", q + "[a-z]")).fetchall()
+    else:
+        hits = x.execute("SELECT number, text FROM rules WHERE number=? COLLATE NOCASE", (f"glossary:{q}",)).fetchall()
+        hits += x.execute("SELECT number, text FROM rules WHERE number NOT LIKE 'glossary:%' AND text LIKE ? ORDER BY number",
+                          (f"%{q}%",)).fetchall()
+    out({"query": a.query, "effective": json.loads(src["detail"]).get("effective"), "source": src["upstream"],
+         "count": len(hits), "rules": [dict(r) for r in hits[:a.limit]]}, fail=not hits)
+
+
+SYNC_SOURCES = ("cards", "tags", "rulings", "combos", "rules", "prices")
+STALE_DAYS = {"cards": 7, "tags": 30, "rulings": 30, "combos": 7, "rules": 60, "prices": 7}
+
+
+def cmd_sync(a):
+    what = a.sources or ["cards", "tags", "rulings", "combos", "rules"]
+    if set(what) - set(SYNC_SOURCES):
+        out({"error": f"unknown source(s) {sorted(set(what) - set(SYNC_SOURCES))}; choose from {list(SYNC_SOURCES)}"}, fail=True)
+    x, done, failed = open_extra(), {}, {}
+    for src in what:
+        print(f"syncing {src}...", file=sys.stderr)
+        try:
+            if src == "cards":
+                index_cards(a.db, None)
+                c = open_db(a.db)
+                done[src] = c.execute("SELECT COUNT(*) FROM printings").fetchone()[0]
+            elif src == "prices":
+                done[src] = sync_prices(a.db)
+            else:
+                done[src] = {"tags": sync_tags, "rulings": sync_rulings, "combos": sync_combos, "rules": sync_rules}[src](x)
+        except Exception as e:  # one source down must not block the others
+            failed[src] = f"{type(e).__name__}: {e}"[:300]
+    out({"synced": done, "failed": failed}, fail=bool(failed))
+
+
+def source_status(db):
+    x = open_extra()
+    rows = {r["source"]: dict(r) for r in x.execute("SELECT * FROM sources")}
+    if "cards" not in rows and os.path.exists(db):
+        c = open_db(db)
+        rows["cards"] = {"source": "cards", "synced": meta(c, "built"), "upstream": meta(c, "bulk_updated"), "detail": "{}"}
+    res = {}
+    for src in SYNC_SOURCES:
+        r = rows.get(src)
+        if not r:
+            res[src] = {"synced": None, "stale": src != "prices",
+                        "note": "never synced" + (" (optional)" if src == "prices" else "")}
+            continue
+        age = (time.time() - time.mktime(time.strptime(r["synced"], "%Y-%m-%d"))) / 86400
+        res[src] = {"synced": r["synced"], "age_days": round(age, 1), "stale": age > STALE_DAYS[src],
+                    "upstream": r["upstream"], **json.loads(r["detail"] or "{}")}
+    return res
+
+
+def cmd_status(a):
+    res = source_status(a.db)
+    if a.remote:
+        checks = {"cards": lambda: bulk_entry("default_cards")["updated_at"],
+                  "tags": lambda: bulk_entry("oracle_tags")["updated_at"],
+                  "rulings": lambda: bulk_entry("rulings")["updated_at"],
+                  "rules": latest_rules_url}
+        for src, f in checks.items():
+            try:
+                latest = f()
+                res[src]["latest"] = latest
+                res[src]["newer_available"] = latest != res[src].get("upstream")
+            except Exception as e:
+                res[src]["latest"] = f"check failed: {e}"[:200]
+    stale = [k for k, v in res.items() if v.get("stale") or v.get("newer_available")]
+    out({"sources": res, "refresh": stale,
+         "hint": ("Run `mtgdb.py sync " + " ".join(stale) + "` to refresh") if stale else "All sources current"})
 
 
 def tags_for(oracle_ids):
@@ -1140,15 +1404,15 @@ def fetch_to(url, dst):
             f.write(chunk)
 
 
-def cmd_prices_sync(a):
+def sync_prices(db, history=False, identifiers=None, prices_file=None, refresh_ids=False):
     os.makedirs(CACHE, exist_ok=True)
-    ids = a.identifiers or os.path.join(CACHE, "AllIdentifiers.json.gz")
-    if not a.identifiers and (a.refresh_ids or not os.path.exists(ids)):
+    ids = identifiers or os.path.join(CACHE, "AllIdentifiers.json.gz")
+    if not identifiers and (refresh_ids or not os.path.exists(ids)):
         print("Downloading MTGJSON AllIdentifiers (large, one time)", file=sys.stderr)
         fetch_to(MTGJSON + "AllIdentifiers.json.gz", ids)
-    name = "AllPrices.json.gz" if a.history else "AllPricesToday.json.gz"
-    prices = a.prices_file or os.path.join(CACHE, name)
-    if not a.prices_file:
+    name = "AllPrices.json.gz" if history else "AllPricesToday.json.gz"
+    prices = prices_file or os.path.join(CACHE, name)
+    if not prices_file:
         print(f"Downloading MTGJSON {name}", file=sys.stderr)
         fetch_to(MTGJSON + name, prices)
     uuid_to_sf = {}
@@ -1177,9 +1441,18 @@ def cmd_prices_sync(a):
     n += len(batch)
     x.commit()
     if n == 0:
-        out({"error": "0 price rows parsed: MTGJSON format may have changed; check mtgjson.com/data-models/price"}, fail=True)
-    out({"rows": n, "mapped_printings": len(uuid_to_sf), "unmapped_price_entries": unmapped,
-         "latest_date": x.execute("SELECT MAX(date) FROM prices").fetchone()[0]})
+        raise RuntimeError("0 price rows parsed: MTGJSON format may have changed; check mtgjson.com/data-models/price")
+    res = {"rows": n, "mapped_printings": len(uuid_to_sf), "unmapped_price_entries": unmapped,
+           "latest_date": x.execute("SELECT MAX(date) FROM prices").fetchone()[0]}
+    mark_source(x, "prices", res["latest_date"], res)
+    return res
+
+
+def cmd_prices_sync(a):
+    try:
+        out(sync_prices(a.db, a.history, a.identifiers, a.prices_file, a.refresh_ids))
+    except RuntimeError as e:
+        out({"error": str(e)}, fail=True)
 
 
 def vendor_prices(scryfall_id):
@@ -1214,26 +1487,42 @@ def cmd_price_history(a):
 
 
 # ---------- Commander Spellbook (fallback when the MCP is down) ----------
+def local_combos(c, rows):
+    x = open_extra()
+    if not x.execute("SELECT 1 FROM sources WHERE source='combos'").fetchone():
+        return None
+    oids = sorted({find_oracle(c, r["name"]) for r in rows} - {None})
+    q = ",".join("?" * len(oids))
+    hits = x.execute(f"""SELECT k.* FROM combos k JOIN (SELECT combo_id, COUNT(*) m FROM combo_cards
+                         WHERE oracle_id IN ({q}) GROUP BY combo_id) h ON h.combo_id = k.id WHERE h.m = k.n""", oids).fetchall()
+    res = [{"id": h["id"], "cards": json.loads(h["cards"]), "produces": json.loads(h["produces"]),
+            "bracket_tag": h["bracket_tag"], "also_requires": [r for r in json.loads(h["requires"]) if r],
+            "popularity": h["popularity"], "url": f"https://commanderspellbook.com/combo/{h['id']}/"} for h in hits]
+    return sorted(res, key=lambda v: (len(v["cards"]), -(v["popularity"] or 0)))
+
+
 def cmd_combos(a):
     rows = [r for r in parse_deck(a.deck) if "error" not in r]
-    body = {"commanders": [{"card": r["name"], "quantity": 1} for r in rows[:a.commanders]],
-            "main": [{"card": r["name"], "quantity": r["qty"]} for r in rows[a.commanders:]]}
-    raw = http_get("https://backend.commanderspellbook.com/find-my-combos", data=json.dumps(body).encode(),
-                   headers={"Content-Type": "application/json"})
-    data = json.loads(raw)
-    res = data.get("results", data)
-    if not isinstance(res, dict) or "included" not in res:
-        out({"error": "unexpected Spellbook response shape; use the MCP tool", "keys": list(res)[:20] if isinstance(res, dict) else str(type(res))}, fail=True)
-    def summ(v):
-        return {"id": v.get("id"), "cards": [u.get("card", {}).get("name") for u in v.get("uses", [])],
+    inc = None if a.live else local_combos(open_db(a.db), rows)
+    source = "Commander Spellbook bulk file (local)"
+    if inc is None:
+        body = {"commanders": [{"card": r["name"], "quantity": 1} for r in rows[:a.commanders]],
+                "main": [{"card": r["name"], "quantity": r["qty"]} for r in rows[a.commanders:]]}
+        data = json.loads(http_get("https://backend.commanderspellbook.com/find-my-combos", data=json.dumps(body).encode(),
+                                   headers={"Content-Type": "application/json"}))
+        res = data.get("results", data)
+        if not isinstance(res, dict) or "included" not in res:
+            out({"error": "unexpected Spellbook response shape",
+                 "keys": list(res)[:20] if isinstance(res, dict) else str(type(res))}, fail=True)
+        inc = [{"id": v.get("id"), "cards": [u.get("card", {}).get("name") for u in v.get("uses", [])],
                 "produces": [p.get("feature", {}).get("name") for p in v.get("produces", [])],
-                "bracket_tag": v.get("bracketTag") or v.get("bracket_tag"),
-                "url": f"https://commanderspellbook.com/combo/{v.get('id')}/"}
-    inc = [summ(v) for v in res.get("included", [])]
-    two = [v for v in inc if len([c for c in v["cards"] if c]) == 2]
-    out({"deck": a.deck, "included": inc, "two_card": two,
-         "almost_included_count": len(res.get("almostIncluded", res.get("almost_included", []))),
-         "source": "Commander Spellbook API"})
+                "bracket_tag": v.get("bracketTag"),
+                "also_requires": [r.get("template", {}).get("name") for r in v.get("requires", [])],
+                "url": f"https://commanderspellbook.com/combo/{v.get('id')}/"} for v in res["included"]]
+        source = "Commander Spellbook API (live)"
+    two = [v for v in inc if len(v["cards"]) == 2 and not v["also_requires"]]
+    out({"deck": a.deck, "count": len(inc), "two_card": two, "included": inc, "source": source,
+         "note": "also_requires lists extra conditions (e.g. a creature with power 3 or greater): check them against the deck"})
 
 
 # ---------- hook (PostToolUse on Write/Edit) ----------
@@ -1287,7 +1576,9 @@ def cmd_hook(a):
 
 
 # ---------- cli ----------
-def main():
+def main(argv=None):
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("--db", default=DB_DEFAULT)
     ap.add_argument("--themes", help="themed-printings.json (keys: printing id, set#cn, set:code)")
@@ -1318,7 +1609,7 @@ def main():
     s = sp.add_parser("search", help="cached, rate-limited Scryfall search (e.g. 'e:sld art:lightsaber')")
     s.add_argument("query"); s.add_argument("--unique", default="cards", choices=["cards", "prints", "art"])
     s.add_argument("--limit", type=int, default=0); s.add_argument("--fresh", action="store_true"); s.set_defaults(f=cmd_search)
-    s = sp.add_parser("tags-sync", help="pull Scryfall Tagger role tags (otag:) into extra.sqlite")
+    s = sp.add_parser("tags-sync", help="role tags from the Scryfall Tagger bulk file (also part of sync)")
     s.add_argument("tags", nargs="*"); s.add_argument("--fresh", action="store_true"); s.set_defaults(f=cmd_tags_sync)
     s = sp.add_parser("collection", help="import or show your card collection")
     s.add_argument("action", choices=["import", "show"]); s.add_argument("file", nargs="?"); s.add_argument("--card")
@@ -1329,8 +1620,15 @@ def main():
     s.set_defaults(f=cmd_prices_sync)
     s = sp.add_parser("price-history"); s.add_argument("card"); s.add_argument("--set"); s.add_argument("--cn")
     s.set_defaults(f=cmd_price_history)
-    s = sp.add_parser("combos", help="Commander Spellbook find-my-combos (fallback if the MCP is down)")
-    s.add_argument("deck"); s.add_argument("--commanders", type=int, default=1); s.set_defaults(f=cmd_combos)
+    s = sp.add_parser("combos", help="combos in a deck from the local Commander Spellbook file (--live: API)")
+    s.add_argument("deck"); s.add_argument("--commanders", type=int, default=1); s.add_argument("--live", action="store_true")
+    s.set_defaults(f=cmd_combos)
+    s = sp.add_parser("sync", help=f"refresh data sources: {', '.join(SYNC_SOURCES)} (default: all but prices)")
+    s.add_argument("sources", nargs="*", metavar="SOURCE"); s.set_defaults(f=cmd_sync)
+    s = sp.add_parser("status", help="date and staleness of every data source (--remote: check for newer versions)")
+    s.add_argument("--remote", action="store_true"); s.set_defaults(f=cmd_status)
+    s = sp.add_parser("rules", help="Comprehensive Rules lookup by number (702.19) or keyword (trample)")
+    s.add_argument("query"); s.add_argument("--limit", type=int, default=15); s.set_defaults(f=cmd_rules)
     sp.add_parser("hook", help="Claude Code PostToolUse hook entry (reads JSON on stdin)").set_defaults(f=cmd_hook)
     s = sp.add_parser("profile", help="snapshot of an existing deck: legality, bracket signals, cost, printing sets (theme hint)")
     s.add_argument("deck"); s.add_argument("--commanders", type=int, default=1); s.set_defaults(f=cmd_profile)
@@ -1348,7 +1646,9 @@ def main():
     s = sp.add_parser("contact-sheet", help="grid of labelled card images for checking art (needs Pillow)")
     s.add_argument("items", help='JSON list [{"label": "...", "img": "<url>"}]'); s.add_argument("--out", default="sheet.jpg")
     s.add_argument("--cols", type=int, default=8); s.set_defaults(f=cmd_contact_sheet)
-    a = ap.parse_args()
+    a = ap.parse_args(argv)
+    if getattr(a, "commanders", None) is not None and os.path.isfile(getattr(a, "deck", "") or ""):
+        a.commanders = parse_deck_sections(a.deck)[1] or a.commanders  # a Commander section beats the flag
     a.f(a)
 
 

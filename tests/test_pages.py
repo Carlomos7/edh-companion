@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import test_mtgdb as base
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), ".."))
-PAGES = os.path.join(ROOT, "plugins/mtg/skills/mtg-pages/scripts")
+PAGES = os.path.join(ROOT, "plugins/mtg-pages/skills/mtg-pages/scripts")
 
 
 class PagesTest(unittest.TestCase):

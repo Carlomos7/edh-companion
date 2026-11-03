@@ -22,16 +22,33 @@ edhrec.json: [{"name": "Card", "pct": 41.2, "n": 1203}]  (n = decks behind the n
 import argparse, json, os, subprocess, sys, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-MTGDB = os.path.normpath(os.path.join(HERE, "..", "..", "mtg-research", "scripts", "mtgdb.py"))
+
+
+def find_mtgdb():
+    """mtgdb.py ships in the core `mtg` plugin. Order: $MTGDB_SCRIPT, the repo checkout, then the path the mtg plugin's
+    MCP server records in its cache each time it starts (installed plugins live in versioned folders)."""
+    cache = os.path.expanduser(os.environ.get("MTG_CACHE", "~/.cache/mtg"))
+    recorded = os.path.join(cache, "mtgdb-path.txt")
+    for cand in (os.environ.get("MTGDB_SCRIPT"),
+                 os.path.join(HERE, "..", "..", "..", "..", "mtg", "scripts", "mtgdb.py"),
+                 open(recorded, encoding="utf-8").read().strip() if os.path.exists(recorded) else None):
+        if cand and os.path.isfile(cand):
+            return os.path.normpath(cand)
+    sys.exit("mtgdb.py not found: install the `mtg` plugin and start a session once, or set MTGDB_SCRIPT")
+
+
+MTGDB = None
 TEMPLATE_RANGES = {"lands": (35, 38), "ramp": (8, 12), "draw": (8, 12), "removal": (8, 12), "wipe": (2, 4)}
 TYPE_ORDER = ["Creature", "Planeswalker", "Battle", "Instant", "Sorcery", "Artifact", "Enchantment", "Land"]
 
 
 def mtgdb(*args, themes=None, ok_codes=(0, 1)):
+    global MTGDB
+    MTGDB = MTGDB or find_mtgdb()
     cmd = [sys.executable, MTGDB] + (["--themes", themes] if themes else []) + list(args)
     if os.environ.get("MTGDB"):
         cmd[2:2] = ["--db", os.environ["MTGDB"]]
-    p = subprocess.run(cmd, capture_output=True, text=True)
+    p = subprocess.run(cmd, capture_output=True, text=True, encoding="utf-8")
     if p.returncode not in ok_codes:
         sys.exit(f"mtgdb {' '.join(args)} failed: {p.stderr.strip()[:500]}")
     return json.loads(p.stdout)

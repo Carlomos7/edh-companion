@@ -78,7 +78,19 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 
 You don't need the commands: plain questions work too.
 
-**Recommended companion:** [j4th/mtg-mcp-server](https://github.com/j4th/mtg-mcp-server) for EDHREC data, Moxfield and Archidekt links, and Commander Spellbook bracket estimates.
+### Optional add-ons (recommended)
+Everything above works on its own. These extra MCP servers make research richer. Claude uses them when they're installed and tells you when a check needed one that isn't. They run alongside the plugin with no conflicts.
+
+| Add-on | What it adds | Install in Claude Code |
+|---|---|---|
+| [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield and Archidekt deck links, Commander Spellbook bracket estimates | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
+| [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
+| Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
+| [TopDeck.gg](https://topdeck.gg) API key | Tournament standings for cEDH questions | free key from TopDeck.gg, set as the `TOPDECK_API_KEY` environment variable |
+
+Using claude.ai or Claude Desktop too? The MTG server is also hosted: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors added there show up in Claude Code when you're signed in.
+
+Restart Claude Code after adding one, then `/mcp` shows whether it connected.
 
 ## Use
 - "Build me a B3 Krenko deck, I like going wide, under $150"

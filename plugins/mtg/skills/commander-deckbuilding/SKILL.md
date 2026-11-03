@@ -8,7 +8,7 @@ description: Build, review, upgrade or price a Commander (EDH) deck together wit
 The player owns the deck. Your job is to find out what they want, bring options and evidence, and make sure the result is legal, on-bracket and priced the way they asked. Never hand over a finished 99 they didn't shape.
 
 ## Tools
-Use the `mtgdb` MCP tools (from this plugin) for every card fact. Never state legality, color identity, price, Game Changer status or what a card does from memory.
+Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mtg_mtgdb__<tool>`, e.g. `mcp__plugin_mtg_mtgdb__mtg_card`) for every card fact. Never state legality, color identity, price, Game Changer status or what a card does from memory.
 
 | Need | Tool |
 |---|---|

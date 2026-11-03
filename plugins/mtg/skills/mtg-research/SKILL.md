@@ -1,14 +1,14 @@
 ---
 name: mtg-research
 description: Accurate Magic the Gathering research with cited, verified facts. Use for any MTG question about cards, rulings, prices, printings, bans, Game Changers, Commander staples, combos, cEDH results or what content creators recommend. Checks every card fact against a local Scryfall index and logs claims with sources.
-when_to_use: Any question about MTG cards or Commander/EDH where being wrong matters, e.g. "is this card good in my deck", "what do people play with X", "is X banned", "cheapest printing of X", "is X a real cEDH commander".
+when_to_use: A question about cards, rules or the format where being wrong matters, e.g. "what does X do", "is X banned", "cheapest printing of X", "how do trample and deathtouch work", "what do people play with X", "is X a real cEDH commander". Building, checking, upgrading or pricing a whole deck belongs to commander-deckbuilding, which loads this skill when it needs research.
 ---
 
 # MTG research
 
 Goal: every fact the user sees is either computed from the card index or traced to a dated source. When you cannot verify something, say so.
 
-Tools: the plugin's `mtgdb` MCP server for every card fact (`mtg_card`, `mtg_resolve_names`, `mtg_rules`, `mtg_deck_check` and the rest; see [references/sources.md](references/sources.md)). Commands without an MCP tool run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command>` (`--help` lists them): `search` (any Scryfall query, cached and rate limited; Tagger `otag:` and `art:` work), `printings`, `audit-claims`, `selftest`, `contact-sheet`, `collection import|show`, `price-history`. Data lives in `~/.cache/mtg/`.
+Tools: the plugin's `mtgdb` MCP server (full names `mcp__plugin_mtg_mtgdb__<tool>`) for every card fact (`mtg_card`, `mtg_resolve_names`, `mtg_rules`, `mtg_deck_check` and the rest; see [references/sources.md](references/sources.md)). Commands without an MCP tool run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command>` (`--help` lists them): `search` (any Scryfall query, cached and rate limited; Tagger `otag:` and `art:` work), `printings`, `audit-claims`, `selftest`, `contact-sheet`, `collection import|show`, `price-history`. Data lives in `~/.cache/mtg/`.
 
 ## Before answering
 1. `mtg_data_status`. If `refresh` lists a source the question depends on (prices, bans, Game Changers, rules), tell the user the data date and offer `mtg_data_sync`. No index at all: sync first.

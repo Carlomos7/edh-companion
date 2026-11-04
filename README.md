@@ -123,7 +123,7 @@ Extras: alternative commanders
 Claude asks about anything unclear, shows the plan and a cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. The page is published privately to your claude.ai account when you're signed in, otherwise saved as files you open in a browser. Every option (theme strictness, must-include cards, card labels, look) is in the [full request template](vault-request.md).
 
 ## Optional add-ons
-Everything above works on its own. These MCP servers make research richer: popularity numbers, deck links, creator videos and news. Claude uses them when they're installed and says when a check needed one that isn't. Card facts and deck checks always come from the plugin's own data, even when an add-on has a similar tool.
+Everything above works on its own. These MCP servers make research richer: popularity numbers, deck links, creator videos and news. When they're installed Claude uses them automatically, with no setup questions: EDHREC data shapes your deck's plan and picks. Without them everything still works, and Claude says once what wasn't available. Card facts and deck checks always come from the plugin's own data, even when an add-on has a similar tool.
 
 | Add-on | What it adds | Install in Claude Code |
 |---|---|---|

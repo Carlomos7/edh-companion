@@ -5,6 +5,8 @@
 
 **Build Magic: The Gathering Commander decks together with Claude, the way you want them.**
 
+By [Carlomos7](https://github.com/Carlomos7).
+
 A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, what your table plays and how you like to spend, shows you a plan before it fills 99 slots, and lets you choose wherever it comes down to taste. Every card fact (legality, colors, prices, Game Changers, combos, rules) is checked against current data, never typed from memory.
 
 ## Contents

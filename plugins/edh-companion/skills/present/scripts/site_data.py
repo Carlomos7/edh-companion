@@ -23,7 +23,7 @@ Modes: showcase = every section, 3D viewer, card fan (default); interactive = sa
 minimal animation; summary = reports/summary.md only (Markdown). --style basic = no images or charts.
 Writes presentation-checks.md next to the output with the inputs, sections and theme source.
 """
-import argparse, glob, json, os, re, shutil, ssl, subprocess, sys, tempfile, time, urllib.parse, urllib.request
+import argparse, glob, json, os, re, shutil, subprocess, sys, tempfile, time, urllib.parse
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DECK_CHECK = os.path.normpath(os.path.join(HERE, "..", "..", "audit", "scripts", "deck_check.py"))
@@ -86,29 +86,25 @@ def contract_errors(ws):
     return companion.validate(ws)[0]
 
 
-def deck_check(deck_path, tmp, cheapest=False):
-    """Run deck_check.py (card facts from Scryfall) and return its JSON. Exit codes 1/2 are check results, not errors."""
+def deck_check(deck_path, tmp, project, cheapest=False, cards_only=False):
+    """Run deck_check.py (card facts from Scryfall, served from the shared cache) and return its JSON. `project` is the
+    project folder: its research preferences decide which providers may be called.
+    Exit codes 1/2 are check results, not errors. Cards it has no data for are listed in "unavailable", not fatal."""
     uv = shutil.which("uv") or sys.exit("uv not found: deck_check.py runs with `uv run --script`")
     out = os.path.join(tmp, f"check-{len(os.listdir(tmp))}.json")
-    p = subprocess.run([uv, "run", "--quiet", "--script", DECK_CHECK, deck_path, "--json", out, "--no-combos"] + (["--cheapest"] if cheapest else []),
+    p = subprocess.run([uv, "run", "--quiet", "--script", DECK_CHECK, deck_path, "--json", out, "--no-combos", "--project", project]
+                       + (["--cheapest"] if cheapest else []) + (["--cards-only"] if cards_only else []),
                        capture_output=True, text=True, encoding="utf-8")
     if not os.path.exists(out):
         sys.exit(f"deck_check.py failed on {deck_path}: {(p.stderr or p.stdout).strip()[:500]}")
-    res = json.load(open(out, encoding="utf-8"))
-    if res.get("unavailable") and not res.get("cards"):
-        sys.exit(f"card data unavailable for {deck_path}: {'; '.join(res['unavailable'])}")
-    return res
+    return json.load(open(out, encoding="utf-8"))
 
 
-def back_image(printing_id):
-    """Real back face of a double-faced card (deck_check gives the front only). None for split/adventure cards."""
-    import certifi
-    req = urllib.request.Request(f"https://api.scryfall.com/cards/{printing_id}",
-                                 headers={"User-Agent": "edh-companion-present/1.0", "Accept": "application/json"})
-    time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls
-    with urllib.request.urlopen(req, timeout=60, context=ssl.create_default_context(cafile=certifi.where())) as r:
-        faces = json.load(r).get("card_faces") or []
-    return ((faces[1].get("image_uris") or {}).get("normal")) if len(faces) > 1 else None
+def note_unavailable(site, res, where):
+    """Show missing or stale card data on the page (sources & accuracy) instead of failing the build."""
+    v = (res.get("data") or {}).get("verification")
+    items = list(res.get("unavailable") or []) + ([f"card data {v} (as of {res['data'].get('as_of')})"] if v in ("stale", "unavailable") else [])
+    site.D["accuracy"]["unverified"] += [{"text": x, "where": where} for x in items]
 
 
 def video_link(url, ts):
@@ -256,7 +252,7 @@ class Site:
                   "accuracy": {"counts": {}, "findings": [], "unverified": [], "decks": []}}
         self.D["page"], self.D["viewer"] = page_settings(a)
         self.report = {"inputs": [], "sections": [], "looks": []}
-        self.backs, self.swaps, self.cms, self.slugs, self.titles = {}, {}, {}, set(), []
+        self.swaps, self.swap_cards, self.cms, self.slugs, self.titles = {}, {}, {}, set(), []
         self.brews = []
 
     def add_img(self, card):
@@ -265,23 +261,21 @@ class Site:
         f = card["printing_id"] + "_f"
         self.D["images"][f] = card["image"]
         b = None
-        if " // " in (card.get("type_line") or ""):
-            if card["printing_id"] not in self.backs:
-                self.backs[card["printing_id"]] = back_image(card["printing_id"])
-            if self.backs[card["printing_id"]]:
-                b = card["printing_id"] + "_b"
-                self.D["images"][b] = self.backs[card["printing_id"]]
+        if card.get("back_image"):  # deck_check sets it only for real double-faced cards (not split or adventure)
+            b = card["printing_id"] + "_b"
+            self.D["images"][b] = card["back_image"]
         return f, b
 
-    def lookup(self, refs):
+    def lookup(self, refs, project):
         """Card data for loose card names (research commanders, rankings, recommended adds): one deck_check call."""
         if not refs:
             return {}
         path = os.path.join(self.tmp, f"lookup-{len(os.listdir(self.tmp))}.txt")
         lines = [f"1 {r['name']}" + (f" ({r['set'].upper()}) {r['collector_number']}" if r.get("set") and r.get("collector_number") else "") for r in refs]
         open(path, "w", encoding="utf-8").write("\n".join(lines))
-        out = {}
-        for c in deck_check(path, self.tmp)["cards"]:
+        out, res = {}, deck_check(path, self.tmp, project, cards_only=True)
+        note_unavailable(self, res, "card lookup")
+        for c in res["cards"]:
             out[c["name"].lower()] = c
             out.setdefault(c["name"].split(" // ")[0].lower(), c)
         return out
@@ -345,11 +339,11 @@ def status_of(card, data=None):
     return (st if st in ("upcoming", "banned", "not_legal") else None), (rel if st == "upcoming" else None)
 
 
-def research_views(site, research, proj, title, links, built, groups):
+def research_views(site, research, proj, title, links, built, groups, ws):
     """Commanders compared and rankings tabs. A research-only project gets its own research tab; otherwise the
     commanders go into the deck tabs of that project as a compact comparison."""
     refs = [c["card"] for c in research.get("commanders", [])] + [x["card"] for r in research.get("rankings", []) for x in r["cards"]]
-    found = site.lookup(refs)
+    found = site.lookup(refs, ws)
     card = lambda ref: found.get(ref["name"].lower()) or found.get(ref["name"].split(" // ")[0].lower()) or {}
     rows = []
     for c in research.get("commanders", []):
@@ -419,7 +413,12 @@ def add_project(site, ws, group_override=None, look_cands=()):
     used_groups, built = [], set()
     for B in builds:
         brew, audit = B["brew"], B["audit"]
-        res = deck_check(B["file"], site.tmp, cheapest=True)
+        res = deck_check(B["file"], site.tmp, ws, cheapest=True)
+        where = os.path.basename(B["file"]) + (f" ({proj})" if proj else "")
+        note_unavailable(site, res, where)
+        if not res.get("cards"):
+            D["accuracy"]["unverified"].append({"text": f"build {B['id']} not shown: no card data", "where": where})
+            continue
         D["data_dates"]["card data and prices (Scryfall)"] = res["checked"]
         by = {c["name"].lower(): c for c in brew["deck"]}
         fails = {}
@@ -500,7 +499,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             if cslug in site.slugs:
                 cslug = slug(f"{pname} {' '.join(cmd_names)}")
             site.slugs.add(cslug)
-            c0 = next(c for c in cards if c["commander"])
+            c0 = next((c for c in cards if c["commander"]), {"img": None, "mv": 0})  # the commander's data may be unavailable
             identity = sorted({x for c in res["cards"] if c["commander"] for x in c.get("color_identity", [])})
             cm = site.cms[key] = {"slug": cslug, "name": " / ".join(cmd_names), "project": proj, "img": c0["img"], "mv": c0["mv"], "decks": [],
                                   "youtube": youtube, "look": resolve_look(cands, identity)}
@@ -521,14 +520,16 @@ def add_project(site, ws, group_override=None, look_cands=()):
         prefix = f"{pname}/" if proj else ""
         site.report["inputs"].append({"file": prefix + os.path.basename(B["file"]), "version": brew["version"], "deck_hash": brew["deck_hash"], "audit_state": val["state"]})
     if research:
-        research_views(site, research, proj, ptitle or pname, links, built, used_groups)
+        research_views(site, research, proj, ptitle or pname, links, built, used_groups, ws)
+    # swap cards are looked up per project, under that project's provider exclusions
+    want = [{"name": r["card"]} for rows in site.swaps.values() for k, r in rows.items() if k not in site.swap_cards]
+    site.swap_cards.update(site.lookup(want, ws))
 
 
 def finish(site, default_dir):
     """Swap images, title, section report; write page-data.json (or summary.md) and presentation-checks.md."""
     a, D = site.a, site.D
-    want = [{"name": r["card"]} for rows in site.swaps.values() for r in rows.values()]
-    found = site.lookup(want) if want else {}
+    found = site.swap_cards
     for g in D["groups"]:
         rows = list(site.swaps.get(g["id"], {}).values())
         for row in rows:
@@ -540,6 +541,8 @@ def finish(site, default_dir):
     A = D["accuracy"]
     A["counts"] = list(A["counts"].items())
     decks = [d for g in D["groups"] for c in g["commanders"] for d in c["decks"]]
+    if not (decks or D["research"] or D["rankings"]):
+        sys.exit("nothing to show: no build has card data and there is no research: " + "; ".join(u["text"] for u in A["unverified"][:6]))
     D["default_bracket"] = decks[0]["bracket"] if decks else None
     ptitle, project = site.titles[0] if site.titles else (None, {})
     first = D["groups"][0]["commanders"][0]["name"] if D["groups"] else None

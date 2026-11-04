@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]  # deck_check.py (shared parser) imports it
+# dependencies = ["certifi"]  # shared core (scripts/edhcore)
 # ///
 """Export a deck to import formats, keeping exact printings and finishes where the format supports them.
 
@@ -28,8 +28,8 @@ def load(path):
         cmd = [dict(c, qty=1, section="commander") for c in d["commander"]["cards"]]
         deck = [dict(c, section="deck") for c in d["deck"]]
         return cmd + deck
-    sys.path.insert(0, os.path.join(HERE, "..", "..", "audit", "scripts"))
-    from deck_check import parse_text  # same parser the checks use
+    sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "scripts"))
+    from edhcore.decklist import parse_text  # same parser the checks use
     cards, cmd = parse_text(open(path, encoding="utf-8").read())
     rows = [dict(c, section="commander") for c in cmd] + [dict(c, section="deck") for c in cards]
     return [{"name": r["name"], "qty": r["qty"], "set": r.get("set"), "collector_number": r.get("cn"), "finish": r.get("finish"), "section": r["section"]} for r in rows]

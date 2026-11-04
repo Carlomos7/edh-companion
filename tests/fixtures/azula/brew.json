@@ -1,0 +1,99 @@
+{
+ "schema_version": "1.0",
+ "project": "azula",
+ "version": 1,
+ "deck_hash": "941a0bbba556",
+ "variant": null,
+ "updated": "2026-11-04",
+ "research_version": 2,
+ "decklist": "decklists/main-v1.txt",
+ "commander": {
+  "cards": [
+   {
+    "name": "Azula, Cunning Usurper",
+    "set": "tla",
+    "collector_number": "208"
+   }
+  ],
+  "rationale": "Player's pick: steal opponents' cards.",
+  "evidence": [
+   "fnd-001"
+  ]
+ },
+ "theme_policy": null,
+ "target_bracket": {
+  "bracket": 3,
+  "restrictions": [
+   "no Game Changers"
+  ]
+ },
+ "strategy": {
+  "archetype": "Dimir theft",
+  "game_plan": "Ramp to Azula, steal the best creature, replay stolen cards."
+ },
+ "deck": [
+  {
+   "name": "Thief of Sanity",
+   "qty": 1,
+   "role": "synergy"
+  },
+  {
+   "name": "Hostage Taker",
+   "qty": 1,
+   "role": "removal"
+  },
+  {
+   "name": "Notion Thief",
+   "qty": 1,
+   "role": "synergy"
+  },
+  {
+   "name": "Gonti, Lord of Luxury",
+   "qty": 1,
+   "role": "synergy"
+  },
+  {
+   "name": "Dauthi Voidwalker",
+   "qty": 1,
+   "role": "synergy"
+  },
+  {
+   "name": "Dimir Signet",
+   "qty": 1,
+   "role": "ramp"
+  },
+  {
+   "name": "Counterspell",
+   "qty": 1,
+   "role": "interaction"
+  },
+  {
+   "name": "Sol Ring",
+   "qty": 1,
+   "role": "ramp"
+  },
+  {
+   "name": "Island",
+   "qty": 45,
+   "role": "land"
+  },
+  {
+   "name": "Swamp",
+   "qty": 46,
+   "role": "land"
+  }
+ ],
+ "recommendations": [
+  {
+   "id": "rec-001",
+   "kind": "add",
+   "add": "Opposition Agent",
+   "cut": null,
+   "reason": "Game Changer; needs approval",
+   "status": "rejected",
+   "evidence": [
+    "fnd-005"
+   ]
+  }
+ ]
+}

@@ -149,6 +149,13 @@
               "unverified"
             ]
           },
+          "method": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How the check was done (command and inputs, hashes, sources or images opened); detail then holds only the result. Checks done the same way share identical text."
+          },
           "detail": {
             "type": [
               "string",

@@ -12,6 +12,7 @@ and drift. This file only reports facts with fixed rules. Judgment (theme fit, p
 Usage:
   deck_check.py DECK [--commander NAME ...] [--bracket N] [--theme-sets spm,spe,...] [--no-combos] [--json OUT]
                 [--budget USD] [--aesthetic-budget USD] [--per-card-max USD] [--cheapest] [--hard-budget]
+                [--fresh | --offline] [--project DIR]
   deck_check.py --commander NAME [--commander NAME]      only check commander eligibility and the pairing
 
 DECK is a Moxfield/Archidekt-style text list ("1 Sol Ring (C21) 263 *F*", sections Commander/Deck/Sideboard),
@@ -19,162 +20,94 @@ or a brew.json. Finish markers *F* (foil) and *E* (etched) are read, and Archide
 Commanders come from --commander, the "Commander" section/tag, or brew.json.
 Prices are Scryfall's daily prices for the listed printing and finish (verified source, dated); --cheapest also
 finds the cheapest paper printing of each card so gameplay cost and the aesthetic premium can be told apart.
+Card data is cached (scripts/edhcore): --fresh refetches everything (final audits, exports), --offline uses the cache
+only. Checks that relied on stale or unavailable data are reported unverified, never pass; see the "data" block.
 Exit: 0 every check passed, 1 a check failed, 2 a check could not run (network/unknown cards).
 """
-import argparse, hashlib, json, os, re, ssl, sys, time, urllib.error, urllib.parse, urllib.request
-import certifi
+import argparse, json, os, re, sys, time
 
-sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.insert(0, HERE)
+sys.path.insert(0, os.path.join(HERE, "..", "..", "..", "scripts"))
 import analytics  # noqa: E402  roles, mana, simulation
+from edhcore.cards import front_type, is_land, match_name, oracle, price, prices_any, record, treatment  # noqa: E402,F401
+from edhcore.decklist import FINISH, LINE, SECTION, deck_hash, parse_brew, parse_text  # noqa: E402,F401
+from edhcore.http import CTX, MAX_WAIT, Client, RequestError, Unavailable  # noqa: E402,F401
+from edhcore.session import RANK, Session, ident_for  # noqa: E402
 
-UA = {"User-Agent": "mtg-skills-deck-check/1.0", "Accept": "application/json"}
-CTX = ssl.create_default_context(cafile=certifi.where())
 GC_LIMIT = {1: 0, 2: 0, 3: 3, 4: None, 5: None}
-LINE = re.compile(r"^\s*(\d+)\s*x?\s+(.+?)(?:\s+\(([A-Za-z0-9]{2,6})\)\s*([^\s*\[]+)?)?((?:\s+\*[A-Z]+\*)*)(?:\s+\[([^\]]*)\])?\s*$")
-FINISH = {"F": "foil", "E": "etched"}
-SECTION = re.compile(r"^\s*(commanders?|deck|main(board)?|sideboard|maybeboard|companion|considering)\s*:?\s*$", re.I)
+_SESSION = None
 
 
-MAX_WAIT = 60  # seconds; the longest single backoff, whatever a server asks for
+def session():
+    """The run's data session (main() sets it from the flags; library callers get a default one)."""
+    global _SESSION
+    if _SESSION is None:
+        _SESSION = Session()
+    return _SESSION
+
+
+def measured(fn, *args):
+    """(result, how fresh the data of this one call was), keeping the session's overall status."""
+    s = session()
+    before, s.status = s.status, "fresh"
+    try:
+        return fn(*args), s.status
+    finally:
+        s.status = max(before, s.status, key=RANK.get)
 
 
 def http(url, body=None, tries=3, sleep=time.sleep):
-    """GET (or POST JSON) with bounded retries: 429 waits for Retry-After (Scryfall locks out for 30 s), 5xx and network
-    errors back off 2 s, 4 s...; never more than `tries` attempts and MAX_WAIT per wait; other 4xx fail at once."""
-    data = json.dumps(body).encode() if body is not None else None
-    hdr = dict(UA, **({"Content-Type": "application/json"} if data else {}))
-    last = None
-    for i in range(tries):
-        try:
-            with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=hdr), timeout=60, context=CTX) as r:
-                return json.load(r)
-        except urllib.error.HTTPError as e:
-            if e.code != 429 and e.code < 500:
-                raise
-            last = f"HTTP {e.code}"
-            ra = (e.headers or {}).get("Retry-After") if hasattr(e, "headers") else None
-            wait = int(ra) if ra and str(ra).isdigit() else (30 if e.code == 429 else 2 * (i + 1))
-        except urllib.error.URLError as e:
-            last, wait = f"network: {e.reason}", 2 * (i + 1)
-        if i < tries - 1:
-            sleep(min(wait, MAX_WAIT))
-    raise RuntimeError(f"{url} unreachable after {tries} tries ({last})")
-
-
-def parse_text(text):
-    cards, cmd, section = [], [], "deck"
-    for raw in text.splitlines():
-        s = raw.strip()
-        if not s or s.startswith(("#", "//")):
-            continue
-        m = SECTION.match(s)
-        if m:
-            section = "commander" if m.group(1).lower().startswith("commander") else ("deck" if m.group(1).lower() in ("deck", "main", "mainboard") else "skip")
-            continue
-        if section == "skip":
-            continue
-        m = LINE.match(s)
-        if not m:
-            m = LINE.match("1 " + s)
-        if not m:
-            continue
-        marks = re.findall(r"\*([A-Z]+)\*", m.group(5) or "")
-        finish = next((FINISH[x] for x in marks if x in FINISH), "nonfoil")
-        e = {"qty": int(m.group(1)), "name": m.group(2).strip(), "set": (m.group(3) or "").lower() or None, "cn": m.group(4), "finish": finish}
-        is_cmd = section == "commander" or "commander" in (m.group(6) or "").lower()
-        (cmd if is_cmd else cards).append(e)
-    return cards, cmd
-
-
-def parse_brew(doc):
-    cmd = [{"qty": 1, "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number"), "finish": c.get("finish") or "nonfoil"} for c in doc["commander"]["cards"]]
-    cards = [{"qty": c["qty"], "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number"), "finish": c.get("finish") or "nonfoil"} for c in doc["deck"]]
-    return cards, cmd
-
-
-def deck_hash(entries, printings=False):
-    key = sorted(f"{e['qty']} {e['name'].lower()}" + (f" {e.get('set') or ''} {e.get('cn') or ''} {e.get('finish') or 'nonfoil'}" if printings else "") for e in entries)
-    return hashlib.sha1("\n".join(key).encode()).hexdigest()[:12]
+    """GET (or POST JSON) through the shared client (edhcore.http): 429 waits for Retry-After, 5xx and network errors
+    back off; raises Unavailable when retries run out, RequestError at once for other 4xx. Not cached."""
+    c = Client(policy=session().policy, tries=tries, sleep=sleep)
+    return c.post_json(url, body) if body is not None else c.get_json(url)
 
 
 def fetch(entries):
-    """Scryfall /cards/collection, 75 per call. Returns {index: card} and a list of not-found entries."""
-    found, missing = {}, []
-    ids = [({"set": e["set"], "collector_number": e["cn"]} if e.get("set") and e.get("cn") else {"name": e["name"].split(" // ")[0] if " // " in e["name"] else e["name"]}) for e in entries]
-    for start in range(0, len(ids), 75):
-        chunk = ids[start:start + 75]
-        res = http("https://api.scryfall.com/cards/collection", {"identifiers": chunk})
-        for card in res.get("data", []):
-            for k, ident in enumerate(chunk):
-                i = start + k
-                if i in found:
-                    continue
-                if ("name" in ident and match_name(card, ident["name"])) or ("set" in ident and card["set"] == ident["set"].lower() and card["collector_number"] == ident["collector_number"]):
-                    found[i] = card
-                    break
-        time.sleep(0.5)
-    for i, e in enumerate(entries):
-        if i not in found:
-            missing.append(e["name"])
-    return found, missing
-
-
-def price(card, finish):
-    """Scryfall price for one finish of this printing, or None."""
-    key = {"foil": "usd_foil", "etched": "usd_etched"}.get(finish, "usd")
-    v = (card.get("prices") or {}).get(key)
-    return float(v) if v else None
-
-
-def treatment(card):
-    """Plain-language printing treatment: what makes this printing look different."""
-    bits = [x for x in card.get("frame_effects") or [] if x in ("showcase", "extendedart", "etched", "inverted", "fullart")]
-    bits += ["borderless"] if card.get("border_color") == "borderless" else []
-    bits += ["full art"] if card.get("full_art") else []
-    bits += ["Secret Lair"] if card.get("set") == "sld" else []
-    bits += [p for p in card.get("promo_types") or [] if p in ("serialized", "galaxyfoil", "surgefoil", "textured", "halofoil")]
-    return ", ".join(dict.fromkeys(bits)) or "regular"
+    """Card data for decklist entries (cached, 75 per request). Returns {index: card} and the names not found.
+    Raises Unavailable when some cards have no data at all (network down and nothing cached)."""
+    cards, not_found, unavailable = session().scryfall.collection([ident_for(e) for e in entries])
+    if unavailable:
+        raise Unavailable("api.scryfall.com/cards/collection", f"no data for {len(unavailable)} cards")
+    return {i: c for i, c in enumerate(cards) if c is not None}, [entries[i]["name"] for i in not_found]
 
 
 def cheapest(names):
     """Cheapest and priciest paper printing (any finish) per card name, via Scryfall search with unique=prints,
-    15 names per query. Returns {name: {usd, set, collector_number, max_usd, max_set, max_collector_number}}."""
+    15 names per query. Each name's printings are also cached on their own ("prints:<name>"), so a variant that shares
+    most cards with another only searches for the rest.
+    Returns {name: {usd, set, collector_number, max_usd, max_set, max_collector_number}}."""
+    s, prints, misses = session(), [], []
+    for n in names:
+        hit = s.cached("prints:" + n.lower(), "price")
+        if hit is None:
+            misses.append(n)
+        else:
+            prints += hit
+    for i in range(0, len(misses), 15):
+        chunk = misses[i:i + 15]
+        q = "(" + " or ".join('!"' + n.replace('"', '') + '"' for n in chunk) + ") game:paper"
+        found, st = measured(s.scryfall.search, q, "prints")
+        found = [{k: c.get(k) for k in ("name", "set", "collector_number", "prices")} for c in found]
+        prints += found
+        if st == "fresh":  # a stale or cached copy is never re-dated as new
+            for n in chunk:
+                s.cache.put("prints:" + n.lower(), "search", [c for c in found if c["name"].lower() == n.lower()])
     best = {}
-    for i in range(0, len(names), 15):
-        q = "(" + " or ".join('!"' + n.replace('"', '') + '"' for n in names[i:i + 15]) + ") game:paper"
-        url = "https://api.scryfall.com/cards/search?unique=prints&q=" + urllib.parse.quote(q)
-        while url:
-            res = http(url)
-            for c in res.get("data", []):
-                vals = [float(v) for k, v in (c.get("prices") or {}).items() if k in ("usd", "usd_foil", "usd_etched") and v]
-                if not vals:
-                    continue
-                b = best.setdefault(c["name"], {"usd": min(vals), "set": c["set"], "collector_number": c["collector_number"],
-                                                "max_usd": max(vals), "max_set": c["set"], "max_collector_number": c["collector_number"]})
-                if min(vals) < b["usd"]:
-                    b.update(usd=min(vals), set=c["set"], collector_number=c["collector_number"])
-                if max(vals) > b["max_usd"]:
-                    b.update(max_usd=max(vals), max_set=c["set"], max_collector_number=c["collector_number"])
-            url = res.get("next_page") if res.get("has_more") else None
-            time.sleep(0.5)
+    for c in prints:
+        vals = prices_any(c)
+        if not vals:
+            continue
+        b = best.setdefault(c["name"], {"usd": min(vals), "set": c["set"], "collector_number": c["collector_number"],
+                                        "max_usd": max(vals), "max_set": c["set"], "max_collector_number": c["collector_number"]})
+        if min(vals) < b["usd"]:
+            b.update(usd=min(vals), set=c["set"], collector_number=c["collector_number"])
+        if max(vals) > b["max_usd"]:
+            b.update(max_usd=max(vals), max_set=c["set"], max_collector_number=c["collector_number"])
     return best
 
 
-def match_name(card, name):
-    n = name.lower()
-    return card["name"].lower() == n or any(f["name"].lower() == n for f in card.get("card_faces", []))
-
-
-def oracle(card):
-    return "\n".join([card.get("oracle_text", "")] + [f.get("oracle_text", "") for f in card.get("card_faces", [])])
-
-
-def is_land(card):
-    return "Land" in card.get("type_line", "").split("//")[0]
-
-
-def front_type(card):
-    return (card.get("card_faces") or [card])[0].get("type_line", card.get("type_line", ""))
 
 
 def can_be_commander(card):
@@ -258,7 +191,13 @@ def main():
     ap.add_argument("--hard-budget", action="store_true", help="budgets are hard limits (over = fail); by default they're flexible targets (over = warning with the amount)")
     ap.add_argument("--cards-only", action="store_true", help="just look the cards up (batched, 75 per request) and write their data; no deck checks. For research: write once to <project>/cards.json and reuse it")
     ap.add_argument("--json", metavar="OUT", help="write the full result (per-card data included) to this file; '-' for stdout")
+    g = ap.add_mutually_exclusive_group()
+    g.add_argument("--fresh", action="store_true", help="refetch all card data (final audits, exports); cached copies only if the network fails, marked stale")
+    g.add_argument("--offline", action="store_true", help="cache only, no network requests")
+    ap.add_argument("--project", metavar="DIR", help="project folder: its research preferences decide which providers may be called")
     a = ap.parse_args()
+    global _SESSION
+    _SESSION = Session(fresh=a.fresh, offline=a.offline, project=a.project)
 
     if a.deck:
         raw = open(a.deck, encoding="utf-8").read()
@@ -278,24 +217,39 @@ def main():
     def check(cid, area, req, status, detail="", cards_=()):
         out["checks"].append({"id": cid, "area": area, "requirement": req, "kind": "deterministic", "status": status, "detail": detail, "cards": list(cards_)})
 
+    scry = session().scryfall
     try:
-        found, missing = fetch(entries)
-    except Exception as e:
-        out["unavailable"].append(f"Scryfall: {e}")
-        check("chk-legality-1", "legality", "Every card legal in Commander", "unverified", f"Scryfall unreachable: {e}")
+        (got, not_found, unav), card_st = measured(scry.collection, [ident_for(e) for e in entries])
+        why = "; ".join(session().client.unavailable.values()) or "no cached copy"
+    except Exception as ex:  # noqa: BLE001  e.g. JSONDecodeError from a captive portal's HTML
+        session()._mark("unavailable")
+        unav, why = entries, f"{type(ex).__name__}: {ex}"
+    if entries and len(unav) == len(entries):
+        out["unavailable"].append(f"Scryfall: {why}")
+        check("chk-legality-1", "legality", "Every card legal in Commander", "unverified", f"Scryfall unreachable: {why}")
         return finish(out, a)
+    found = {i: c for i, c in enumerate(got) if c is not None}
+    missing = [entries[i]["name"] for i in not_found]
+    no_data = [entries[i]["name"] for i in unav]
 
     if missing:
-        check("chk-cards-1", "other", "Every name is a real paper card", "fail", "not found on Scryfall: " + "; ".join(missing), missing)
+        check("chk-cards-1", "other", "Every name is a real paper card", "fail", "not found on Scryfall: " + "; ".join(missing)
+              + (f"; card data unavailable (not checked): {'; '.join(no_data)}" if no_data else ""), missing)
+    elif no_data:
+        check("chk-cards-1", "other", "Every name is a real paper card", "unverified",
+              "card data unavailable (Scryfall unreachable, nothing cached): " + "; ".join(no_data), no_data)
     else:
         check("chk-cards-1", "other", "Every name is a real paper card", "pass")
+    if no_data:
+        out["unavailable"].append(f"Scryfall: no card data for {len(no_data)} cards: " + "; ".join(no_data))
     # A (SET) number that points at a different card is a wrong printing, not the named card.
     bad = [i for i, e in enumerate(entries) if (c := found.get(i)) and e.get("set") and not match_name(c, e["name"])]
     wrong = [f"{entries[i]['name']} ({entries[i]['set'].upper()} {entries[i]['cn']} is {found[i]['name']})" for i in bad]
     if bad:  # check the named card from here on, not the card the wrong number points at
-        byname, _ = fetch([{"name": entries[i]["name"]} for i in bad])
+        (byname, _, _), st2 = measured(scry.collection, [{"name": entries[i]["name"].split(" // ")[0]} for i in bad])
+        card_st = max(card_st, st2, key=RANK.get)
         for k, i in enumerate(bad):
-            if k in byname:
+            if byname[k] is not None:
                 found[i] = byname[k]
             else:
                 found.pop(i)
@@ -307,25 +261,23 @@ def main():
         if not c:
             continue
         rows.append((e, c))
-        out["cards"].append({
-            "name": c["name"], "qty": e["qty"], "commander": i < len(cmd), "oracle_id": c.get("oracle_id"), "printing_id": c["id"],
-            "set": c["set"], "collector_number": c["collector_number"], "set_name": c.get("set_name"), "type_line": c.get("type_line"),
-            "mana_cost": c.get("mana_cost") or (c.get("card_faces") or [{}])[0].get("mana_cost"), "cmc": c.get("cmc"),
-            "color_identity": c.get("color_identity", []), "legal": c["legalities"].get("commander"), "game_changer": bool(c.get("game_changer")),
-            "digital": c.get("digital", False), "border": c.get("border_color"), "oversized": c.get("oversized", False),
-            "finish": e.get("finish") or "nonfoil", "finishes_available": c.get("finishes", []), "price_usd": price(c, e.get("finish")),
-            "price_source": "Scryfall daily price", "illustration_id": c.get("illustration_id"), "treatment": treatment(c),
-            "artist": c.get("artist"), "scryfall_uri": c.get("scryfall_uri"),
-            "image": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("normal"),
-            "art_crop": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("art_crop"),
-        })
+        out["cards"].append(record(c, e["qty"], i < len(cmd), e.get("finish")))
 
+    today = time.strftime("%Y-%m-%d")
+    upcoming = [(c["name"], c.get("released_at")) for e, c in rows
+                if c["legalities"].get("commander") == "not_legal" and (c.get("released_at") or "") > today and not c.get("digital")]
+    for card in out["cards"]:
+        hit = next((d for n, d in upcoming if n == card["name"]), None)
+        card["status"] = "banned" if card["legal"] == "banned" else ("upcoming" if hit else ("legal" if card["legal"] == "legal" else "not_legal"))
+        if hit:
+            card["releases"] = hit
     if a.cards_only:
         out["checks"] = [c for c in out["checks"] if c["id"] in ("chk-cards-1", "chk-printing-2")]
         return finish(out, a)
 
     total = sum(e["qty"] for e in entries)
-    check("chk-count-1", "count", "Exactly 100 cards including commanders", "pass" if total == 100 else "fail", f"{total} cards")
+    if a.deck:  # --commander alone checks eligibility, not a deck
+        check("chk-count-1", "count", "Exactly 100 cards including commanders", "pass" if total == 100 else "fail", f"{total} cards")
 
     names = {}
     for e, c in rows:
@@ -345,9 +297,9 @@ def main():
         # Scryfall's is:commander is the second, independent source for eligibility; disagreements are flagged.
         try:
             q = "(" + " or ".join('!"' + c["name"].replace('"', "") + '"' for c in cmd_cards) + ") is:commander"
-            sf = {c["name"] for c in http("https://api.scryfall.com/cards/search?q=" + urllib.parse.quote(q)).get("data", [])}
+            sf = {c["name"] for c in scry.search(q)} or None  # none match: no second opinion, as before
         except Exception:
-            sf = None  # 404 when none match is also an exception; handled below
+            sf = None
         bad_cmd, notes = [], []
         for c in cmd_cards:
             ok = can_be_commander(c) or (len(cmd) == 2 and is_background(c))
@@ -372,20 +324,12 @@ def main():
     off = [c["name"] for e, c in deck_rows if not set(c.get("color_identity", [])) <= identity]
     check("chk-identity-1", "identity", f"Every card within the commander color identity ({''.join(sorted(identity)) or 'C'})", "fail" if off else "pass", ", ".join(off), off)
 
-    today = time.strftime("%Y-%m-%d")
     banned = [c["name"] for e, c in rows if c["legalities"].get("commander") == "banned"]
-    upcoming = [(c["name"], c.get("released_at")) for e, c in rows
-                if c["legalities"].get("commander") == "not_legal" and (c.get("released_at") or "") > today and not c.get("digital")]
     illegal = [c["name"] for e, c in rows if c["legalities"].get("commander") not in ("legal", "banned") and c["name"] not in {n for n, _ in upcoming}]
     if upcoming:
         check("chk-legality-4", "legality", "Unreleased cards (not legal until released)", "warning",
               "; ".join(f"{n}: releases {d} (Scryfall release date; Commander legality expected on release, not yet confirmed)" for n, d in upcoming),
               [n for n, _ in upcoming])
-    for card in out["cards"]:
-        hit = next((d for n, d in upcoming if n == card["name"]), None)
-        card["status"] = "banned" if card["legal"] == "banned" else ("upcoming" if hit else ("legal" if card["legal"] == "legal" else "not_legal"))
-        if hit:
-            card["releases"] = hit
     check("chk-legality-1", "legality", "No banned or non-Commander-legal cards", "fail" if banned or illegal else "pass",
           "; ".join(x for x in [("banned: " + ", ".join(banned)) if banned else "", ("not legal: " + ", ".join(illegal)) if illegal else ""] if x), banned + illegal)
 
@@ -454,11 +398,11 @@ def main():
         out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, max(int(c.get("cmc") or 0) for c in cmd_cards))
         out["stats"]["cast_by_turn"]["assumptions"] += "; two commanders: the more expensive one"
     listed = out["stats"]["price_usd"]
-    cheap_total = None
+    cheap_total, cheap_st, combo_st = None, "fresh", "fresh"
     if a.cheapest or a.aesthetic_budget is not None:
         try:
             names = sorted({c["name"] for e, c in rows if "Basic" not in c.get("type_line", "")})
-            best = cheapest(names)
+            best, cheap_st = measured(cheapest, names)
             cheap_total = round(sum(best[c["name"]]["usd"] * e["qty"] for e, c in rows if c["name"] in best), 2)
             both = [(e, c, p) for e, c, p in priced if p is not None and c["name"] in best]
             premium = round(sum((p - best[c["name"]]["usd"]) * e["qty"] for e, c, p in both), 2)
@@ -493,10 +437,9 @@ def main():
         check("chk-budget-3", "other", f"No listed printing over ${a.per_card_max:g} each ({'hard limit' if a.hard_budget else 'flexible target'})",
               ("fail" if a.hard_budget else "warning") if over else "pass", "; ".join(over))
 
-    if not a.no_combos and cmd:
+    if not a.no_combos and cmd and a.deck:
         try:
-            body = {"commanders": [{"card": n} for n in out["commanders"]], "main": [{"card": c["name"], "quantity": e["qty"]} for e, c in deck_rows]}
-            res = http("https://backend.commanderspellbook.com/find-my-combos", body)
+            res, combo_st = measured(session().spellbook.find_my_combos, out["commanders"], [(c["name"], e["qty"]) for e, c in deck_rows])
             r = res.get("results", res)
             inc = []
             for v in r.get("included", []):
@@ -513,10 +456,31 @@ def main():
         except Exception as e:
             out["unavailable"].append(f"Commander Spellbook: {e}")
             check("chk-combos-1", "combos", "Known combos checked against Commander Spellbook", "unverified", f"Spellbook unreachable: {e}")
+    degrade(out, no_data, card_st, cheap_st, combo_st)
     return finish(out, a)
 
 
+STALE_SENSITIVE = ("chk-legality-", "chk-game-changers-", "chk-budget-", "chk-combos-")
+
+
+def degrade(out, no_data, card_st, cheap_st="fresh", combo_st="fresh"):
+    """A check that would pass on data we don't have or that is stale is unverified, never pass. Fails stay fails.
+    card_st / cheap_st / combo_st: freshness of the card lookup, the cheapest-printing search and the Spellbook call."""
+    d = session().data_block()
+    stale = lambda st: RANK[st] >= RANK["stale"]
+    relied = {"chk-budget-": (card_st, cheap_st), "chk-combos-": (combo_st,)}  # the rest rely on the card lookup only
+    for c in out["checks"]:
+        if c["status"] != "pass":
+            continue
+        pre = next((p for p in STALE_SENSITIVE if c["id"].startswith(p)), None)
+        if no_data and c["id"] != "chk-count-1":
+            c["status"], c["detail"] = "unverified", "; ".join(x for x in [c["detail"], "no card data for: " + ", ".join(no_data)] if x)
+        elif pre and any(map(stale, relied.get(pre, (card_st,)))):
+            c["status"], c["detail"] = "unverified", "; ".join(x for x in [c["detail"], f"data stale (as of {d['as_of']}); rerun with network"] if x)
+
+
 def finish(out, a):
+    out["data"] = d = session().data_block()
     if a.json:
         txt = json.dumps(out, indent=1, ensure_ascii=False)
         if a.json == "-":
@@ -537,6 +501,8 @@ def finish(out, a):
                 print(f"combo{' (two-card)' if x['two_card'] else ''}: {' + '.join(x['cards'])} -> {x['result']}  {x['url']}")
         for u in out["unavailable"]:
             print("UNAVAILABLE:", u)
+        print(f"data: {d['verification']}" + (f" (as of {d['as_of']})" if d["as_of"] else "") + f", {d['requests']} requests"
+              + (f"; unavailable: {'; '.join(d['endpoints_unavailable'])}" if d["endpoints_unavailable"] else ""))
     st = [c["status"] for c in out["checks"]]
     sys.exit(1 if "fail" in st else (2 if "unverified" in st or out["unavailable"] else 0))
 

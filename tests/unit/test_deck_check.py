@@ -2,21 +2,21 @@
 
 Run: uv run --with certifi python -m unittest discover -s tests/unit
 """
-import importlib.util, json, os, subprocess, sys, tempfile, unittest, urllib.request
+import importlib.util, json, os, re, subprocess, sys, tempfile, unittest, urllib.parse
+from unittest import mock
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # _net, also when run as tests.unit.test_deck_check
+from _net import online  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(ROOT, "plugins", "edh-companion", "skills", "audit", "scripts", "deck_check.py")
 spec = importlib.util.spec_from_file_location("deck_check", SCRIPT)
 dc = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(dc)
-
-
-def online():
-    try:
-        urllib.request.urlopen(urllib.request.Request("https://api.scryfall.com/sets/spm", headers=dc.UA), timeout=10, context=dc.CTX)
-        return True
-    except Exception:
-        return False
+from edhcore.cache import Cache  # noqa: E402  (deck_check put plugin/scripts on sys.path)
+from edhcore.http import Client  # noqa: E402
+from edhcore.policy import Policy  # noqa: E402
+from edhcore.session import DAY, Session  # noqa: E402
 
 
 def run(deck_text, *args):
@@ -53,6 +53,144 @@ class Parse(unittest.TestCase):
         cards, cmd = dc.parse_brew(brew)
         self.assertEqual(cmd[0]["name"], "Krenko, Mob Boss")
         self.assertEqual(cards[0]["qty"], 99)
+
+
+T = 1_800_000_000.0
+KRENKO = {"id": "k1", "name": "Krenko, Mob Boss", "set": "rvr", "collector_number": "120", "type_line": "Legendary Creature \u2014 Goblin Warrior",
+          "oracle_text": "{T}: Create X 1/1 red Goblin creature tokens, where X is the number of Goblins you control.", "cmc": 4,
+          "mana_cost": "{2}{R}{R}", "color_identity": ["R"], "legalities": {"commander": "legal"}, "prices": {"usd": "1.00"}}
+MOUNTAIN = {"id": "m1", "name": "Mountain", "set": "fdn", "collector_number": "279", "type_line": "Basic Land \u2014 Mountain",
+            "oracle_text": "({T}: Add {R}.)", "cmc": 0, "color_identity": [], "legalities": {"commander": "legal"}, "prices": {"usd": "0.10"},
+            "produced_mana": ["R"]}
+DECK = "Commander\n1 Krenko, Mob Boss\nDeck\n99 Mountain\n"
+
+
+class Offline(unittest.TestCase):
+    """main() in-process against a temp cache with no network (offline policy, fixed clock)."""
+
+    def setUp(self):
+        self.tmp = tempfile.mkdtemp()
+        self.cache = Cache(path=os.path.join(self.tmp, "c", "cache.sqlite"), now=lambda: T)
+        pol = Policy(offline=True, config=os.path.join(self.tmp, "none.yaml"))
+        self.s = Session(cache=self.cache, policy=pol, client=Client(self.cache, pol, sleep=lambda x: None, now=lambda: T), now=lambda: T)
+
+    def tearDown(self):
+        self.cache.db.close()
+        import shutil
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def put(self, card, age):
+        self.cache.put("card:name:" + card["name"].lower(), "card", card, fetched_at=T - age)
+        if card is KRENKO or card["name"] == KRENKO["name"]:  # deck_check's second opinion on commander eligibility
+            self.cache.put('search:cards:(!"Krenko, Mob Boss") is:commander', "search", [card], fetched_at=T - age)
+
+    def main(self, *argv, deck=DECK):
+        p, out = os.path.join(self.tmp, "deck.txt"), os.path.join(self.tmp, "out.json")
+        if deck:
+            open(p, "w", encoding="utf-8").write(deck)
+        args = ([p] if deck else []) + list(argv) + ["--json", out]
+        with mock.patch.object(dc, "Session", return_value=self.s), mock.patch.object(sys, "argv", ["deck_check.py", *args]), \
+                mock.patch("sys.stdout", new_callable=lambda: open(os.devnull, "w", encoding="utf-8")):
+            with self.assertRaises(SystemExit) as ex:
+                dc.main()
+        res = json.load(open(out, encoding="utf-8"))
+        return ex.exception.code, res, {c["id"]: c for c in res["checks"]}
+
+    def test_cached_data_passes(self):
+        self.put(KRENKO, 3600)
+        self.put(MOUNTAIN, 3600)
+        code, res, ch = self.main("--bracket", "3", "--no-combos")
+        self.assertEqual(res["data"]["verification"], "cached")
+        self.assertEqual(res["data"]["requests"], 0)
+        self.assertEqual({k: v["status"] for k, v in ch.items() if k.startswith("chk-legality")}, {"chk-legality-1": "pass", "chk-legality-2": "pass"})
+        self.assertIn("back_image", res["cards"][0])
+
+    def test_stale_data_is_unverified_never_pass(self):
+        self.put(KRENKO, 3 * DAY)  # legality max age is 1 day; still within the 30-day stale limit
+        self.put(MOUNTAIN, 3 * DAY)
+        code, res, ch = self.main("--bracket", "3", "--no-combos", "--budget", "500")
+        self.assertEqual(res["data"]["verification"], "stale")
+        for cid in ("chk-legality-1", "chk-legality-2", "chk-game-changers-1", "chk-budget-1"):
+            self.assertEqual(ch[cid]["status"], "unverified", cid)
+            self.assertIn("data stale (as of", ch[cid]["detail"])
+        self.assertEqual(ch["chk-count-1"]["status"], "pass")  # counting needs no card data
+        self.assertEqual(code, 2)
+
+    def test_stale_fail_stays_fail(self):
+        self.put(KRENKO, 3 * DAY)
+        self.put(dict(MOUNTAIN, legalities={"commander": "banned"}), 3 * DAY)
+        _, _, ch = self.main("--no-combos")
+        self.assertEqual(ch["chk-legality-1"]["status"], "fail")
+
+    def test_unavailable_cards_are_reported_not_missing(self):
+        self.put(KRENKO, 3600)  # Mountain: not cached and no network
+        code, res, ch = self.main("--bracket", "3", "--no-combos")
+        self.assertEqual(ch["chk-cards-1"]["status"], "unverified")
+        self.assertIn("Mountain", ch["chk-cards-1"]["detail"])
+        self.assertNotIn("not found", ch["chk-cards-1"]["detail"])
+        self.assertTrue(any("Mountain" in u for u in res["unavailable"]))
+        self.assertTrue(all(c["status"] != "pass" for k, c in ch.items() if k != "chk-count-1"))
+        self.assertEqual(code, 2)
+
+    def test_commander_only_has_no_count_check_and_no_spellbook(self):
+        self.put(KRENKO, 3600)
+        with mock.patch.object(self.s.spellbook, "find_my_combos") as sb:
+            code, res, ch = self.main("--commander", "Krenko, Mob Boss", deck=None)
+        sb.assert_not_called()
+        self.assertNotIn("chk-count-1", ch)
+        self.assertEqual(ch["chk-legality-2"]["status"], "pass")
+        self.assertEqual(code, 0)
+
+    def test_stale_combos_are_unverified(self):
+        self.put(KRENKO, 3600)
+        self.put(MOUNTAIN, 3600)  # card data merely cached: only the Spellbook answer is stale
+        self.cache.put("combos:old", "combos", {"results": {"included": [], "almostIncluded": []}}, fetched_at=T - 3 * DAY)
+        with mock.patch.object(self.s.spellbook, "find_my_combos", side_effect=lambda *a: self.s.fallback("combos:old")):
+            code, res, ch = self.main("--bracket", "3")
+        self.assertEqual(ch["chk-combos-1"]["status"], "unverified")
+        self.assertIn("data stale (as of", ch["chk-combos-1"]["detail"])
+        self.assertEqual(ch["chk-legality-1"]["status"], "pass")  # degraded on the combo call's own status, not the cards'
+        self.assertEqual(res["data"]["verification"], "stale")
+        self.assertEqual(code, 2)
+
+    def test_non_json_answer_is_unverified_not_a_crash(self):
+        html = json.JSONDecodeError("Expecting value", "<html>captive portal</html>", 0)  # an HTML page answered 200
+        with mock.patch.object(self.s.client, "post_json", side_effect=html):
+            code, res, ch = self.main("--bracket", "3", "--no-combos")
+        self.assertEqual(ch["chk-legality-1"]["status"], "unverified")
+        self.assertIn("JSONDecodeError", ch["chk-legality-1"]["detail"])
+        self.assertEqual(res["data"]["verification"], "unavailable")
+        self.assertEqual(code, 2)
+
+    def test_cards_only_has_status_and_release_date(self):
+        future = dict(MOUNTAIN, id="f1", name="Future Card", type_line="Creature", legalities={"commander": "not_legal"}, released_at="2099-01-01")
+        banned = dict(MOUNTAIN, id="b1", name="Banned Card", type_line="Artifact", legalities={"commander": "banned"})
+        for c in (KRENKO, future, banned):
+            self.put(c, 3600)
+        _, res, _ = self.main("--cards-only", deck="Commander\n1 Krenko, Mob Boss\nDeck\n1 Future Card\n1 Banned Card\n")
+        cards = {c["name"]: c for c in res["cards"]}
+        self.assertEqual({n: c["status"] for n, c in cards.items()},
+                         {"Krenko, Mob Boss": "legal", "Future Card": "upcoming", "Banned Card": "banned"})
+        self.assertEqual(cards["Future Card"]["releases"], "2099-01-01")
+
+    def test_cheapest_reuses_names_across_variants(self):
+        fx = os.path.join(ROOT, "tests", "fixtures", "krenko")
+        b3, b4 = ({c["name"] for c in json.load(open(os.path.join(fx, f), encoding="utf-8"))["deck"]} - {"Mountain"}
+                  for f in ("brew-b3.json", "brew-b4.json"))
+        asked = []
+
+        def search(url):
+            names = re.findall(r'!"([^"]+)"', urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)["q"][0])
+            asked.append(names)
+            return {"data": [{"id": n, "name": n, "set": "tst", "collector_number": "1", "prices": {"usd": "1.00"}} for n in names], "has_more": False}
+
+        with mock.patch.object(dc, "_SESSION", self.s), mock.patch.object(self.s.client, "get_json", side_effect=search):
+            first = dc.cheapest(sorted(b3))
+            n3, asked[:] = len(asked), []
+            second = dc.cheapest(sorted(b4))
+        self.assertEqual((set(first), set(second)), (b3, b4))
+        self.assertEqual(n3, -(-len(b3) // 15))                       # 15 names per query
+        self.assertEqual([set(q) for q in asked], [b4 - b3])           # the variant only searches for the cards it doesn't share
 
 
 @unittest.skipUnless(online(), "needs Scryfall and Commander Spellbook")

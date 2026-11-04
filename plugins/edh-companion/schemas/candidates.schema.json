@@ -1,0 +1,105 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "candidates.schema.json",
+  "title": "candidates.json: research card candidates verified for one build (written by candidates.py)",
+  "description": "Every card research named (plus newly added ones), looked up on Scryfall and judged against the commanders' color identity, Commander legality, the target bracket and the theme policy. ineligible = a hard rule fails; needs_review = a person must decide; eligible = passes. Final legality and bracket are still decided by deck_check and audit.",
+  "type": "object",
+  "required": ["schema_version", "generated", "research_version", "commanders", "bracket", "theme_policy", "data", "counts", "cards"],
+  "properties": {
+    "schema_version": {"$ref": "common.schema.json#/$defs/schema_version"},
+    "generated": {"$ref": "common.schema.json#/$defs/date"},
+    "research_version": {"type": ["integer", "null"], "description": "research.json version these candidates came from."},
+    "brew": {"type": ["string", "null"], "description": "brew file the commanders, bracket and theme policy were read from."},
+    "commanders": {"type": "array", "maxItems": 2, "items": {"type": "string"}},
+    "color_identity": {"type": ["array", "null"], "items": {"enum": ["W", "U", "B", "R", "G"]}, "description": "Combined identity of the commanders; null when unknown."},
+    "bracket": {"type": ["integer", "null"], "minimum": 1, "maximum": 5},
+    "theme_policy": {
+      "type": "object",
+      "required": ["mode", "art_required", "theme_sets", "exceptions"],
+      "properties": {
+        "mode": {"enum": ["none", "printings", "prefer", "strict"]},
+        "eligibility": {"type": ["string", "null"]},
+        "art_required": {"type": "boolean"},
+        "theme_sets": {"type": "array", "items": {"type": "string"}},
+        "exceptions": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "data": {
+      "type": "object",
+      "required": ["as_of", "verification"],
+      "properties": {
+        "as_of": {"type": ["string", "null"]},
+        "verification": {"enum": ["fresh", "cached", "stale", "unavailable", null], "description": "null when nothing was looked up."},
+        "endpoints_unavailable": {"type": "array", "items": {"type": "string"}}
+      }
+    },
+    "counts": {
+      "type": "object",
+      "required": ["eligible", "needs_review", "ineligible"],
+      "properties": {
+        "eligible": {"type": "integer", "minimum": 0},
+        "needs_review": {"type": "integer", "minimum": 0},
+        "ineligible": {"type": "integer", "minimum": 0}
+      }
+    },
+    "printing_choice": {"type": "object", "description": "Cards whose printing/art still has to be chosen (needed) or is already chosen in the brew (done). Not part of the verdict.",
+                        "properties": {"needed": {"type": "integer", "minimum": 0}, "done": {"type": "integer", "minimum": 0}}},
+    "cards": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["name", "oracle_id", "legal", "game_changer", "status", "in_identity", "evidence", "evidence_class", "edhrec", "theme", "verdict", "reasons"],
+        "properties": {
+          "name": {"type": "string"},
+          "oracle_id": {"type": ["string", "null"]},
+          "scryfall_uri": {"type": ["string", "null"]},
+          "type_line": {"type": ["string", "null"]},
+          "color_identity": {"type": ["array", "null"], "items": {"enum": ["W", "U", "B", "R", "G"]}},
+          "legal": {"type": ["string", "null"], "description": "Scryfall Commander legality."},
+          "game_changer": {"type": ["boolean", "null"]},
+          "status": {"enum": ["legal", "banned", "not_legal", "upcoming", null], "description": "upcoming = release date in the future."},
+          "in_identity": {"type": ["boolean", "null"], "description": "null when the card or the commanders' identity is unknown."},
+          "evidence": {"$ref": "common.schema.json#/$defs/evidence_refs"},
+          "evidence_class": {"oneOf": [{"$ref": "common.schema.json#/$defs/evidence_class"}, {"type": "null"}], "description": "Strongest class among the card's evidence."},
+          "evidence_confidence": {"oneOf": [{"$ref": "common.schema.json#/$defs/confidence"}, {"type": "null"}]},
+          "edhrec": {
+            "type": ["object", "null"],
+            "description": "Best-supported ranking entry (largest sample).",
+            "properties": {
+              "inclusion_pct": {"type": ["number", "null"]},
+              "decks": {"type": ["integer", "null"]},
+              "total_decks": {"type": ["integer", "null"]}
+            }
+          },
+          "edhrec_conflict": {"type": "array", "minItems": 2, "description": "Ranking entries whose inclusion % disagree by more than 2 points; kept, never averaged.", "items": {"type": "object"}},
+          "theme": {
+            "type": "object",
+            "required": ["fit", "how"],
+            "properties": {
+              "fit": {"enum": ["on_theme", "exception", "off_theme", "unchecked"]},
+              "how": {"type": ["string", "null"]}
+            }
+          },
+          "printings_on_theme": {
+            "type": ["array", "null"],
+            "description": "Printings in the theme sets (null when neither theme sets nor an art rule apply). Art still has to be looked at.",
+            "items": {
+              "type": "object",
+              "required": ["set", "collector_number", "printing_id"],
+              "properties": {
+                "set": {"type": "string"},
+                "collector_number": {"type": "string"},
+                "printing_id": {"type": "string"},
+                "illustration_id": {"type": ["string", "null"]}
+              }
+            }
+          },
+          "printing_choice": {"enum": ["needed", "done", "n/a"], "description": "Art-based themes: a printing whose art fits must be chosen (needed) or brew.json already names one (done). Not a verdict reason."},
+          "added": {"type": "boolean", "description": "Added with --add/--add-name rather than taken from research."},
+          "verdict": {"enum": ["eligible", "needs_review", "ineligible"]},
+          "reasons": {"type": "array", "items": {"type": "string"}}
+        }
+      }
+    }
+  }
+}

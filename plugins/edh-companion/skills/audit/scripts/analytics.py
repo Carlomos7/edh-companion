@@ -4,7 +4,10 @@ and a seeded cast-by-turn simulation. Pure functions (no network) so they can be
 Roles come from fixed text rules over Oracle text and type lines, not from labels anyone typed. A card can have
 several roles. Every role says which rule matched, so a surprising count can be traced.
 """
-import random, re
+import os, random, re, sys
+
+sys.path.insert(0, os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", "..", "scripts"))
+from edhcore.cards import front_type, oracle  # noqa: E402,F401  (shared helpers, one copy each)
 
 COLORS = "WUBRG"
 
@@ -27,14 +30,6 @@ ROLE_RULES = [
     ("protection", "gives protection", r"(?:gains?|have|has) (?:hexproof|indestructible|shroud|protection from)|phase(?:s)? out|can't be the target"),
     ("recursion", "returns cards from the graveyard", r"return (?:target|up to \w+ target|a|an|all) [^.]*from (?:your|a) graveyard to (?:the battlefield|your hand)"),
 ]
-
-
-def oracle(card):
-    return "\n".join([card.get("oracle_text", "")] + [f.get("oracle_text", "") for f in card.get("card_faces", [])])
-
-
-def front_type(card):
-    return (card.get("card_faces") or [card])[0].get("type_line", card.get("type_line", ""))
 
 
 def roles(card):

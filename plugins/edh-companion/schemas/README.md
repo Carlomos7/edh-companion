@@ -1,6 +1,6 @@
 # Project files
 
-All four skills work from one folder per project, outside the plugin. This file is the single description of that folder; skills link here instead of repeating it.
+All four skills work from one folder per project, outside the plugin. This file is the single description of that folder; skills link here instead of repeating it. How replies and file prose are written for the player: [references/writing.md](../references/writing.md).
 
 ## Where projects live
 One persistent workspace, the same wherever Claude Code is started:
@@ -52,6 +52,9 @@ EDHCompanion/projects/<project>/     project = commander or idea slug, e.g. spid
 ├── DECISIONS.md    what the player accepted, rejected or allowed, why   (any skill, when the player decides)
 ├── RESEARCH.md     readable research summary with citations             (research)
 ├── research.json   sources and findings, for citations and checks       (research)
+├── research.plan.json  expected parallel workers and their ID prefixes  (research, only when parallel)
+├── research.part-<slug>.json  one worker's findings until merged         (researcher agents; merge-research files them in research.parts/)
+├── candidates.json verified card candidates for brew, evidence kept     (candidates.py; regenerate, never edit)
 ├── brew.json       accepted deck, proposals, statistics                 (brew)   brew-<variant>.json for variants
 ├── audit.json      checks and verdict for one deck version              (audit)  audit-<variant>.json for variants
 ├── ACQUISITION.md  optional: how to get the cards, with dated prices   (brew, on request)
@@ -60,7 +63,10 @@ EDHCompanion/projects/<project>/     project = commander or idea slug, e.g. spid
 ```
 Create only what the task needs. A research question writes RESEARCH.md and research.json and nothing else.
 
-Markdown is the source of truth for goals and decisions; JSON is used where structure pays for itself (citations, decklists with printings, automated checks, pages). Schemas: `research.schema.json`, `brew.schema.json`, `audit.schema.json`. Check a project with `python scripts/companion.py validate <project-dir>`.
+Markdown is the source of truth for goals and decisions; JSON is used where structure pays for itself (citations, decklists with printings, automated checks, pages). Schemas: `research.schema.json`, `research-plan.schema.json`, `candidates.schema.json`, `brew.schema.json`, `audit.schema.json`. Check a project with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" validate <project>`: schemas, citation IDs (including rankings, disagreements and feasibility), EDHREC number consistency, duplicate source URLs, future dates, unmerged worker parts ("research incomplete"), stale candidates and stale audits.
+
+## Card data and the cache
+Scripts get card data through the shared core (`scripts/edhcore/`), never by hand: `card_lookup.py` for lookups and searches, `deck_check.py` for decks, `candidates.py` for research candidates. They share a cache in `~/.cache/edh-companion/` (outside the workspace; disposable; `EDHC_CACHE_DIR` moves it, `EDHC_NO_CACHE=1` turns it off), one rate limit across parallel processes, and retries per endpoint. Freshness: card text 7 days; legality, Game Changers, prices and searches 24 hours; `--fresh` re-reads everything (audits use it). Every result has a `data` block (`fresh`, `cached`, `stale` = an older copy used because the refresh failed, `unavailable`); anything that relied on stale or unavailable data is `unverified`. Providers excluded in the research preferences are never called; `--offline` uses the cache only.
 
 ## Reading and writing
 - Start by reading PROJECT.md, STATE.md and DECISIONS.md (short), then load research.json / brew.json only when needed.
@@ -123,7 +129,14 @@ A later request that conflicts with a decision is a question to the player, neve
 A card's **game identity** (name, `oracle_id`) decides rules, legality and color identity. Its **printing** (`printing_id`, set, collector number, finish, `illustration_id`, treatment, price) decides art, theme-by-art, looks, exports and cost. Keep both: a strict art theme, a drippy budget and an exact Moxfield import all depend on the printing, not the card. Prices are per printing and finish, with a date and `verified: true` only when read for that exact printing; anything else is an estimate.
 
 ## IDs (citations and checks only)
-`src-001` sources and `fnd-001` findings (research.json), `rec-001` recommendations (brew.json), `chk-<area>-<n>` checks (audit.json). IDs are never reused; new items take the next number. Readable files cite them in brackets: "Gwenom wants cheap spells [fnd-004, src-012]".
+`src-001` sources and `fnd-001` findings (research.json), `rec-001` recommendations (brew.json), `chk-<area>-<n>` checks (audit.json). Parallel research workers use their slug: `src-yt-001`, `fnd-cards-003`, so parts never collide; merging keeps every existing ID. IDs are never reused; new items take the next number. brew.json `deck[].evidence` carries a card's IDs from candidates.json into the deck. Readable files cite them in brackets: "Gwenom wants cheap spells [fnd-004, src-012]". Chat replies name the source and moment instead, with the ID only as a pointer ([writing.md](../references/writing.md), "Facts, citations and money").
+
+## Findings and checks
+Optional fields that keep claims, locations and methods apart, so files and pages stay readable (older files without them stay valid):
+- **research.json `findings[]`**: one claim per finding. `headline` is the conclusion in about 90 characters or fewer; `claim` says it in 1 to 3 sentences with no citation brackets or timestamps in the text; `locators` says where in each cited source this claim is supported: `[{"source": "src-101", "at": ["9:00", "9:40-10:40"]}]` (mm:ss or h:mm:ss, ranges allowed; videos mainly). Long card lists go in `cards`, reasoning in `explanation`, what weakens the claim in `limitations`. Method: research's [method.md](../skills/research/references/method.md), "Writing findings".
+- **research.json `scope.deck`**: for research about an existing deck, the deck it was written for (`{version, deck_hash}`, the same shape as audit.json `subject.deck`). When brew.json has moved on, the research isn't silently current: say which version it describes and flag claims about cards or plans that changed.
+- **research.json `methodology.stopped_because`**: why research stopped (questions answered, saturation, a limit, a tool failure).
+- **audit.json `checks[].method`**: how the check was done (the deck_check command and its inputs, hashes, sources or images opened). `detail` then holds only the result. Checks done the same way share identical `method` text.
 
 ## Evidence classes
 | class | meaning |
@@ -158,7 +171,7 @@ Three different things; don't mix them up:
 - Ordinary lookups, audits, routine research, validation, and reports the player asked for.
 - Using an approved equivalent tool when one fails (e.g. a second approved search tool). Ask before an unapproved or excluded one.
 
-**Show progress without stopping:** announce substantial work in a line or two before starting (what, which tools, roughly how long), give short progress updates at natural milestones ("3 of 5 commanders researched"), and finish with what was done. Don't pause for confirmation in the middle unless a gate above is hit.
+**Show progress without stopping:** announce substantial work, give progress updates at natural milestones and finish with what was done ([writing.md](../references/writing.md), "Multi-step work"). Don't pause for confirmation in the middle unless a gate above is hit.
 
 **Never**, approved or not: overwrite an accepted decklist version (add a new one), erase research or decisions, or publish private project data silently.
 

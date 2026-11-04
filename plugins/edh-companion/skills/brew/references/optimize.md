@@ -4,7 +4,7 @@
 A Moxfield link (read it with a deck-reading tool if one works), a pasted export, or the project's latest decklists/ file. Never edit the player's original: the first version you save is `version: 1` of brew.json with every card `accepted`, exactly as given.
 
 ## 2. Profile before asking
-Run deck_check.py at the bracket it seems to be and read the cards. Tell the player in 4 to 6 lines what you found **before** the questions, so the questions make sense: legality problems, Game Changers, combos, bracket signal, cost, theme lean (what share of printings are from one franchise), obvious role gaps. Mention cost once here.
+Run deck_check.py at the bracket it seems to be and read the cards. Tell the player what you found **before** the questions, so the questions make sense. Lead with the finding that matters most (a legality problem, or "legal, plays like bracket 3"), then legality problems, Game Changers, combos, bracket signal, cost, theme lean (what share of printings are from one franchise) and obvious role gaps. Mention cost once here.
 
 ## 3. Ask (fast path first)
 "Use your defaults (Recommended)": keep its bracket, light tune of 5 to 10 swaps, no new money concerns, keep its theme. Or set it up:
@@ -27,7 +27,7 @@ With research.json (or EDHREC/decklist data gathered via the research skill): ro
 Accepted → change `deck`, bump `version`, new `deck_hash`, save a new decklists/<variant>-v<N>.txt and note what changed in STATE.md. Rejected → `status: rejected` plus a dated DECISIONS.md line with their reason. Then the boundary audit (brew workflow step 6).
 
 ## 7. Hand back
-The diff (cuts, adds, printing changes), before vs after (bracket signals, Game Changers, role counts, price, theme line), the new list in Moxfield format, validation state, and what wasn't checked.
+Brew's hand-back (SKILL.md step 7). For an existing deck the diff is the cuts, adds and printing changes, with before → after only for the numbers that moved (bracket signals, Game Changers, role counts, theme line), plus what wasn't checked.
 
 ## Edge cases
 - Illegal deck: fixing legality comes first and doesn't count toward the change budget.

@@ -2,7 +2,7 @@
 
 Run: uv run --with jsonschema --with pyyaml --with certifi python -m unittest discover -s tests/unit
 """
-import json, os, shutil, subprocess, sys, tempfile, unittest
+import json, os, re, shutil, subprocess, sys, tempfile, unittest
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 COMPANION = os.path.join(ROOT, "plugins", "edh-companion", "scripts", "companion.py")
@@ -118,6 +118,74 @@ class Companion(unittest.TestCase):
         self.assertEqual(code, 1)
         self.assertIn("src-009 is not a defined source", out)
         self.assertIn("'deck' is a required property", out)
+
+    def put(self, name, doc):
+        with open(os.path.join(self.p, name), "w", encoding="utf-8") as h:
+            json.dump(doc, h)
+
+    def research(self, **extra):
+        r = {"schema_version": "1.0", "version": 1, "created": "2026-11-04", "scope": {"question": "q"}, "methodology": {"approach": "a", "coverage": {}},
+             "sources": [{"id": "src-001", "title": "t", "url": "https://example.com/a", "type": "stats", "accessed": "2026-11-01"},
+                         {"id": "src-w1-001", "title": "t2", "url": "https://example.com/b", "type": "article", "accessed": "2026-11-01"}],
+             "findings": [{"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": ["src-w1-001"]}], "gaps": []}
+        r.update(extra)
+        self.put("research.json", r)
+        return sh("validate", self.p)
+
+    def test_research_new_rules(self):
+        code, out = self.research()
+        self.assertEqual(code, 0, out)                              # worker-prefixed IDs are valid
+        card = lambda **k: {"card": {"name": "Sol Ring"}, "rank": 1, "why": "w", "evidence": ["src-001"], **k}
+        src = lambda i, url, **k: {"id": i, "title": "t", "url": url, "type": "stats", "accessed": "2026-11-01", **k}
+        cases = {
+            "rankings: evidence src-404": dict(rankings=[{"group": "G", "method": "m", "cards": [card(evidence=["src-404"])]}]),
+            "disagreements: evidence src-404": dict(disagreements=[{"topic": "t", "positions": [{"position": "p", "evidence": ["src-404"]}]}]),
+            "feasibility: evidence fnd-404": dict(feasibility={"question": "q", "verdict": "feasible", "evidence": ["fnd-404"], "commanders": ["Krenko, Mob Boss"]}),
+            "total_decks 0 must be > 0": dict(rankings=[{"group": "G", "method": "m", "cards": [card(total_decks=0)]}]),
+            "decks 50 > total_decks 40": dict(rankings=[{"group": "G", "method": "m", "cards": [card(decks=50, total_decks=40)]}]),
+            "inclusion_pct 50 != 25.0": dict(rankings=[{"group": "G", "method": "m", "cards": [card(inclusion_pct=50, decks=10, total_decks=40)]}]),
+            "src-002 has the same URL as src-001": dict(sources=[src("src-001", "https://Example.com/a"), src("src-002", "https://example.com/a/?utm_source=x")], findings=[]),
+            "accessed 2999-01-01 is in the future": dict(sources=[src("src-001", "https://example.com/a", accessed="2999-01-01")], findings=[]),
+            "published 2999-02 is in the future": dict(sources=[src("src-001", "https://example.com/a", published="2999-02")], findings=[]),
+        }
+        for msg, extra in cases.items():   # checks newer than 7.8 warn on research.json so existing projects stay valid
+            with self.subTest(msg):
+                code, out = self.research(**extra)
+                self.assertEqual(code, 0, out)
+                self.assertRegex(out, r"WARN .*" + re.escape(msg))
+        for msg, extra in {"findings: evidence src-404": dict(findings=[{"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": ["src-404"]}]),
+                           "duplicate source or finding id": dict(findings=[{"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": []}] * 2)}.items():
+            with self.subTest(msg):    # 7.8's checks stay errors
+                code, out = self.research(**extra)
+                self.assertEqual(code, 1, out)
+                self.assertRegex(out, r"ERROR .*" + re.escape(msg))
+        self.put("research-part-old.json", {})   # pre-merge-research hyphenated part files are just old notes
+        self.assertEqual(self.research()[0], 0)
+        code, out = self.research(rankings=[{"group": "G", "method": "m", "cards": [card(inclusion_pct=26.5, decks=10, total_decks=40)]}])
+        self.assertEqual(code, 0, out)                              # within 2 points
+
+    def test_research_incomplete_and_stale_candidates(self):
+        self.research()
+        plan = {"schema_version": "1.0", "created": "2026-11-04", "workers": [
+            {"slug": "w1", "role": "r", "subjects": [], "id_prefix": "w1", "status": "merged", "part_hash": "a" * 64},
+            {"slug": "w2", "role": "r", "subjects": [], "id_prefix": "w2", "status": "pending", "part_hash": None}]}
+        self.put("research.plan.json", plan)
+        code, out = sh("validate", self.p)
+        self.assertEqual(code, 1)
+        self.assertIn("research incomplete: worker(s) not merged: w2", out)
+        plan["workers"][1].update(status="merged", part_hash="b" * 64)
+        self.put("research.plan.json", plan)
+        self.assertEqual(sh("validate", self.p)[0], 0)
+        self.put("research.part-w3.json", {})
+        code, out = sh("validate", self.p)
+        self.assertEqual(code, 1)
+        self.assertIn("research incomplete: unmerged research.part-w3.json", out)
+        os.remove(os.path.join(self.p, "research.part-w3.json"))
+        self.put("candidates.json", {})
+        os.utime(os.path.join(self.p, "candidates.json"), (1, 1))
+        code, out = sh("validate", self.p)
+        self.assertEqual(code, 0, out)
+        self.assertIn("NOTE  candidates.json stale", out)
 
     def test_missing_decklist_file(self):
         self.edit("brew.json", lambda d: d.update(decklist="decklists/main-v9.txt"))

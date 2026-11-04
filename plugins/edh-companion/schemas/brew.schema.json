@@ -262,6 +262,10 @@
           "price": {
             "$ref": "common.schema.json#/$defs/price"
           },
+          "evidence": {
+            "$ref": "common.schema.json#/$defs/evidence_refs",
+            "description": "Research source/finding IDs behind this card (carried from candidates.json)."
+          },
           "custom": {
             "type": "boolean",
             "description": "true for a custom or proxy card (not a real, legal Magic card). Only with the player's approval for casual play; never counted as legal."

@@ -69,6 +69,10 @@
             "type": "string"
           },
           "description": "The important questions this research set out to answer."
+        },
+        "deck": {
+          "$ref": "common.schema.json#/$defs/deck_ref",
+          "description": "For research about an existing deck: the deck version it was written for (same shape as audit.json subject.deck)."
         }
       }
     },
@@ -253,8 +257,37 @@
           "id": {
             "$ref": "common.schema.json#/$defs/finding_id"
           },
+          "headline": {
+            "type": "string",
+            "maxLength": 140,
+            "description": "The conclusion in about 90 characters or fewer. Optional: pages derive it from the claim's first sentence when absent."
+          },
           "claim": {
             "type": "string"
+          },
+          "locators": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "source",
+                "at"
+              ],
+              "properties": {
+                "source": {
+                  "$ref": "common.schema.json#/$defs/source_id"
+                },
+                "at": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?(-[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?)?$"
+                  }
+                }
+              }
+            },
+            "description": "Where in each cited source this claim is supported: mm:ss or h:mm:ss, ranges as start-end. The claim text carries no citation brackets."
           },
           "explanation": {
             "type": [

@@ -20,6 +20,15 @@ Plan the **important questions** first (what the deck does, what real lists play
 
 Record in research.json `methodology`: sources actually reviewed (including ones not cited), coverage per type, why research stopped (`stopped_because`, e.g. "key questions answered; last 4 threads repeated earlier points"), and the limitations. Give an overall confidence in the reply.
 
+## Writing findings
+Each finding is one claim the player could act on or dispute, written so a page can show the conclusion first and the evidence on demand ([schemas/README.md](../../../schemas/README.md), "Findings and checks"):
+- **One claim per finding.** A video that makes three points gives three findings; a finding never bundles a recommendation, a warning and a card list.
+- **`headline`**: the conclusion as a sentence of about 90 characters or fewer ("Flash enablers are a trap for Azula: 4 creators skip them"), not a topic ("Flash").
+- **`claim`**: the claim in 1 to 3 plain sentences, attributed ("EDHRECast cuts…"). Citation brackets and timestamps stay out of the text.
+- **`locators`**: for each cited source, where this claim is supported: `[{"source": "src-106", "at": ["8:00-9:20"]}]`. Each finding carries its own moments, even when several findings cite the same video; `sources[].timestamps` lists every moment cited from that video.
+- **`cards`**: every card the claim names, exact Scryfall names; a long list lives here, not in the claim.
+- **`explanation`** for the reasoning or context; **`limitations`** for what weakens it (one source, old, sponsored, small sample).
+
 ## Evidence rules
 - **Opinion claims** (must-play, trap, best line) need two independent sources (different creators, or creator + data). One source: say "one source suggests" and set confidence low.
 - **Statistics** always carry the sample ("in 312 of 1,040 decks on EDHREC"). Under ~50 decks: low confidence.
@@ -48,7 +57,7 @@ Record in research.json `methodology`: sources actually reviewed (including ones
 - Prefer videos with a linked decklist; the list is primary, the transcript explains it.
 - Flag sponsored and precon-promo videos: they can support, not decide.
 - Transcripts garble names ("Rhystic Studdy"): resolve every name on Scryfall; drop or flag what doesn't resolve.
-- Cite with the timestamp: `https://www.youtube.com/watch?v=ID&t=754s` and `timestamps: ["12:34"]`.
+- Cite with the timestamp: the source URL (`https://www.youtube.com/watch?v=ID`), its `timestamps`, and the finding's `locators` for the moments behind that claim.
 
 ## Unusual strategies (from a video or thread)
 1. Get the original source and its decklist.
@@ -56,10 +65,16 @@ Record in research.json `methodology`: sources actually reviewed (including ones
 3. Look for independent evidence: other lists using it, threads discussing it, results.
 4. Report what the strategy needs, how fragile it is, and whether anyone besides the original source vouches for it.
 
-## research.md shape
-1. Answer / recommendation-relevant summary (3 to 6 bullets with refs).
-2. Commanders or options compared (one short block each, same layout).
-3. Key cards and why (refs).
-4. Disagreements.
-5. Gaps and limitations.
-Keep it short; the evidence lives in research.json.
+## RESEARCH.md shape
+One shape for every research file, answer first ([writing.md](../../../references/writing.md)):
+1. **Header line:** date, depth, the deck version it was written for ("written for main v3"; or "no deck yet"), and the size of the evidence (sources, findings in research.json).
+2. **Recommendation:** the answer, with any caveat that changes it, and the overall confidence.
+3. **Key evidence:** the findings behind the recommendation, most decision-relevant first, each with its IDs and the readable source and moment.
+4. **Options compared** (when there's a choice): the directions in the shared layout ([writing.md](../../../references/writing.md), "Recommending directions").
+5. **Key cards and why** (when relevant), grouped by role.
+6. **Disagreements:** both sides, cited.
+7. **Gaps and limits:** what's unknown, what failed, why research stopped.
+The full evidence lives in research.json; RESEARCH.md is the readable layer over it.
+
+## When the deck changes after research
+Research about an existing deck records the deck it describes in `scope.deck` (`{version, deck_hash}` from brew.json) and in RESEARCH.md's header line. When brew.json's version is newer, say which version the research describes ("Research was written for v3; the deck is now v5") and flag the claims about cards or plans that changed. When the changes affect the recommendation, offer a refresh as the next step (a new research.json version with an updated `scope.deck`).

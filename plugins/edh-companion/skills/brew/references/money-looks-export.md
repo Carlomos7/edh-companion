@@ -14,7 +14,7 @@ Only split it into the two budgets if they care about looks. Record it in PROJEC
 
 **Budgets guide; they don't hide options.** Unless the player says "hard limit", a budget is a target with some wiggle room (about 10 to 15%). Never silently go over a hard limit, and never trade away a strict theme to save money.
 
-Present recommendations in small groups (3 to 5 each), in this order, skipping empty groups:
+Present recommendations grouped, in this order, skipping empty groups:
 1. **Within budget**: the picks that fit.
 2. **Worth stretching for**: slightly over the target, each with the extra cost and what it buys.
 3. **Best regardless of budget**: clearly better cards or upgrades at any price, kept separate so they're information, not pressure.
@@ -31,7 +31,7 @@ Then:
 - "What bracket is my deck?" is the audit skill's job; brew uses its result.
 
 ## Community-researched alternatives
-After a build or review, proactively offer a short list of worthwhile swaps (3 to 8), each: add → cut, why (synergy, a weakness it fixes, theme fit), evidence (EDHREC inclusion with sample size, decklists, creator or community take), trade-off, price change if money matters. Save them as `proposed` recommendations. End with an offer, not a push: "Want a deeper comparison of any of these?" Rejected swaps stay rejected (DECISIONS.md).
+After a build or review, proactively offer the worthwhile swaps, ordered by impact and grouped when there are many, each: add → cut, why (synergy, a weakness it fixes, theme fit), evidence (EDHREC inclusion with sample size, decklists, creator or community take), trade-off, price change if money matters. Save them as `proposed` recommendations. End with an offer, not a push: "Want a deeper comparison of any of these?" Rejected swaps stay rejected (DECISIONS.md).
 
 ## Export
 Exact printings matter for art themes, looks and prices, so exports keep them:

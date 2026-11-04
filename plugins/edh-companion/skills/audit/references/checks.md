@@ -63,7 +63,8 @@ Compare deck_check stats with the plan and [construction defaults](../../brew/re
 ## Recommendations
 For each `rec-`: the cut is in the accepted deck; the add exists, is legal, in identity, within bracket and theme; evidence IDs resolve and support the reason; it doesn't contradict a decision (re-proposing a rejected card is a fail unless the reason changed and is stated).
 
-## Verdict wording
-- Lead with the verdict and the count of fails/unverified.
+## Writing checks and the verdict
+- **`method`** says how the check was done: the deck_check command and its inputs, the hashes, the sources or images opened. Checks done the same way share identical `method` text; deck_check results carry its command. **`detail`** holds only the result: what was found, the numbers, the cards, what an image shows.
+- **`verdict.summary`** leads with the verdict in plain words and the counts ("Pass with warnings: 0 fails, 0 unverified, 5 warnings."), then the fails and unverified checks, worst first, each with cause and fix; then the warnings, grouped. What passed needs no list there; the checks hold it.
 - Separate "what's objectively wrong" from "what I'd judge differently".
 - Never write "verified" for something that was assumed.

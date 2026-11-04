@@ -8,19 +8,14 @@ Before asking anything that benefits from context, look: candidate commanders fo
 Only recommend commanders that are verified legal: eligible as a commander and not banned, and for two commanders, a real pairing (see the audit skill's checks.md, "Commander eligibility"). `deck_check.py --commander "A" [--commander "B"]` checks this without a deck.
 
 ## 2. Recommend directions
-Show 2 to 4 options in the same short layout each:
-- **Commander or approach**, one line on what it does
-- **Theme fit** (how much of the deck can be on theme in its colors)
-- **Strengths / weaknesses** (mechanical, with evidence refs)
-- **Feels like** (fast and aggressive, grindy value, combo, big turns)
-Say which you'd pick for this player and why. They can pick another or ask for different ones.
+Show 2 to 4 options, the recommended one first with why, each in the shared directions layout (name, feels like, theme fit, strengths and shortcomings with evidence refs, cost when money matters): [writing.md](../../../references/writing.md), "Recommending directions". They can pick another or ask for different ones.
 
 ## 3. Ask what matters, one question at a time
 Ask at natural decision points, only when the answer changes the deck. Typical order, skipping what's known:
 1. Which direction (the options above).
 2. **Theme strictness** (if there's a theme): strict / prefer with a few exceptions / themed printings only / none. And whether artwork matters.
 3. **Power**: bracket (explain it: Wizards' 1 to 5 scale; 3 is a typical upgraded deck).
-4. **Budget**, once: "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget (hard limit or rough target?) · drippy (fancy printings, per-card max) · no expense spared (the ultimate blinged-out deck). Details: money-looks-export.md.
+4. **Budget**, asked once ([writing.md](../../../references/writing.md), "Facts, citations and money"): "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget (hard limit or rough target?) · drippy (fancy printings, per-card max) · no expense spared (the ultimate blinged-out deck). Details: money-looks-export.md.
 5. Playstyle details only if the direction leaves them open (interaction level, win style).
 Multiple choice, recommended first with its reason. For low-impact gaps, state a provisional assumption ("assuming medium interaction; say if not") and move on. Record answers in PROJECT.md.
 
@@ -38,4 +33,4 @@ Respect a flavor-first player: power is one option, never the default pressure.
 Never relax a restriction silently. Approved exceptions go in PROJECT.md (Theme → Allowed exceptions) and DECISIONS.md, and hold for every later revision. A conflicting new request becomes a question.
 
 ## 7. Evaluate the result
-After the build: what the deck does well, its remaining weaknesses and compromises (honestly), and possible improvements that stay inside their rules, plus any that would need a new exception (offered, not pushed).
+After the build: what the deck does well, its remaining shortcomings and compromises (named honestly), and possible improvements that stay inside their rules, plus any that would need a new exception (offered, not pushed).

@@ -11,7 +11,7 @@ Acquisition help is on demand: before a build ("what's the cheapest way into Spi
 - **Singles:** the cheapest acceptable printing per card (`deck_check.py --cheapest`) and the chosen aesthetic printing, with vendor prices where available (Scryfall's TCGplayer/Cardmarket/Card Kingdom prices, or a price tool). Every price has a source and date; anything else is labelled an estimate.
 - **Availability:** in print or not, recent or announced reprints that may drop the price, Secret Lairs sold out (secondary market only), cards on the Reserved List (never reprinted). Cite the source for each claim.
 
-## The plan (short, ranked)
+## The plan (ranked, best path first)
 1. **Best path in one line** ("Buy the X precon ($45, covers 31 cards), then ~$60 of singles").
 2. **Buy first:** the commander and the cards the plan can't work without; then upgrades by impact.
 3. **Products vs singles:** each product worth it, with how many needed cards it covers and the leftover value; when singles are cheaper, say so.

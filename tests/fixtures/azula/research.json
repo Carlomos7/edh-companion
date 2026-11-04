@@ -1,0 +1,352 @@
+{
+ "schema_version": "1.0",
+ "project": "azula",
+ "version": 2,
+ "created": "2026-11-03",
+ "scope": {
+  "question": "Is Azula, Cunning Usurper a good theft commander at bracket 3, and which cards support it?",
+  "theme": "Fire Nation villains: steal and replay opponents' cards",
+  "constraints": [
+   "bracket 3",
+   "no Game Changers"
+  ],
+  "depth": "standard",
+  "questions": [
+   "How does Azula's exile-and-cast plan play?",
+   "Which Dimir theft cards are most played?"
+  ]
+ },
+ "methodology": {
+  "approach": "Test fixture: two parallel workers (commander analysis, theft staples) merged by hand in the 7.8 style. Numbers and links are invented for tests.",
+  "tools_used": [
+   "Scryfall API",
+   "EDHREC",
+   "YouTube transcripts",
+   "Reddit"
+  ],
+  "tools_failed": [
+   {
+    "capability": "Commander Spellbook",
+    "error": "timeout",
+    "fallback": "manual combo check"
+   }
+  ],
+  "coverage": {
+   "card_data": 1,
+   "stats": 2,
+   "video": 1,
+   "community": 1,
+   "article": 1
+  },
+  "recency_cutoff": "2026-09-22",
+  "sources_reviewed": 9,
+  "stopped_because": "questions answered",
+  "workers": [
+   {
+    "role": "commander analysis",
+    "subjects": [
+     "Azula, Cunning Usurper"
+    ],
+    "status": "complete"
+   },
+   {
+    "role": "theft staples",
+    "subjects": [
+     "Dimir theft cards"
+    ],
+    "status": "complete"
+   }
+  ]
+ },
+ "sources": [
+  {
+   "id": "src-001",
+   "title": "Azula, Cunning Usurper on Scryfall",
+   "url": "https://scryfall.com/card/tla/208",
+   "type": "card_data",
+   "accessed": "2026-11-03",
+   "primary": true
+  },
+  {
+   "id": "src-002",
+   "title": "EDHREC: Azula, Cunning Usurper",
+   "url": "https://edhrec.com/commanders/azula-cunning-usurper",
+   "type": "stats",
+   "accessed": "2026-11-03",
+   "sample_size": 840,
+   "primary": false
+  },
+  {
+   "id": "src-003",
+   "title": "Azula deck tech (fixture video)",
+   "url": "https://www.youtube.com/watch?v=fixtureAzula1",
+   "type": "video",
+   "accessed": "2026-11-03",
+   "published": "2026-10",
+   "timestamps": [
+    "2:15",
+    "11:40"
+   ],
+   "primary": false
+  },
+  {
+   "id": "src-004",
+   "title": "EDHREC: Dimir theft theme",
+   "url": "https://edhrec.com/themes/theft/dimir",
+   "type": "stats",
+   "accessed": "2026-11-03",
+   "sample_size": 5200,
+   "primary": false
+  },
+  {
+   "id": "src-005",
+   "title": "Reddit r/EDH thread on Azula",
+   "url": "https://www.reddit.com/r/EDH/",
+   "type": "community",
+   "accessed": "2026-11-03",
+   "primary": false
+  },
+  {
+   "id": "src-006",
+   "title": "Theft in Commander (fixture article)",
+   "url": "https://example.com/articles/theft-in-commander",
+   "type": "article",
+   "accessed": "2026-11-03",
+   "published": "2026-08-14",
+   "primary": false
+  }
+ ],
+ "findings": [
+  {
+   "id": "fnd-001",
+   "claim": "Azula exiles an opponent's creature and a card from their graveyard on entry, and you can cast both during your turn.",
+   "class": "verified_fact",
+   "confidence": "high",
+   "evidence": [
+    "src-001"
+   ],
+   "cards": [
+    "Azula, Cunning Usurper"
+   ]
+  },
+  {
+   "id": "fnd-002",
+   "claim": "Players build Azula as Dimir theft with clones and flicker to re-trigger her entry.",
+   "class": "popularity_metric",
+   "confidence": "medium",
+   "evidence": [
+    "src-002",
+    "src-003"
+   ],
+   "cards": [
+    "Azula, Cunning Usurper"
+   ]
+  },
+  {
+   "id": "fnd-003",
+   "claim": "Thief of Sanity and Hostage Taker are the most played theft creatures in Dimir.",
+   "class": "popularity_metric",
+   "confidence": "medium",
+   "evidence": [
+    "src-004"
+   ],
+   "cards": [
+    "Thief of Sanity",
+    "Hostage Taker"
+   ]
+  },
+  {
+   "id": "fnd-004",
+   "claim": "Community players say Azula is slow without ramp because her plan starts at five mana.",
+   "class": "community_opinion",
+   "confidence": "low",
+   "evidence": [
+    "src-005",
+    "src-003"
+   ],
+   "cards": [
+    "Azula, Cunning Usurper"
+   ]
+  },
+  {
+   "id": "fnd-005",
+   "claim": "Opposition Agent is a Game Changer, so it is out for this bracket 3 build unless the player allows one.",
+   "class": "verified_fact",
+   "confidence": "high",
+   "evidence": [
+    "src-006"
+   ],
+   "cards": [
+    "Opposition Agent"
+   ]
+  }
+ ],
+ "commanders": [
+  {
+   "card": {
+    "name": "Azula, Cunning Usurper",
+    "set": "tla",
+    "collector_number": "208"
+   },
+   "strategy": "Dimir theft: steal creatures and spells, replay them at instant speed on your turn.",
+   "advantages": [
+    "value on entry",
+    "uses opponents' best cards"
+   ],
+   "disadvantages": [
+    "five mana",
+    "needs flicker for repeat value"
+   ],
+   "theme_fit": "Fire Nation villain",
+   "evidence": [
+    "fnd-001",
+    "fnd-002"
+   ],
+   "legal_check": "deck_check.py --commander 2026-11-03"
+  }
+ ],
+ "card_candidates": [
+  {
+   "card": {
+    "name": "Thief of Sanity"
+   },
+   "relevance": "Steals a card every combat hit.",
+   "role": "synergy",
+   "theme_fit": "on_theme",
+   "evidence": [
+    "fnd-003",
+    "src-004"
+   ]
+  },
+  {
+   "card": {
+    "name": "Hostage Taker"
+   },
+   "relevance": "Removal that becomes a cast.",
+   "role": "removal",
+   "theme_fit": "on_theme",
+   "evidence": [
+    "fnd-003"
+   ]
+  },
+  {
+   "card": {
+    "name": "Notion Thief"
+   },
+   "relevance": "Takes opponents' draws.",
+   "role": "synergy",
+   "theme_fit": "on_theme",
+   "evidence": [
+    "src-004"
+   ]
+  }
+ ],
+ "rankings": [
+  {
+   "group": "Dimir theft",
+   "scope": "Blue-black theft cards, Commander-legal",
+   "method": "EDHREC inclusion % among Azula decks (popularity, n decks), then community picks",
+   "as_of": "2026-11-03",
+   "cards": [
+    {
+     "card": {
+      "name": "Thief of Sanity"
+     },
+     "rank": 1,
+     "tier": "A",
+     "inclusion_pct": 61.9,
+     "decks": 520,
+     "total_decks": 840,
+     "why": "Repeatable theft.",
+     "evidence": [
+      "src-002"
+     ],
+     "status": "legal"
+    },
+    {
+     "card": {
+      "name": "Hostage Taker"
+     },
+     "rank": 2,
+     "tier": "A",
+     "inclusion_pct": 55.0,
+     "decks": 462,
+     "total_decks": 840,
+     "why": "Removal plus theft.",
+     "evidence": [
+      "src-002"
+     ],
+     "status": "legal"
+    },
+    {
+     "card": {
+      "name": "Dauthi Voidwalker"
+     },
+     "rank": 3,
+     "tier": "B",
+     "inclusion_pct": 30.0,
+     "decks": 252,
+     "total_decks": 840,
+     "why": "Exile plus a free cast.",
+     "evidence": [
+      "src-002",
+      "src-005"
+     ],
+     "status": "legal"
+    }
+   ]
+  }
+ ],
+ "disagreements": [
+  {
+   "topic": "Is Azula strong enough for bracket 3?",
+   "positions": [
+    {
+     "position": "Yes, with ramp",
+     "evidence": [
+      "src-003"
+     ]
+    },
+    {
+     "position": "Too slow",
+     "evidence": [
+      "src-005"
+     ]
+    }
+   ],
+   "explanation": "Depends on ramp count."
+  }
+ ],
+ "alternatives": [
+  {
+   "option": "Fire Lord Azula",
+   "why": "Three colors, more aggressive.",
+   "evidence": [
+    "src-001"
+   ]
+  }
+ ],
+ "recommendations": [
+  {
+   "text": "Build Dimir theft at bracket 3 with ten ramp pieces.",
+   "why": "Azula is slow otherwise.",
+   "evidence": [
+    "fnd-004",
+    "fnd-002"
+   ]
+  }
+ ],
+ "feasibility": {
+  "question": "Fire Nation-flavoured theft at bracket 3",
+  "verdict": "feasible",
+  "reasons": [
+   "Dimir has many theft cards"
+  ],
+  "evidence": [
+   "src-004"
+  ]
+ },
+ "gaps": [
+  "No tournament data for Azula."
+ ]
+}

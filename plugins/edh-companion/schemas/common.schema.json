@@ -18,11 +18,13 @@
     },
     "source_id": {
       "type": "string",
-      "pattern": "^src-[0-9]{3,}$"
+      "pattern": "^src-([a-z0-9-]+-)?[0-9]{3,}$",
+      "description": "src-001, or src-<worker slug>-001 for a parallel research worker"
     },
     "finding_id": {
       "type": "string",
-      "pattern": "^fnd-[0-9]{3,}$"
+      "pattern": "^fnd-([a-z0-9-]+-)?[0-9]{3,}$",
+      "description": "fnd-001, or fnd-<worker slug>-001 for a parallel research worker"
     },
     "rec_id": {
       "type": "string",

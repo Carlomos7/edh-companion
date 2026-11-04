@@ -1,8 +1,15 @@
-"""present skill pipeline test: fixture project -> site_data.py -> build_site.py. Needs uv and network (Scryfall).
+"""present skill pipeline test: fixture project -> site_data.py -> build_site.py. Live classes need uv and network
+(Scryfall) and are skipped offline; the Data and Atlas classes run offline.
 
 Run: python tests/unit/test_present.py
 """
-import importlib.util, json, os, re, shutil, subprocess, tempfile, unittest
+import argparse, collections, importlib.util, io, json, os, re, shutil, subprocess, sys, tempfile, unittest
+from unittest import mock
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # _net, also when run as tests.unit.test_present
+from _net import online  # noqa: E402
+
+LIVE = unittest.skipUnless(online(), "needs Scryfall")
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 HERE = os.path.join(ROOT, "plugins", "edh-companion", "skills", "present", "scripts")
@@ -11,9 +18,12 @@ SC_ROOT = os.path.join(ROOT, "tests", "fixtures", "showcase")
 SHOWCASE = os.path.join(SC_ROOT, "showcases", "test-showcase")
 RESEARCH_ONLY = os.path.join(SC_ROOT, "projects", "spider-research")
 TALRAND = os.path.join(SC_ROOT, "projects", "talrand")
+BENCH = os.path.join(ROOT, "tests", "bench")  # its sitecustomize.py logs every urlopen of every subprocess
 spec = importlib.util.spec_from_file_location("site_data", os.path.join(HERE, "site_data.py"))
 site_data = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(site_data)
+sys.path.insert(0, os.path.join(ROOT, "plugins", "edh-companion", "scripts"))
+from edhcore.cards import record  # noqa: E402
 
 
 def build_pipeline(tmp, cmd, path, *flags, site=True):
@@ -37,6 +47,7 @@ def run(*args):
                           env=dict(os.environ, PYTHONIOENCODING="utf-8"))
 
 
+@LIVE
 class Pipeline(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
@@ -211,6 +222,7 @@ class Units(unittest.TestCase):
         self.assertTrue(all(rows[n]["included"] for n in names))
 
 
+@LIVE
 class Showcase(unittest.TestCase):
     """from-showcase: krenko (Villains, b3/b4), spider-gwen + talrand (Heroes: commander picker), spider-research (research only)."""
 
@@ -275,6 +287,7 @@ class Showcase(unittest.TestCase):
         self.assertTrue(self.D["page"]["show"]["fan"])
 
 
+@LIVE
 class ResearchOnly(unittest.TestCase):
     def test_research_only_report(self):
         tmp = tempfile.mkdtemp()
@@ -300,6 +313,7 @@ class ResearchOnly(unittest.TestCase):
             shutil.rmtree(tmp, ignore_errors=True)
 
 
+@LIVE
 class Modes(unittest.TestCase):
     def test_interactive_and_summary(self):
         tmp = tempfile.mkdtemp()
@@ -317,6 +331,228 @@ class Modes(unittest.TestCase):
                          "Roles (from fixed Oracle-text rules", "### Decklist", "1 Talrand, Sky Summoner", "**Planned for release.**", "Price ladder"):
                 self.assertIn(part, md)
             self.assertNotIn("weak", md.lower())
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+
+def args(**kw):
+    a = argparse.Namespace(mode="showcase", style=None, images="cdn", viewer=None, show=None, hide=None, title=None, subtitle=None, out=None)
+    a.__dict__.update(kw)
+    return a
+
+
+def rec(name, pid, commander=False, back=None, type_line="Creature \u2014 Goblin"):
+    """A deck_check card record (the fields site_data reads)."""
+    return {"name": name, "qty": 1, "commander": commander, "printing_id": pid, "set": "tst", "collector_number": "1", "type_line": type_line,
+            "cmc": 1, "mana_cost": "{R}", "color_identity": ["R"], "game_changer": False, "price_usd": 0.5, "image": f"https://cards.scryfall.io/{pid}.jpg",
+            "back_image": back, "status": "legal", "roles": {}}
+
+
+def sf(layout, name, pid, faces, top=False):
+    """Minimal Scryfall card in its real shape (checked against api.scryfall.com, Nov 2026): transform and modal DFCs carry
+    image_uris per face and none on the card; split, adventure and flip cards have one top-level image for both halves."""
+    img = lambda side: {"normal": f"https://cards.scryfall.io/normal/{side}/{pid[0]}/{pid[1]}/{pid}.jpg", "art_crop": "x"}
+    return {"object": "card", "id": pid, "name": name, "layout": layout, "set": "tst", "collector_number": "1", "type_line": "Creature",
+            **({"image_uris": img("front")} if top else {}),
+            "card_faces": [dict({"object": "card_face", "name": n}, **({} if top else {"image_uris": img(side)}))
+                           for n, side in zip(faces, ("front", "back"))]}
+
+
+LAYOUTS = {  # layout -> (card, has a separate back image)
+    "transform": (sf("transform", "Delver of Secrets // Insectile Aberration", "6904ea20-e504-47da-95a0-08739fdde260",
+                     ["Delver of Secrets", "Insectile Aberration"]), True),
+    "modal_dfc": (sf("modal_dfc", "Valakut Awakening // Valakut Stoneforge", "228e551e-023a-4c9a-8f32-58dae6ffdf7f",
+                     ["Valakut Awakening", "Valakut Stoneforge"]), True),
+    "split": (sf("split", "Fire // Ice", "18303862-4726-4136-814f-157aa7006579", ["Fire", "Ice"], top=True), False),
+    "adventure": (sf("adventure", "Bonecrusher Giant // Stomp", "b5b71cd2-de35-451f-b16e-2e3936169407", ["Bonecrusher Giant", "Stomp"], top=True), False),
+    "flip": (sf("flip", "Akki Lavarunner // Tok-Tok, Volcano Born", "6ee6cd34-c117-4d7e-97d1-8f8464bfaac8",
+                ["Akki Lavarunner", "Tok-Tok, Volcano Born"], top=True), False),
+}
+
+
+class Data(unittest.TestCase):
+    """Offline: card data comes only from deck_check's JSON; missing data never aborts a build."""
+
+    def test_back_face_from_card_record(self):
+        site = site_data.Site(args(), multi=False)
+        for layout, (card, two_images) in LAYOUTS.items():
+            with self.subTest(layout):
+                r, pid = record(card), card["id"]
+                self.assertTrue(r["image"].endswith(f"/front/{pid[0]}/{pid[1]}/{pid}.jpg"))
+                if two_images:
+                    self.assertTrue(r["back_image"].endswith(f"/back/{pid[0]}/{pid[1]}/{pid}.jpg"))
+                    self.assertEqual(site.add_img(r), (pid + "_f", pid + "_b"))
+                    self.assertEqual(site.D["images"][pid + "_b"], r["back_image"])
+                else:
+                    self.assertIsNone(r["back_image"])
+                    self.assertEqual(site.add_img(r), (pid + "_f", None))
+                    self.assertNotIn(pid + "_b", site.D["images"])
+
+    def test_deck_check_gets_the_project(self):
+        tmp = tempfile.mkdtemp()
+        argv = []
+
+        def fake_run(cmd, **kw):
+            argv.extend(cmd)
+            open(cmd[cmd.index("--json") + 1], "w", encoding="utf-8").write("{}")
+            return subprocess.CompletedProcess(cmd, 0, "", "")
+
+        try:
+            with mock.patch.object(site_data.subprocess, "run", side_effect=fake_run):
+                site_data.deck_check("deck.txt", tmp, WS, cards_only=True)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        self.assertEqual(argv[argv.index("--project") + 1], WS)  # its research preferences decide the providers
+
+    def fake_deck_check(self, path, tmp, project, cheapest=False, cards_only=False):
+        """deck_check with Scryfall half down: the commander and two cards have data, the rest are unavailable."""
+        self.projects.append(project)
+        if cards_only:
+            return {"cards": [], "checks": [], "unavailable": ["Scryfall: no card data for 3 cards"], "data": {"verification": "unavailable", "as_of": None}}
+        brew = json.load(open(path, encoding="utf-8"))
+        cmd = brew["commander"]["cards"][0]["name"]
+        cards = [rec(cmd, "c0", commander=True)] + [rec(c["name"], f"d{i}") for i, c in enumerate(brew["deck"][:2])]
+        stats = {"price_usd": 1.5, "average_mv": 1, "lands": 0, "game_changers": [], "curve": {"1": 2}, "types": {"Creature": 2}}
+        return {"cards": cards, "checks": [{"id": "chk-cards-1", "status": "unverified", "requirement": "x", "detail": "", "cards": []}],
+                "stats": stats, "deck_hash": brew["deck_hash"], "checked": "2026-11-04",
+                "unavailable": ["Scryfall: no card data for 97 cards: ..."], "data": {"verification": "stale", "as_of": "2026-10-30 10:00"}}
+
+    def add(self, fake=None):
+        self.projects = []
+        site = site_data.Site(args(), multi=False)
+        site.D["look"] = site_data.resolve_look([])
+        with mock.patch.object(site_data, "deck_check", side_effect=fake or self.fake_deck_check), \
+                mock.patch("urllib.request.urlopen", side_effect=AssertionError("no network")):
+            site_data.add_project(site, WS)
+        return site, [d for g in site.D["groups"] for c in g["commanders"] for d in c["decks"]]
+
+    def test_unavailable_cards_do_not_abort_a_page(self):
+        site, decks = self.add()
+        self.assertEqual(sorted(d["id"] for d in decks), ["b3", "b4"])
+        texts = [u["text"] for u in site.D["accuracy"]["unverified"]]
+        self.assertTrue(any("no card data for 97 cards" in t for t in texts))
+        self.assertTrue(any("card data stale" in t for t in texts))
+        self.assertTrue(any("no card data for 3 cards" in t for t in texts))  # research lookups too
+        self.assertEqual(set(self.projects), {os.path.abspath(WS)})           # builds, research and swap lookups
+
+    def test_build_without_card_data_is_left_out(self):
+        def fake(path, tmp, project, cheapest=False, cards_only=False):
+            if path.endswith("brew-b3.json"):
+                return {"cards": [], "checks": [], "unavailable": ["Scryfall: unreachable"], "data": {"verification": "unavailable", "as_of": None}}
+            return self.fake_deck_check(path, tmp, project, cheapest, cards_only)
+
+        site, decks = self.add(fake)
+        self.assertEqual([d["id"] for d in decks], ["b4"])
+        self.assertTrue(any(u["text"] == "build b3 not shown: no card data" for u in site.D["accuracy"]["unverified"]))
+
+    def test_nothing_to_show_exits(self):
+        site = site_data.Site(args(out=os.path.join(tempfile.gettempdir(), "never-written.json")), multi=False)
+        site.D["look"] = site_data.resolve_look([])
+        with self.assertRaises(SystemExit):
+            site_data.finish(site, tempfile.gettempdir())
+
+
+@unittest.skipUnless(importlib.util.find_spec("PIL"), "needs Pillow")
+class Atlas(unittest.TestCase):
+    """Offline: atomic image cache, corrupt files refetched, 5xx retried."""
+
+    @classmethod
+    def setUpClass(cls):
+        sys.path.insert(0, HERE)
+        import atlas
+        cls.atlas = atlas
+
+    def setUp(self):
+        from PIL import Image
+        self.tmp = tempfile.mkdtemp()
+        self.raw, self.out = os.path.join(self.tmp, "raw"), os.path.join(self.tmp, "out")
+        os.makedirs(self.raw)
+        self.src = os.path.join(self.tmp, "src.jpg")
+        Image.new("RGB", (488, 680), (200, 30, 30)).save(self.src, "JPEG")
+        buf = io.BytesIO()
+        Image.new("RGB", (488, 680), (30, 30, 200)).save(buf, "JPEG")
+        self.jpeg = buf.getvalue()
+
+    def tearDown(self):
+        shutil.rmtree(self.tmp, ignore_errors=True)
+
+    def test_corrupt_or_empty_cache_is_refetched(self):
+        open(os.path.join(self.raw, "a_f.jpg"), "wb").close()                      # zero bytes
+        open(os.path.join(self.raw, "b_f.jpg"), "wb").write(b"<html>oops</html>")  # not an image
+        url = "file://" + self.src.replace("\\", "/")
+        man, failed = self.atlas.build({"a_f": url, "b_f": url}, self.out, raw_dir=self.raw, width=48)
+        self.assertEqual(failed, [])
+        self.assertEqual(set(man["cards"]), {"a_f", "b_f"})
+        self.assertTrue(all(self.atlas.valid(os.path.join(self.raw, k + ".jpg")) for k in ("a_f", "b_f")))
+        self.assertEqual([f for f in os.listdir(self.raw) if f.endswith(".tmp")], [])
+
+    def test_truncated_jpeg_is_refetched_or_skipped(self):
+        cut = self.jpeg[: len(self.jpeg) // 2]  # header intact, so Image.verify() would accept it
+        open(os.path.join(self.raw, "t_f.jpg"), "wb").write(cut)
+        self.assertFalse(self.atlas.valid(os.path.join(self.raw, "t_f.jpg")))
+        url = "file://" + self.src.replace("\\", "/")
+        man, failed = self.atlas.build({"t_f": url}, self.out, raw_dir=self.raw, width=48)
+        self.assertEqual((failed, set(man["cards"])), ([], {"t_f"}))  # refetched
+        # one image that still can't be decoded at packing time is a failure, never a crashed build
+        open(os.path.join(self.raw, "t_f.jpg"), "wb").write(cut)
+        open(os.path.join(self.raw, "u_f.jpg"), "wb").write(self.jpeg)
+        with mock.patch.object(self.atlas, "valid", return_value=True):
+            man, failed = self.atlas.build({"t_f": url, "u_f": url}, self.out, raw_dir=self.raw, width=48)
+        self.assertEqual([k for k, _ in failed], ["t_f"])
+        self.assertEqual(set(man["cards"]), {"u_f"})
+
+    def test_bad_download_never_lands_in_the_cache(self):
+        with mock.patch.object(self.atlas, "http_get", return_value=b"not an image"):
+            man, failed = self.atlas.build({"x_f": "https://cards.scryfall.io/x.jpg"}, self.out, raw_dir=self.raw, width=48)
+        self.assertEqual([k for k, _ in failed], ["x_f"])
+        self.assertEqual(os.listdir(self.raw), [])  # no partial or bogus file left behind
+        self.assertEqual(man["cards"], {})
+
+    def test_5xx_is_retried(self):
+        import urllib.error
+        from edhcore.http import Client
+        calls = []
+
+        class Ok:
+            def __init__(s, b): s.b = b
+            def __enter__(s): return io.BytesIO(s.b)
+            def __exit__(s, *x): return False
+
+        def fake(req, *a, **k):
+            calls.append(req.headers.get("Accept"))
+            if len(calls) == 1:
+                raise urllib.error.HTTPError(req.full_url, 502, "bad gateway", {}, io.BytesIO(b""))
+            return Ok(self.jpeg)
+
+        with mock.patch.object(self.atlas, "_client", Client(sleep=lambda s: None)), mock.patch("urllib.request.urlopen", side_effect=fake):
+            man, failed = self.atlas.build({"y_f": "https://cards.scryfall.io/y.jpg"}, self.out, raw_dir=self.raw, width=48)
+        self.assertEqual(failed, [])
+        self.assertEqual(calls, ["*/*", "*/*"])
+        self.assertIn("y_f", man["cards"])
+
+
+@LIVE
+class CacheReuse(unittest.TestCase):
+    """A 2-variant page built twice in one cache: each card is looked up once, and the rebuild needs no card lookups."""
+
+    def test_two_variants_share_one_lookup(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            env = dict(os.environ, PYTHONPATH=BENCH, EDHC_CACHE_DIR=os.path.join(tmp, "cache"), PYTHONIOENCODING="utf-8")
+            rows = {}
+            for phase in ("cold", "warm"):
+                log = os.path.join(tmp, phase + ".jsonl")
+                p = subprocess.run([shutil.which("uv"), "run", "--quiet", "--script", os.path.join(HERE, "site_data.py"), "from-workspace", WS,
+                                    "--out", os.path.join(tmp, phase, "page-data.json"), "--images", "cdn"],
+                                   capture_output=True, text=True, encoding="utf-8", env=dict(env, EDHC_BENCH_LOG=log))
+                self.assertEqual(p.returncode, 0, p.stderr)
+                rows[phase] = [r for r in (json.loads(x) for x in open(log, encoding="utf-8")) if r.get("kind", "request") == "request"] if os.path.exists(log) else []  # the probe also logs sleeps and body reads
+            coll = [r for r in rows["cold"] if "/cards/collection" in r["url"]]
+            self.assertTrue(coll)
+            dup = [k for k, n in collections.Counter((r["url"], r["body"]) for r in rows["cold"]).items() if n > 1]
+            self.assertEqual(dup, [])                                                    # nothing asked twice
+            self.assertFalse([r for r in rows["cold"] if re.search(r"/cards/[0-9a-f-]{36}", r["url"])])  # no per-card back-face calls
+            self.assertEqual([r["url"] for r in rows["warm"] if "api.scryfall.com" in r["url"]], [])   # rebuild: all from cache
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

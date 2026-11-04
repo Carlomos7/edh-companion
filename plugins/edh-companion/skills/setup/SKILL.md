@@ -7,12 +7,12 @@ argument-hint: "[nothing, or what to change, e.g. 'workspace D:/MTG']"
 
 # Setup (optional)
 
-Nothing requires setup: every skill works without it, using defaults. This only saves preferences and tells the player what their tools can do.
+Nothing requires setup: every skill works without it, using defaults. This only saves preferences and tells the player what their tools can do. Replies follow [writing.md](../../references/writing.md).
 
 Request: $ARGUMENTS
 
 ## 1. Show what's there
-Check capabilities by calling, not by reading tool names (one cheap call each; list in [research's sources.md](../research/references/sources.md)): card data (Scryfall), EDHREC stats, combos (Commander Spellbook), deck links (Moxfield/Archidekt), web search, YouTube transcripts, a browser for page testing (Playwright/Chrome), Bash + uv (for the deck checker and page builder). Report in a short table: available / missing / what's lost without it.
+Check capabilities by calling, not by reading tool names (one cheap call each; list in [research's sources.md](../research/references/sources.md)): card data (Scryfall), EDHREC stats, combos (Commander Spellbook), deck links (Moxfield/Archidekt), web search, YouTube transcripts, a browser for page testing (Playwright/Chrome), Bash + uv (for the deck checker and page builder). Report answer-first: one line on what works and what's missing ("Card data, combos and web search work; no YouTube transcripts, so no creator deck techs"), then a table: capability · available or missing · what's lost without it.
 
 For missing capabilities that would clearly help, suggest options in one line each (never install anything yourself):
 - MTG data: j4th MTG MCP (`claude mcp add mtg --scope user -- uvx mtg-mcp-server`) or its hosted connector
@@ -21,6 +21,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 - uv (`winget install astral-sh.uv` / `brew install uv`), needed for the deck checker and pages
 
 ## 2. Ask, one question at a time, only what they want to set
+Each question is multiple choice with the recommended option first; any can be skipped.
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
 2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget, as a hard limit or a flexible target / drippy / no expense spared), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
 3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
@@ -28,7 +29,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 5. Workspace folder: `~/Documents/EDHCompanion` (Recommended, used from any folder Claude Code starts in) · another path · this folder (creates `EDHCompanion/workspace.yaml` here so it's used when Claude Code starts here). Existing projects are never moved; if they live elsewhere, say where and let the player move them. Say plainly where the choice is saved (`workspace:` in the config file) and that every future session uses it, wherever Claude Code is started; a marked local folder (`workspace.yaml`) is the only thing that overrides it.
 
 ## 3. Save
-Config file: `~/.config/edh-companion/config.yaml`. Read it first if it exists; show the changes and get a yes before overwriting any existing value. Write only what was answered:
+Config file: `~/.config/edh-companion/config.yaml`. Read it first if it exists; show each change to an existing value as old → new and get a yes before overwriting it. Write only what was answered:
 ```yaml
 platform: Moxfield
 workspace: ~/Documents/EDHCompanion
@@ -50,6 +51,6 @@ research:
   prefer: [EDHREC, Reddit]
 ```
 Step 1's check never calls an unapproved tool; once tools are approved, their test results go in `status` and `checked`. Format and meaning: research's sources.md, "Research approval".
-Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back). Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
+Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back), and finish with what was saved and where. Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
 
 Project defaults from this file are suggestions for new projects only; a project's PROJECT.md always wins.

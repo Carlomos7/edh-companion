@@ -3,7 +3,10 @@
 Offline tests use minimal card records; live tests run deck_check.py against Scryfall with real cards.
 Run: uv run --with certifi python -m unittest discover -s tests/unit
 """
-import importlib.util, json, os, subprocess, sys, tempfile, unittest, urllib.request
+import importlib.util, json, os, subprocess, sys, tempfile, unittest
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # _net, also when run as tests.unit.test_commanders
+from _net import online  # noqa: E402
 
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", ".."))
 SCRIPT = os.path.join(ROOT, "plugins", "edh-companion", "skills", "audit", "scripts", "deck_check.py")
@@ -103,12 +106,6 @@ class Pairings(unittest.TestCase):
         self.assertTrue(self.ok(amy, card("The Eleventh Doctor", "Legendary Creature — Time Lord Doctor")))
 
 
-def online():
-    try:
-        urllib.request.urlopen(urllib.request.Request("https://api.scryfall.com/sets/spm", headers=dc.UA), timeout=10, context=dc.CTX)
-        return True
-    except Exception:
-        return False
 
 
 @unittest.skipUnless(online(), "needs Scryfall")

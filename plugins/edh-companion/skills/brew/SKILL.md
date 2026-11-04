@@ -7,10 +7,12 @@ description: Guides players from an idea, theme, character or commander to a pla
 
 Act like an informed deckbuilding friend: explore first, recommend with reasons, ask only what changes the deck, and keep every promise the player has made you keep (theme, art, budget, bracket, pet cards, cards they refuse). The accepted deck changes only with their yes.
 
+**Writing:** every reply, question and file this skill writes follows [writing.md](../../references/writing.md); read it before the first reply of a task.
+
 ## When to use
 - **Use:** "help me build a Spider-Man deck", "make my Doom deck stronger without losing the theme", "what should I cut", "bracket 3 and 4 versions", "drip it out under $200 extra", "export it for Archidekt", "turn this research into a list", any revision of a saved project.
 - **Don't use:** information only ("best Spider-Man commanders?" is research), "is my deck bracket 3?" (audit), "show it as a page" (present).
-- **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first.
+- **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first (`companion.py research-find <project> --card NAME | --text WORDS` instead of reading it whole).
 - **Calls audit** at decision boundaries: a build or revision handed back as ready, before export or sleeving, after a set of variants. Not for each card suggestion.
 - **Needs approval:** the direction/plan before filling 99 slots; changes to the accepted deck the player didn't ask for in so many words (an explicit "swap X for Y" is the approval: do it, as a new version); any relaxed or reinterpreted hard rule; variants they didn't ask for. Everything else runs without asking ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)).
 
@@ -25,35 +27,36 @@ A starting point (idea, theme, commander, card pool, or a list/Moxfield export/l
 - [ ] 4. Build or revise; run deck_check.py
 - [ ] 5. Save brew.json, a new decklists/ version, PROJECT/DECISIONS/STATE updates
 - [ ] 6. At a decision boundary: audit; report its verdict as-is
-- [ ] 7. Hand back: what changed, why, what's verified, honest weaknesses, next steps
+- [ ] 7. Hand back: status first, then the diff, Rule 0, price, honest shortcomings, next steps
 ```
 
 1. **Load.** No project named? Check for saved ones first and offer to resume a match ([schemas/README.md](../../schemas/README.md), "Starting a session"). Resume from STATE.md's next step. If the latest audit's version/hash doesn't match brew.json, the audit is out of date: say so.
 2. **Discover.** For a broad request, don't hand over a deck or a questionnaire. Follow [references/discovery.md](references/discovery.md): research and present a few directions with a recommendation, ask one meaningful question at a time at natural decision points, check that the restrictions allow a functional deck (confirmed limits vs estimates), and explain trade-offs so the player chooses deliberately. If the request is already specific, skip ahead.
-3. **Plan.** In under 15 lines: game plan and roughly when it wins at this bracket, role targets ([references/construction.md](references/construction.md)), 3 to 5 key cards with reasons and refs, what the bracket allows and what stays out, the theme line. Ask "Build it?" with options.
+3. **Plan.** Lead with the game plan and roughly when it wins at this bracket; then role targets ([references/construction.md](references/construction.md)), the key cards that make it work (reasons and refs), what the bracket allows and what stays out, and the theme line. End with "Build it?" as options.
 4. **Build or revise.**
    - New: lands and ramp → card advantage → interaction → wipes → plan cards. Auto-pick the obvious and list it; ask only where taste changes how the deck plays.
-   - Existing deck: [references/optimize.md](references/optimize.md). Every add names its cut, reason, evidence and theme status, saved as a `proposed` recommendation; apply only what's accepted.
+   - Existing deck: [references/optimize.md](references/optimize.md). Every add names its cut, reason, evidence and theme status, saved as a `proposed` recommendation; apply only what's accepted, and mark those `accepted` (applied to the deck) in the same save so an applied card never reads as a proposal.
    - Themes and art: [references/themes.md](references/themes.md): what "on theme" means, feasibility, compromises, infeasible hard rules, rule changes. The theme is their goal; build the best deck inside it, and never present a deck as meeting rules it breaks.
    - Budgets (gameplay vs aesthetic), printings and finishes, bracket targeting, community alternatives and exports: [references/money-looks-export.md](references/money-looks-export.md).
    - Getting the cards (products vs singles, what to buy first, availability), whenever the player asks or budget/art makes it matter: [references/acquisition.md](references/acquisition.md).
-   - Read each card's text on Scryfall before writing its role or "why". Never invent cards. Before proposing or locking in a commander (or a pair), confirm it with `deck_check.py --commander "A" [--commander "B"]`.
+   - **Research → deck:** build from verified candidates, not from memory or raw research: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/candidates.py" <project> [--add-name "New Card" …]` writes `candidates.json` with a verdict per card. `eligible` cards are ready; `needs_review` ones (Game Changer vs the bracket, upcoming, art/printing choice, theme unclear, no evidence yet) are a judgment call you make or ask about; `ineligible` (not a real card, banned, outside the identity) stay out. Newly found cards are fine: add them with `--add-name`, they're never rejected for not being in the research.
+   - **Carry the evidence into the deck:** copy each card's evidence IDs from candidates.json into `deck[].evidence` and set `research_version`. This is how a card's citations reach the audit and the pages; a deck built from research without it loses its sources.
+   - Read each card's text on Scryfall before writing its role or "why" (`card_lookup.py names …` gives the compact facts; never paste full card JSON). Never invent cards. Before proposing or locking in a commander (or a pair), confirm it with `deck_check.py --commander "A" [--commander "B"]`.
    - Self-check the result (catches count, identity, bans, Game Changers, commander + 2 combos, wrong or off-set printings):
-     `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" <decklist> --bracket N [--theme-sets …] --json <project>/deck_check.json`
+     `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" <decklist> --bracket N [--theme-sets …] --project <project> --json <project>/deck_check.json`
      Fix every fail. This is not the audit. Role counts (ramp, draw, removal...) come from deck_check's Oracle-text rules, not your own labels; a card can fill several roles. Unreleased cards show as upcoming with their release date: keep them out of the playable list, or plan a `future` version in brew.json.
    - Splitting a card pool (a Secret Lair, a box) between decks or players: `uv run --script "${CLAUDE_SKILL_DIR}/scripts/allocate.py" pool.txt --target Me=decklists/main-v3.txt --target "Sam=Doctor Doom" [--want Sam:Card]`. It never assigns a copy twice and leaves ties to the players.
 5. **Save** (after meaningful changes, not every message): brew.json per `schemas/brew.schema.json` (bump `version`, `deck_hash` and `statistics` from deck_check, never typed); the list as a new `decklists/<variant>-v<N>.txt` (Moxfield format: `Commander` then `Deck` sections; `(SET) number` whenever the printing matters); accepted/rejected/allowed items as dated lines in DECISIONS.md; goals the player states in PROJECT.md; progress and next steps in STATE.md. Variants are `brew-<variant>.json`. Validate with `companion.py validate`.
-6. **Audit at the boundary.** Invoke the audit skill on this version; it runs judgment checks in a fresh `auditor` agent so this conversation doesn't grade its own work. Present its verdict exactly. Its required fixes come back to the player as proposals, not silent edits.
-7. **Hand back.** The list or the diff (exports per money-looks-export.md when they want to import it); the plan in 3 to 5 lines; a Rule 0 summary (bracket, how it wins and roughly when, Game Changers, combos); the price once, in their money style; audit status; then remaining weaknesses and compromises stated plainly (also in brew.json `limitations` and PROJECT.md) without pushing them off their preferences; a few community-backed alternative swaps when they'd help; 1 to 3 next steps, recommended first, e.g. export it, plan how to get the cards, or a page (all offered, never done unasked).
+6. **Audit at the boundary.** Invoke the audit skill on this version; it decides what runs in the independent `auditor`. Report its verdict exactly as written ([writing.md](../../references/writing.md), "Audit status"). Its required fixes come back to the player as proposals, not silent edits.
+7. **Hand back**, answer-first. The first line is what's ready and its status ("v3 saved: legal, bracket 3, audit passed with 2 warnings", or "not audited yet"). Then: the list or the diff (exports per money-looks-export.md when they want to import it); a Rule 0 summary (bracket, how it wins and roughly when, Game Changers, combos); the price once, in their money style; remaining shortcomings and compromises stated plainly (also in brew.json `limitations` and PROJECT.md) without pushing them off their preferences; community-backed alternative swaps when they'd help, saved as proposals; next steps last, recommended first, e.g. export it, plan how to get the cards, or a page (all offered, never done unasked). The agreed plan isn't repeated; the Rule 0 summary carries it.
 
 ## Managing projects
 Resume, rename, archive or delete a saved project only by name and only after the player confirms the exact action ("Delete the whole spider-gwen folder, including its decklists and reports? This can't be undone."). Offer archiving (moving it to `<workspace>/archive/`) as the recommended alternative to deleting. Never touch other projects.
 
 ## Talking to the player
-- Describe shortcomings specifically (consistency, interaction, speed, resilience, mana, card flow), never "weak card" or "weak deck".
-- Friend-at-the-table tone; explain a term the first time (bracket, Game Changer, Rule 0).
+- [writing.md](../../references/writing.md) covers reply shape, naming shortcomings, defining terms and money. On top of it:
+- Friend-at-the-table tone.
 - Decisions as multiple choice with the recommended option first and its reason. Low-impact unknowns get a stated provisional assumption instead of a question.
-- Money comes up once, then at hand-back, unless a set budget is now broken.
 - Don't re-ask settled preferences; let them change direction any time and record it.
 
 ## Moxfield and other platforms

@@ -1,0 +1,70 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research-plan.schema.json",
+  "title": "research.plan.json: the parallel research workers a merge expects (companion.py research-plan / merge-research)",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created",
+    "workers"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.schema.json#/$defs/schema_version"
+    },
+    "created": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "workers": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "slug",
+          "role",
+          "subjects",
+          "id_prefix",
+          "status",
+          "part_hash"
+        ],
+        "properties": {
+          "slug": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "Names the part file research.part-<slug>.json."
+          },
+          "role": {
+            "type": "string"
+          },
+          "subjects": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "id_prefix": {
+            "type": "string",
+            "pattern": "^[a-z0-9-]+$",
+            "description": "The worker's IDs are src-<id_prefix>-001, fnd-<id_prefix>-001."
+          },
+          "status": {
+            "enum": [
+              "pending",
+              "merged",
+              "partial",
+              "failed"
+            ]
+          },
+          "part_hash": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "sha256 of the part file once merged."
+          }
+        }
+      }
+    }
+  }
+}

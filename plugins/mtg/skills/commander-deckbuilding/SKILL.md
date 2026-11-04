@@ -15,7 +15,7 @@ Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mt
 
 | Need | Tool |
 |---|---|
-| Data freshness at the start | `mtg_data_status`, then `mtg_data_sync` if the player agrees |
+| Data freshness at the start | `mtg_data_status`, then `mtg_data_sync` for anything stale (no question, see step 1) |
 | One card's facts, roles, rulings | `mtg_card` (`response_format: "detailed"` adds printings and prices) |
 | Messy names from pastes or videos | `mtg_resolve_names` |
 | Full deck check (legality, bracket, curve, mana, roles, combos) | `mtg_deck_check` |
@@ -30,7 +30,13 @@ Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mt
 
 No `mtg_*` tools available? The plugin's data server needs `uv`. Tell the player in one line: "The deck tools need a small helper called uv: install it (Windows: `winget install astral-sh.uv`, macOS: `brew install uv`, Linux: see docs.astral.sh/uv), then restart Claude Code." If `uv` is installed, the same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.
 
-Optional add-ons (EDHREC data, deck links, bracket estimates, videos, web search): follow the add-on rules in the `mtg-research` skill (references/sources.md, "Optional MCP servers"). In short: card facts and deck checks always come from the `mtgdb` tools, and a missing add-on means saying which check didn't run. Load the `mtg-research` skill for anything beyond card facts.
+**Use the add-ons whenever they're there, without asking.** At the start of a deck, look at the tools you actually have (rules in the `mtg-research` skill's references/sources.md, "Optional MCP servers"):
+- **EDHREC data** (e.g. `edhrec_commander_staples`, `edhrec_card_synergy`): used in steps 4, 5 and 6 below to ground the plan, the options and the review in what real decks with this commander play. Quote it with the deck count ("in 61% of 4,210 Krenko decks").
+- **Bracket estimate** (e.g. `spellbook_estimate_bracket`): step 6.
+- **Deck links** (e.g. `moxfield_decklist`): importing.
+- **Videos and web search**: slow, so only when the player asks what creators run, or in vaults.
+
+Card facts and deck checks still always come from the `mtgdb` tools. If an add-on isn't installed, build anyway and say once, in one line, what wasn't available ("no EDHREC data here, so picks are from card data and roles only"). Load the `mtg-research` skill for research beyond this.
 
 ## Talking to the player
 Many players aren't deep in Commander jargon. Write like a friend at the table: casual and short ("wanna drip out your cards?", "cool, here's the plan"), never stiff or salesy:
@@ -38,7 +44,7 @@ Many players aren't deep in Commander jargon. Write like a friend at the table: 
 - Lead with what matters to them (is it legal, how strong, what to change), then the detail.
 - Keep each reply short; offer more ("want the full numbers?") instead of dumping every stat.
 - Questions always come as options to pick (AskUserQuestion), never as a form to fill in. **Put the recommended option first, labelled "(Recommended)", with the reason in its description.**
-- **End every stage with recommended next steps:** 1 to 3 concrete options, the recommended one first, as an AskUserQuestion when the player has to choose. Never end on a bare "anything else?".
+- **End each finished flow with recommended next steps** (hand-back, review, upgrade, price check): 1 to 3 concrete options, the recommended one first, as an AskUserQuestion. Mid-build, the next stage *is* the next step: don't add a question between stages. Never end on a bare "anything else?".
 - **Money comes up once.** Ask about it in intake, show the price at hand-back, and otherwise only mention cost when they picked "keep it cheap", set a budget the deck now exceeds, or ask. Don't keep offering cheaper cards to someone who didn't ask to save.
 
 ## 1. Freshness (every new deck)
@@ -55,7 +61,7 @@ Work in the current folder so nothing is lost and other commands (like `/mtg:com
 - `<commander-slug>.txt` (e.g. `krenko-mob-boss.txt`): the current list in Moxfield format, commander first, rewritten after every accepted change.
 
 ## 4. Skeleton before the 99
-Propose, in under 15 lines:
+If EDHREC data is available, first pull the commander's staples and themes (one call, no question) and let them shape the plan, the role targets and the key cards; say "based on N decks". Then propose, in under 15 lines:
 - the plan in 2 to 3 sentences, and the turn it should threaten to win at this bracket
 - role targets adjusted to their answers ([references/construction.md](references/construction.md)), with any deviation explained
 - 3 to 5 key cards with a reason each (read each with `mtg_card` first)
@@ -65,6 +71,7 @@ Ask "Is this the deck you want?": "Yes, build it (Recommended)" / "Adjust the pl
 
 ## 5. Fill by role, with choices where taste matters
 Build in order: lands and ramp, card advantage, interaction, wipes, then the plan cards.
+- **Rank candidates** with the card data (roles, colors, legality) and, when available, EDHREC synergy and inclusion for this commander; a card with high synergy that the deck lacks is worth a look even if it's unpopular overall.
 - **Decide yourself, and say so:** basics, obvious fixing, staple ramp. List what you auto-picked so the player can override.
 - **Offer choices** where taste really matters, recommended option first. On the default path keep it to the 2 or 3 picks that change how the deck plays (usually the win conditions); auto-pick the rest, list them, and add "Want to pick more of these yourself?". If the player chose "Let me pick everything", also offer theme cards, pet-card slots and any slot where 2 to 4 cards are close. For many slots at once, use the picker page: write candidates JSON and run `uv run "${CLAUDE_SKILL_DIR}/scripts/picker.py" candidates.json --out picker.html` (format in its `--help`). Each option carries its reason and evidence; add the price only when money matters to them.
 - **Copies follow their money answer:**
@@ -100,8 +107,8 @@ Build it with the vault page scripts per the `commander-vault` skill's reference
 **Finally, recommend next steps** (pick the 2 or 3 that fit): a full vault with more brackets or commanders (`/mtg:commander-vault` in this folder starts from this deck), export it for Moxfield or Archidekt (`mtg_export`; Moxfield keeps exact printings), check what they still need from their collection (`mtg_collection` `have`), build another bracket of the same commander, or start a new deck.
 
 ## Other requests
-- **Review a deck:** `mtg_deck_profile` + `mtg_deck_check` + `mtg_simulate`, then report legality, bracket (with reasons), role gaps, mana problems, weakest cards (read each before calling it weak), and combos present or one card away. Recommend next steps: upgrade it, make it cheaper, or leave it.
+- **Review a deck:** `mtg_deck_profile` + `mtg_deck_check` + `mtg_simulate`, then report legality, bracket (with reasons), role gaps, mana problems, weakest cards (read each before calling it weak; with EDHREC data, also popular cards for this commander the deck is missing), and combos present or one card away. Recommend next steps: upgrade it, make it cheaper, or leave it.
 - **Optimize or upgrade:** follow [references/optimize.md](references/optimize.md). Every add names a specific cut and passes `mtg_deck_swap`. Never cut a combo piece, a commander enabler or the last card in a role without saying so.
-- **Make it cheaper:** `mtg_price_plan` (budget style shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
+- **Make it cheaper:** `mtg_price_plan` (its cheapest total shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
 - **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md); the theme is their goal, so build inside it and don't argue it.
 - **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a deck link (Moxfield, Archidekt, ...), use an installed add-on that can read that site; if none can, ask the player to paste the site's export. Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.

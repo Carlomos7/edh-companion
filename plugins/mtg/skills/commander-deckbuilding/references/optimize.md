@@ -21,7 +21,7 @@ The full question card (one AskUserQuestion call, up to 4 questions; skip any th
 Then, in plain text, one optional line: "Any cards that must stay (pet cards)?"
 
 ## 4. Diagnose
-Against the target bracket and construction.md: role gaps (Tagger counts), mana problems (sources vs pips, simulate), weak cards (read each before calling it weak), missing commander payoffs (commander-text search), and bracket violations for the target (Game Changers, combos, MLD, extra turns).
+If EDHREC data is available, pull this commander's staples and synergy first (no question) and use them to spot what the deck is missing. Against the target bracket and construction.md: role gaps (Tagger counts), mana problems (sources vs pips, simulate), weak cards (read each before calling it weak), missing commander payoffs (commander-text search), and bracket violations for the target (Game Changers, combos, MLD, extra turns).
 
 ## 5. Propose
 - Every add has a specific cut and a reason, tested with `mtg_deck_swap` against the target bracket, theme map and budget.

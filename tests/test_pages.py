@@ -166,6 +166,16 @@ class PagesTest(unittest.TestCase):
                 pg.locator("#tabs button", has_text="Sith decks").click()
                 pg.wait_for_selector(".decklist .ln")
                 self.assertEqual(pg.locator(".decklist .ln").count(), 4)
+                # filter chips: a chip's count is what clicking it leaves; Clear brings the whole list back
+                live = pg.locator(".decklist [aria-live]")
+                chip = pg.locator(".decklist .cg[aria-label=Type] .chip").first
+                n = chip.locator(".cn").inner_text()
+                chip.click()
+                self.assertEqual(chip.get_attribute("aria-pressed"), "true")
+                self.assertTrue(live.inner_text().startswith(f"Showing {n} of"))
+                pg.locator(".decklist .chips .chipclr").click()
+                self.assertFalse(pg.locator(".decklist .chips .chipclr").is_visible())
+                self.assertEqual(pg.locator(".decklist .ln").count(), 4)
                 body = pg.inner_text("main")
                 self.assertIn("Vader <b>hunts</b>.", body)  # agent text is shown as text, never parsed as HTML
                 self.assertNotIn("<b>hunts</b>", pg.inner_html("main"))

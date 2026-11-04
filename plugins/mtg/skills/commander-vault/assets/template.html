@@ -206,6 +206,17 @@ body.noprice .pr,body.noprice .stat.price{display:none}
 .alt{border-top:1px solid #2a3245;margin-top:12px;padding-top:10px}.alt h4{font:600 11.5px var(--body);text-transform:uppercase;letter-spacing:1.1px;color:#9aa4b8;margin:0 0 6px}
 .alt button{all:unset;cursor:pointer;display:block;width:100%;box-sizing:border-box;padding:8px 10px;margin:0 0 6px;border:1px solid #39425a;border-radius:6px;font-size:13px;line-height:1.35}
 .alt button:hover{background:#222a3b}.alt button:focus-visible{outline:3px solid #3987e5}
+.chips{display:flex;flex-wrap:wrap;gap:8px 18px;align-items:center;margin:0 0 14px;padding:10px 0;border-block:1px solid var(--line)}
+.cg{display:flex;flex-wrap:wrap;gap:5px;align-items:center}
+.cgl{font:600 10.5px var(--mono);text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-right:3px;white-space:nowrap;flex:none}
+.chip{display:inline-flex;align-items:center;gap:6px;font:500 12.5px var(--body);color:var(--text-2);background:var(--field);border:1px solid var(--line);border-radius:999px;padding:3px 11px;min-height:30px;cursor:pointer;white-space:nowrap}
+.chip:hover:not(:disabled){border-color:var(--s1);color:var(--text)}
+.chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
+.chip:disabled{opacity:.35;cursor:default}
+.chip .cn{font:500 11px var(--mono);opacity:.65}
+.chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
+.chipclr{font:500 12.5px var(--body);color:var(--s1);background:none;border:0;padding:4px 2px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
+@media (max-width:640px){.chips{display:grid;gap:8px}.cg{flex-wrap:nowrap;overflow-x:auto;scrollbar-width:none;padding-bottom:2px}.chip{flex:none;min-height:36px}}
 .swp{display:inline-block;margin-left:5px;font:600 11px/1 var(--mono);color:var(--s1)}
 .vbtns{display:flex;gap:10px;justify-content:center;align-items:center;margin-top:16px}
 .vbtns .btn{background:#161c29;color:#e7ebf3;border:1px solid #39425a;border-radius:999px;min-width:44px;height:44px}
@@ -283,21 +294,26 @@ function renderTier(T,host=$("#main")){const key="tier:"+T.id,st=store.get(key,{
   T.low_n?el("p",{class:"flag"},`Low confidence: fewer than ${T.low_n} decks behind some numbers (n shown on each card).`):null,themeLegend()));
  const ctl=el("div",{class:"ctrl"});const list=el("div");
  const sortSel=el("select",{"aria-label":"Sort"},...[["pct","Inclusion (high first)"],["price","Price (cheap first)"],["name","Name"]].map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
- const q=el("input",{type:"search",placeholder:"Search cards",value:st.q,"aria-label":"Search"});
- const max=el("input",{type:"number",placeholder:"Max $",min:0,value:st.max,style:"width:90px","aria-label":"Maximum price"});
- ctl.append(sortSel,q,max);if(D.theme){const th=el("select",{"aria-label":"Theme filter"},el("option",{value:""},"All themes"),...D.theme.labels.map(l=>el("option",{value:l.label,selected:st.theme===l.label},l.label)),el("option",{value:"off-theme",selected:st.theme==="off-theme"},"Off-theme"));th.onchange=draw;ctl.append(th);ctl.th=th}
- [sortSel,q,max].forEach(i=>i.addEventListener("input",draw));
- const panel=el("section",{class:"panel"},ctl,list);host.append(panel);
+ const q=el("input",{type:"search",placeholder:"Search cards",value:st.q||"","aria-label":"Search"});
+ const sel=st.f&&typeof st.f==="object"?st.f:{};
+ const PR=[["lt1","Under $1",0,1],["1-5","$1–5",1,5],["5-20","$5–20",5,20],["20+","$20+",20,1e9]];
+ const groups=[{id:"tier",label:"Tier",get:c=>tierOf(c.pct,cut),opts:TIERS.map(t=>({v:t,label:t}))},
+  SHOW.prices?{id:"price",label:"Price",get:c=>c.price==null?null:(PR.find(p=>c.price>=p[2]&&c.price<p[3])||[])[0],opts:PR.map(p=>({v:p[0],label:p[1]}))}:null,themeChips()].filter(Boolean);
+ const chips=chipBar(groups,T.cards,sel,draw);
+ ctl.append(q,sortSel);
+ [sortSel,q].forEach(i=>i.addEventListener("input",draw));
+ const panel=el("section",{class:"panel"},ctl,chips,list);host.append(panel);
  const sc=el("section",{class:"panel"});host.append(sc);
  if(T.cards.some(c=>c.price!=null))chart(sc,{type:"scatter",data:{datasets:[{label:"Cards",data:T.cards.filter(c=>c.price>0).map(c=>({x:c.price,y:c.pct,n:c.name})),backgroundColor:cssv("--s1"),pointRadius:4}]},
   options:baseOpts({plugins:{legend:{display:false},tooltip:{callbacks:{label:c=>`${c.raw.n}: ${c.raw.y}% · ${money(c.raw.x)}`}}},scales:{x:{type:"logarithmic",title:{display:true,text:"Price (log)",color:cssv("--text-2")},ticks:{color:cssv("--text-2"),callback:v=>[0.1,1,10,100,1000].includes(v)?"$"+v:""}},y:{title:{display:true,text:"Inclusion %",color:cssv("--text-2")},ticks:{color:cssv("--text-2")},grid:{color:cssv("--line")}}}})},"Which cards are cheap but widely played?");
  if(T.staples&&T.staples.length){sc.append(el("h3",{},"Generic staples (ranked separately)"),el("div",{class:"grid"},...T.staples.map(c=>cardTile(c,T.staples))))}
- function draw(){const s={sort:sortSel.value,q:q.value,max:max.value,theme:ctl.th?ctl.th.value:""};store.set(key,s);
-  let cs=T.cards.filter(c=>(!s.q||c.name.toLowerCase().includes(s.q.toLowerCase()))&&(!s.max||(c.price??0)<=+s.max)&&(!s.theme||c.theme===s.theme));
+ function draw(){const s={sort:sortSel.value,q:q.value,f:sel};store.set(key,s);
+  const base=c=>textHit(c,s.q);chips.sync(base);
+  let cs=T.cards.filter(c=>base(c)&&chipMatch(chips.groups,sel,c));
   cs.sort(s.sort==="price"?(a,b)=>(a.price??1e9)-(b.price??1e9):s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):(a,b)=>b.pct-a.pct);
   list.replaceChildren(...TIERS.map(t=>{const inT=cs.filter(c=>tierOf(c.pct,cut)===t);if(!inT.length)return null;
    return el("div",{class:"tier"},el("div",{class:"lt"+(t==="C"||t==="D"?" dk":""),style:`background:var(--t-${t})`,"aria-label":"Tier "+t},t),el("div",{class:"grid"},...inT.map(c=>cardTile(c,inT))))}).filter(Boolean));
-  if(!cs.length)list.append(el("p",{class:"muted"},"No cards match these filters."))}
+  if(!cs.length)list.append(el("p",{class:"note"},"No cards match. ",el("button",{type:"button",class:"chipclr",onclick:()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}},"Clear search and filters")))}
  draw()}
 function cardTile(c,ctx){return el("button",{class:"tile",onclick:e=>openViewer(c,ctx,e.currentTarget),"aria-label":`${c.name}, open card`},art(c.img,c.name),
  el("div",{class:"nm"},c.name),el("div",{class:"meta num"},c.pct!=null?`${c.pct}%${c.n?` of ${c.n.toLocaleString()}`:""}`:"",c.price!=null?` · ${money(c.price)}`:""),pill(c.theme))}
@@ -396,26 +412,54 @@ function deckCharts(d){const s=d.stats||{},ch=el("div",{class:"charts"});
  return ch}
 const TYPE_ORDER=["Creature","Planeswalker","Battle","Instant","Sorcery","Artifact","Enchantment","Land"];
 function mainType(t){t=t||"";return TYPE_ORDER.find(x=>t.includes(x))||"Other"}
-function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q:"",only:""});
+/* ---------- filter chips: OR inside a group, AND across groups; counts show what each chip would leave ---------- */
+function chipHas(g,c,v){const x=g.get(c);return Array.isArray(x)?x.includes(v):x===v}
+function chipMatch(groups,sel,c,skip){return groups.every(g=>g.id===skip||!(sel[g.id]||[]).length||sel[g.id].some(v=>chipHas(g,c,v)))}
+function chipBar(groups,cards,sel,onchange){
+ const bar=el("div",{class:"chips"}),btns=[];
+ const live=groups.filter(g=>g.opts.filter(o=>cards.some(c=>chipHas(g,c,o.v))).length>=(g.min??2));
+ live.forEach(g=>{const opts=g.opts.filter(o=>cards.some(c=>chipHas(g,c,o.v)));
+  bar.append(el("div",{class:"cg",role:"group","aria-label":g.label},el("span",{class:"cgl"},g.label),...opts.map(o=>{
+   const b=el("button",{type:"button",class:"chip",onclick:()=>{const a=sel[g.id]=sel[g.id]||[],i=a.indexOf(o.v);i<0?a.push(o.v):a.splice(i,1);onchange()}},o.dot?el("i",{style:`--c:${o.dot}`}):null,o.label,el("span",{class:"cn"}));
+   btns.push([g,o,b]);return b})))});
+ const clear=el("button",{type:"button",class:"chipclr",onclick:()=>{Object.keys(sel).forEach(k=>delete sel[k]);onchange()}},"Clear filters");bar.append(clear);
+ bar.groups=live;
+ bar.sync=(base)=>{btns.forEach(([g,o,b])=>{const on=(sel[g.id]||[]).includes(o.v);b.setAttribute("aria-pressed",on);
+   const n=cards.filter(c=>base(c)&&chipMatch(live,sel,c,g.id)&&chipHas(g,c,o.v)).reduce((a,c)=>a+(c.qty||1),0);
+   b.querySelector(".cn").textContent=n;b.disabled=!n&&!on});clear.hidden=!live.some(g=>(sel[g.id]||[]).length)};
+ return bar}
+const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
+function themeChips(){return D.theme?{id:"theme",label:"Theme",min:1,get:c=>c.theme,opts:[...D.theme.labels.map(l=>({v:l.label,label:l.label,dot:l.color})),{v:"off-theme",label:"Off-theme",dot:"var(--muted)"}]}:null}
+function textHit(c,q){q=q.trim().toLowerCase();return !q||[c.name||c.card,c.type,c.role].some(x=>x&&x.toLowerCase().includes(q))}
+function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q:"",f:{}});const sel=st.f&&typeof st.f==="object"?st.f:{};
  const total=d.cards.reduce((a,c)=>a+c.qty,0),gcs=new Set(((d.stats||{}).game_changers||[]).map(x=>x.toLowerCase()));
  const sec=el("section",{class:"panel decklist"},el("h2",{},`Decklist · ${total} cards`));
  const grp=el("select",{"aria-label":"Group by"},...[["type","Group: card type"],["mv","Group: mana value"],["theme","Group: theme"],["role","Group: role"],["none","No groups"]].filter(([v])=>v!=="theme"||D.theme).map(([v,t])=>el("option",{value:v,selected:st.group===v},t)));
  const srt=el("select",{"aria-label":"Sort"},...[["mv","Sort: mana value"],["name","Sort: name"],["price","Sort: price (high first)"]].filter(([v])=>v!=="price"||SHOW.prices).map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
- const only=el("select",{"aria-label":"Show"},el("option",{value:""},"Show: all cards"),...(D.theme?[...D.theme.labels.map(l=>el("option",{value:l.label,selected:st.only===l.label},"Show: "+l.label)),el("option",{value:"off-theme",selected:st.only==="off-theme"},"Show: off-theme")]:[]),el("option",{value:"gc",selected:st.only==="gc"},"Show: Game Changers"));
- const q=el("input",{type:"search",placeholder:"Card name",value:st.q,"aria-label":"Filter decklist"});
+ const isGC=c=>c.gc||gcs.has(c.name.toLowerCase());
+ const MVS=["0","1","2","3","4","5","6+"];
+ const groups=[{id:"type",label:"Type",get:c=>mainType(c.type),opts:TYPE_ORDER.map(t=>({v:t,label:t}))},
+  {id:"mv",label:"Mana value",get:c=>c.land?null:MVS[Math.min(c.mv||0,6)],opts:MVS.map(v=>({v,label:v}))},
+  {id:"role",label:"Role",get:c=>c.role,opts:[...new Set(d.cards.map(c=>c.role).filter(Boolean))].sort().map(r=>({v:r,label:cap(r)}))},
+  themeChips(),
+  {id:"tag",label:"Tags",min:1,get:c=>[isGC(c)&&"gc",swapsFor(c.name).length&&"swap",c.flags&&c.flags.length&&"flag"].filter(Boolean),
+   opts:[{v:"gc",label:"Game Changers"},{v:"swap",label:"⇄ Swap options"},{v:"flag",label:"! Flagged"}]}].filter(Boolean);
+ const q=el("input",{type:"search",placeholder:"Search cards",title:"Matches name, type or role",value:st.q,"aria-label":"Search the decklist"});
  const count=el("span",{class:"note","aria-live":"polite",style:"margin-left:auto;align-self:center"});
- sec.append(el("div",{class:"ctrl"},q,grp,srt,only,count));const out=el("div",{class:"cols"});sec.append(out);
+ const chips=chipBar(groups,d.cards,sel,draw);
+ sec.append(el("div",{class:"ctrl"},q,grp,srt,count),chips);const out=el("div",{class:"cols"});sec.append(out);
  sec.append(el("div",{class:"legend"},D.theme?el("span",{},...D.theme.labels.map(l=>tag(l.label)),tag("off-theme")," printing theme"):null,el("span",{},...["common","uncommon","rare","mythic"].map(rar)," rarity"),el("span",{},el("span",{class:"pill gc"},"GC")," Game Changer"),(CUR.G&&CUR.G.swaps||[]).length?el("span",{},el("span",{class:"swp"},"⇄")," swap options"):null,el("span",{},VIEW()?"Hover a name to preview · click to enlarge · price buys · ↗ Scryfall":"Name or ↗ opens Scryfall · price buys")));
- [grp,srt,q,only].forEach(i=>i.addEventListener("input",draw));
- function draw(){const s={group:grp.value,sort:srt.value,q:q.value,only:only.value};store.set(key,s);
-  let cs=d.cards.filter(c=>(!s.q||c.name.toLowerCase().includes(s.q.toLowerCase()))&&(!s.only||(s.only==="gc"?(c.gc||gcs.has(c.name.toLowerCase())):c.theme===s.only)));
+ [grp,srt,q].forEach(i=>i.addEventListener("input",draw));
+ function draw(){const s={group:grp.value,sort:srt.value,q:q.value,f:sel};store.set(key,s);
+  const base=c=>textHit(c,s.q);chips.sync(base);
+  let cs=d.cards.filter(c=>base(c)&&chipMatch(chips.groups,sel,c));
   count.textContent=`Showing ${cs.reduce((a,c)=>a+c.qty,0)} of ${total}`;
   cs.sort(s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):s.sort==="price"?(a,b)=>(b.price??0)-(a.price??0):(a,b)=>(a.mv-b.mv)||a.name.localeCompare(b.name));
   const gk=c=>c.commander?"Commander":s.group==="type"?mainType(c.type):s.group==="mv"?(c.land?"Lands":"Mana value "+Math.min(c.mv,7)+(c.mv>=7?"+":"")):s.group==="theme"?(c.theme==="off-theme"?"Off-theme":c.theme||"–"):s.group==="role"?(c.role||"Other"):"All cards";
   const groups={};cs.forEach(c=>(groups[gk(c)]=groups[gk(c)]||[]).push(c));
   const order=Object.keys(groups).sort((a,b)=>(a==="Commander"?-1:b==="Commander"?1:0)||(s.group==="type"?TYPE_ORDER.indexOf(a)-TYPE_ORDER.indexOf(b):a.localeCompare(b,undefined,{numeric:true})));
   const flat=order.flatMap(g=>groups[g]);  // the viewer browses the list in display order
-  if(!cs.length){out.replaceChildren(el("p",{class:"note"},"No cards match. Clear the search or set Show to all cards."));return}
+  if(!cs.length){out.replaceChildren(el("p",{class:"note"},"No cards match. ",el("button",{type:"button",class:"chipclr",onclick:()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}},"Clear search and filters")));return}
   out.replaceChildren(...order.map(g=>el("div",{class:"grp"},el("h3",{},el("span",{},g),el("span",{class:"num"},groups[g].reduce((a,c)=>a+c.qty,0))),...groups[g].map(c=>el("div",{class:"ln"},
    el(VIEW()?"button":"a",{class:"name"+(c.theme==="off-theme"?" off":""),"data-img":c.img,...(VIEW()?{onclick:e=>openViewer(c,flat,e.currentTarget)}:{href:cardLinks(c).scryfall,target:"_blank",rel:"noopener"})},c.qty>1?c.qty+"× ":"",c.name,(c.gc||gcs.has(c.name.toLowerCase()))?[" ",el("span",{class:"pill gc"},"GC")]:"",rar(c.rarity),tag(c.theme),
     swapsFor(c.name).length?el("span",{class:"swp",title:"Has tested swap options"},"⇄"):"",

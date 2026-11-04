@@ -2,6 +2,9 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.6
+- **Better page filters:** the decklist filters are now chips you can combine: card type, mana value, role, theme and tags (Game Changers, cards with swap options, flagged cards). Chips in one row widen the list (Instant or Sorcery); rows narrow it (and Removal). Each chip shows how many cards it would leave, empty ones grey out, and Clear filters resets everything. Search also matches type and role. The card-rankings tab gets tier, price and theme chips in place of the max-price box. Filters are remembered and scroll sideways on phones. A browser test covers them.
+
 ## 5.5.5
 - **Hover preview fix:** 5.5.4 hid the preview on scroll, which hid it as soon as it showed. It now shows on hover and hides on click, key press, tab change and when the viewer opens. A browser test covers it.
 

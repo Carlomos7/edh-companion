@@ -3,6 +3,7 @@
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
 ## 5.1.0
+- **Fast path:** one click to use the recommended setup and skip the questions; the upgrade flow has it too.
 - **Collection:** import from Moxfield, Archidekt or ManaBox, add and remove cards, undo, value, search, what a deck still needs, what fits a commander, export (`/mtg:collection`).
 - **Money is asked once:** no limit (default), keep it cheap, a set budget, or drippy (fancy printings up to a per-card max). "Bling" is now "drippy".
 - **Recommended next steps** at every stage, with the recommended option marked.

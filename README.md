@@ -47,7 +47,7 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 A build is a conversation, usually 10 to 20 minutes. You can stop, change your mind or say "you pick" at any point.
 
 1. **Data check.** One line showing how fresh the card data and rules are, with an offer to refresh.
-2. **A few questions, as options to click.** Usually three short rounds:
+2. **One click, or a few questions.** Claude first offers its recommended setup (bracket 3, best cards with normal copies, medium interaction, no theme). Take it and you're at the plan within a minute. Or pick everything yourself, in about three short rounds:
    - where you're starting (a commander, colors, a favorite card, a deck to upgrade)
    - your table's power level (bracket 1 to 5) and anything you don't want to see (infinite combos, extra turns, land destruction)
    - what's fun for you, how you like to win, how much interaction

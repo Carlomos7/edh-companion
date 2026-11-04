@@ -4,6 +4,18 @@ Ask with AskUserQuestion: 2 to 4 options per question, the recommended or most c
 
 Why this order: players start from very different places (a commander, colors, a favorite card or character), bracket and hard lines rule cards in or out, and what they find fun decides which of many legal decks is theirs. Budget comes after the plan so the plan isn't shaped by price before the player has said what they want.
 
+## Fast path first (don't slow people down)
+As soon as you know the starting point (question 1, or what they typed), offer the recommended setup in one question before any other round:
+
+"Want me to just run with my recommended setup?"
+- **"Yeah, use your defaults" (Recommended):** list them in the option's description, one line: bracket 3 · no infinite combos, extra turns or land destruction · best cards, normal copies, price at the end · medium interaction · plays to the commander's strengths · cards you own when close (only if they have a collection) · no theme
+- **"Defaults, but let me set money":** ask only question 7, then go
+- **"Let me pick everything":** run rounds 1 to 3 below
+
+When they take the defaults, ask nothing else up front: go straight to the skeleton (the skeleton's "Is this the deck you want?" is their chance to steer). Pet cards are optional: one line, "Any cards you definitely want in? (or just say go)". Write the defaults into `deck-brief.md` as their answers.
+
+For a pasted deck, the defaults come from the deck itself: its current bracket, its current spend level, any theme its printings show.
+
 ## Round 1: starting point and table
 1. **Starting point.** A commander they named · colors or a mechanic · a favorite card or character · an existing deck or precon to upgrade · "surprise me".
 2. **Bracket.** Show each with its intent:
@@ -36,8 +48,19 @@ Why this order: players start from very different places (a commander, colors, a
 - **Complexity:** if the commander makes a lot of triggers or long turns, ask whether that's fun or tiring for them.
 - **Popular or original:** if they say they're tired of seeing the same cards, prefer lower-inclusion picks and say so.
 
-## Defaults when the player says "you pick"
-B3, interaction medium, no limit with normal copies (price shown at the end), no theme, no proxies. Say which defaults you used in one line.
+## Defaults (the fast path, or whenever the player says "you pick")
+| Question | Default |
+|---|---|
+| Bracket | 3 (for a pasted deck: the bracket it plays at now) |
+| Hard lines | what the bracket rules out; at 3: no early infinite combos, no chained extra turns, no land destruction |
+| Fun and win style | whatever the commander does best |
+| Interaction | medium |
+| Money | best cards, normal copies, price shown at the end |
+| Collection | use cards they own when close in quality, if they have a collection |
+| Theme | none (for a pasted deck: keep the theme its printings show) |
+| Proxies | not used |
+
+Say which defaults you used in one line, so they can change any of them.
 
 ## deck-brief.md
 Write it after intake; update it whenever the player changes their mind.

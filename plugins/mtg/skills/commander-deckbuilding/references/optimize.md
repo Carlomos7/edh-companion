@@ -8,7 +8,10 @@ A deck link (read with an installed add-on that supports that site), a pasted ex
 
 Tell the user in 4 to 6 lines what you found **before** the questions, so the questions make sense. For example: "Legal except Mana Crypt (banned). Plays like B3 (2 Game Changers, no 2-card combos). Commander on curve 44% of games. 58% of cards are Lord of the Rings printings. Worth about $480." Mention cost once here; don't repeat it in every later message.
 
-## 3. Ask (one AskUserQuestion call, up to 4 questions; skip any the user already answered)
+## 3. Ask (fast path first)
+Offer the recommended setup in one question first: "Yeah, use your defaults (Recommended)" with the defaults in the description (keep its current bracket, light tune of 5 to 10 swaps, no new money concerns, keep its theme if it has one) · "Let me set it up". Taking the defaults goes straight to step 4.
+
+The full question card (one AskUserQuestion call, up to 4 questions; skip any the user already answered):
 1. **Target bracket**: "Your deck plays like B3. Target?" Options: Stay B3 (Recommended, unless they said otherwise) · Push to B4 · Tune down to B2 · Make it cEDH (B5).
 2. **Theme** (only if the profile shows a theme lean, or the user mentioned one), per themes.md: Ignore theme · Themed printings only (power) · Theme first with upgrades (prefer) · Strict.
    - Follow-up only if they chose prefer or strict and the theme has factions or a franchise: "What counts as on theme?" Options: Any <franchise> · Only <side A> (e.g. the Fellowship) · Only <side B> (Sauron's forces) · <character> only.

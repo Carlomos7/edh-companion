@@ -42,9 +42,9 @@ Many players aren't deep in Commander jargon. Write like a friend at the table: 
 Call `mtg_data_status`. Tell the player one line with the dates in use, for example "Cards and bans from Nov 3 · Comprehensive Rules effective Sep 25, 2026 · 53 Game Changers". If `refresh` is not empty, ask once whether to sync now ("Refresh now (Recommended, about a minute)" / "Use what's here"). A missing index means sync first.
 
 ## 2. Intake (ask, don't assume)
-Follow [references/intake.md](references/intake.md): usually three short rounds, a few questions each. Skip anything the player already told you. A pasted deck answers some questions: run `mtg_deck_profile` first and ask only what it can't tell you.
+Follow [references/intake.md](references/intake.md). **Lead with the fast path:** once you know the starting point, offer the recommended defaults in one question; most players should be at the skeleton within a minute. Only run the full rounds (three short ones) if they want to pick everything. Skip anything the player already told you. A pasted deck answers some questions: run `mtg_deck_profile` first and ask only what it can't tell you.
 
-Always settle, at minimum: starting point, bracket and hard lines, what they find fun, the one money question, and pet cards or cards they refuse to play. Theme is optional; never assume one from the commander.
+With the full rounds, settle at minimum: starting point, bracket and hard lines, what they find fun, the one money question, and pet cards or cards they refuse to play. Theme is optional; never assume one from the commander.
 
 ## 3. Save as you go
 Work in the current folder so nothing is lost and other commands (like `/mtg:commander-vault`) can pick the deck up:

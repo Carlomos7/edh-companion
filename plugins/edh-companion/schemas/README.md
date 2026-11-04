@@ -19,6 +19,7 @@ EDHCompanion/projects/<project>/     project = commander or idea slug, e.g. spid
 ├── research.json   sources and findings, for citations and checks       (research)
 ├── brew.json       accepted deck, proposals, statistics                 (brew)   brew-<variant>.json for variants
 ├── audit.json      checks and verdict for one deck version              (audit)  audit-<variant>.json for variants
+├── ACQUISITION.md  optional: how to get the cards, with dated prices   (brew, on request)
 ├── decklists/      main-v1.txt, main-v2.txt, b4-v1.txt ... importable lists, never overwritten
 └── reports/        index.html + img/ and presentation-checks.md         (present)
 ```

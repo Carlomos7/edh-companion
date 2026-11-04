@@ -15,6 +15,8 @@ Tested 2026-11-04 with the j4th MTG MCP (claude.ai connector), Parallel Search, 
 | Web/community search | Parallel `web_search` + `web_fetch` | Works; good for Reddit threads and articles. | Built-in WebSearch/WebFetch |
 | Semantic discovery | Exa `web_search_exa`, `web_fetch_exa` | Works; good at finding articles and deck techs by description. | Parallel or built-in search |
 | Video transcripts | `get_transcript`, `get_video_info` | Works (timestamped). YouTube sometimes blocks by IP. | Web fetch of the video URL; else cite the video as "watch" without quoting |
+| Prices and vendors | Scryfall prices (USD/EUR/TIX per printing, daily); a price tool such as `price_comparison` if installed (not retested) | Scryfall works | Vendor product pages via web fetch (TCGplayer, Card Kingdom, Cardmarket) |
+| Product contents (precons, Secret Lairs) | Scryfall `e:<set>` search | Works | Official Wizards product/decklist pages |
 | Tournament results (cEDH) | EDHTop16 GraphQL `https://edhtop16.com/api/graphql`; a tournament tool if installed | Not retested | cedh-db, web search |
 | Wizards rules and announcements | web fetch of magic.wizards.com | Works via any fetch tool | none needed |
 

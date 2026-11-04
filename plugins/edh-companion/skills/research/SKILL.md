@@ -8,7 +8,7 @@ description: Researches Magic: The Gathering Commander ideas, commanders, cards,
 Find out what real players know, then recommend. Quality beats volume: relevant, recent, diverse, honestly labelled evidence. Every claim the player sees traces to a source they can open, or is labelled as Claude's judgment or as unresolved.
 
 ## When to use
-- **Use:** "I want an Avatar deck, where do I start?", "what are people saying about Anti-Venom?", "best Spider-Man commanders?", "is this Reddit combo real?", a gap brew or audit reports.
+- **Use:** "I want a Spider-Man deck, where do I start?", "what are people saying about Anti-Venom?", "best Spider-Man commanders?", "is this Reddit combo real?", "which precon has most of these cards?", "is this Secret Lair still available?", a gap brew or audit reports.
 - **Don't use:** "what does lifelink do?", "is Sol Ring banned?", one card's text or price. Answer directly from one authoritative lookup with its date; no files.
 - **Parallel agents:** only for several independent subjects (e.g. four commanders to compare): one `researcher` agent per 1 to 2 subjects, each writing a part file in the research.json format with its own ID range; merge them into research.json. Small jobs run inline.
 - **Needs approval:** a deep pass nobody asked for (say the depth in one line; ask before going deep). Reading never needs approval, and research never changes a deck.
@@ -44,3 +44,4 @@ For a quick question in chat with no project, answer inline with citations and s
 - Card facts (text, legality, color identity, Game Changer status, printings, art) come from Scryfall, never from videos, EDHREC or memory. Resolve every card name from a transcript or thread on Scryfall; drop or list what doesn't resolve.
 - What couldn't be checked goes in `gaps`, not into a finding.
 - Prices: per printing and finish, with source and date; verified only when read for that exact printing, otherwise an estimate.
+- Products and availability (precon and Secret Lair contents, in print or not, reprints, Reserved List): check contents against Scryfall or the official decklist, cite availability claims. A quick "cheapest way to get X?" is a direct answer with dated prices; acquisition plans for a whole deck follow brew's [acquisition.md](../brew/references/acquisition.md).

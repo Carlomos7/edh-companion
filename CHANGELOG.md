@@ -2,6 +2,9 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.2.0
+- **Getting the cards, on demand:** ask any time (before, during or after a build, or about one card or product) how to get cards. research checks real product contents (precons, Secret Lairs) against Scryfall, dated prices per printing, and availability (out of print, reprints, Reserved List); brew turns it into a short ranked plan (best path, buy-first cards, products vs singles, printing choices within the aesthetic budget, totals without owned cards), saved to ACQUISITION.md only if wanted. Offered after a finished deck, never forced. audit can check product contents and price claims. setup can save currency and preferred stores.
+
 ## 7.1.0
 Themes that might not work, money and looks, exports.
 - **Theme feasibility:** research checks whether a franchise really has Magic cards (no assuming either way), finds eligible commanders, counts the pool per color identity and role, and records a verdict (feasible, constrained, infeasible, unknown) with confirmed counts vs estimates. brew explains the compromises with numbers and offers real paths (a thematic commander, a broader visual/story or mechanical theme, approved exceptions, or casual custom/proxy cards clearly marked as not legal), recommends one, and never presents a deck as meeting rules it breaks. Themes now record their basis (official, visual/story, mechanical, inspired) and hard rules vs flexible preferences.

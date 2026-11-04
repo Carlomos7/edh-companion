@@ -23,8 +23,9 @@ For missing capabilities that would clearly help, suggest options in one line ea
 ## 2. Ask, one question at a time, only what they want to set
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
 2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget / drippy), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
-3. Research sources (optional): any to prefer (e.g. EDHREC, Reddit, a favourite creator) or to never use. Skip it and research uses everything available.
-4. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
+3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
+4. Research sources (optional): any to prefer (e.g. EDHREC, Reddit, a favourite creator) or to never use. Skip it and research uses everything available.
+5. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
 
 ## 3. Save
 Config file: `~/.config/edh-companion/config.yaml`. Read it first if it exists; show the changes and get a yes before overwriting any existing value. Write only what was answered:
@@ -37,6 +38,9 @@ defaults:
   aesthetic:
     treatments: [foil, borderless]
     per_card_max_usd: 30
+shopping:
+  currency: USD
+  stores: [TCGplayer]
 research:
   prefer: [EDHREC, Reddit]
   exclude: []

@@ -1,7 +1,7 @@
 {
   "name": "edh-companion",
   "description": "A research-driven Commander (EDH) companion: researches real community knowledge, builds and refines decks with you inside your theme, budget and bracket, verifies them independently, and turns the results into interactive pages. Works with whatever MTG, search and video tools you have installed.",
-  "version": "7.1.0",
+  "version": "7.2.0",
   "author": {
     "name": "Carlomos7",
     "url": "https://github.com/Carlomos7"

@@ -45,9 +45,9 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 3. **Restart Claude Code and type `/mtg:build`**, or just say "build me a Krenko deck". The first time, Claude offers to download the card data (about a minute).
 
 ## Your first deck
-A build is a conversation, usually 10 to 20 minutes. You can stop, change your mind or say "you pick" at any point.
+A build is a conversation: quick by default (take the recommended setup and it's about three clicks), customizable whenever you want (say "let me pick" or "change X" at any point).
 
-1. **Data check.** One line showing how fresh the card data and rules are, with an offer to refresh.
+1. **Data check.** If the card data or rules are out of date, Claude refreshes them first (about a minute; say skip if you'd rather not), then shows one line with the dates in use.
 2. **One click, or a few questions.** Claude first offers its recommended setup (bracket 3, best cards with normal copies, medium interaction, no theme). Take it and you're at the plan within a minute. Or pick everything yourself, in about three short rounds:
    - where you're starting (a commander, colors, a favorite card, a deck to upgrade)
    - your table's power level (bracket 1 to 5) and anything you don't want to see (infinite combos, extra turns, land destruction)
@@ -64,7 +64,7 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
    - a Rule 0 summary to read out at your table
    - the price in one line (cheapest, as listed, drippy); store links if you want them
    - an export for Moxfield, Archidekt, MTG Arena or a spreadsheet (import it into Moxfield or Archidekt for a page you can share)
-   - once the deck passes every check: "Want to see it as a page?" Fancy, Basic, or customize
+   - once the deck passes every check: "Want to see it as a page?" Fancy (shareable or just on your computer), Basic, or Customize
 
 ## Commands and examples
 | Type | To |

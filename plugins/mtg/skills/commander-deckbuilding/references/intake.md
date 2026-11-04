@@ -4,7 +4,7 @@ Ask with AskUserQuestion: 2 to 4 options per question, the recommended or most c
 
 Why this order: players start from very different places (a commander, colors, a favorite card or character), bracket and hard lines rule cards in or out, and what they find fun decides which of many legal decks is theirs. Budget comes after the plan so the plan isn't shaped by price before the player has said what they want.
 
-## Fast path first (don't slow people down)
+## Fast path first (quick by default, customizable whenever they want)
 As soon as you know the starting point (question 1, or what they typed), offer the recommended setup in one question before any other round:
 
 "Want me to just run with my recommended setup?"

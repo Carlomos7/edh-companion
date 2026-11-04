@@ -7,6 +7,9 @@ description: Build, review, upgrade or price a Commander (EDH) deck together wit
 
 The player owns the deck. Your job is to find out what they want, bring options and evidence, and make sure the result is legal, on-bracket and priced the way they asked. Never hand over a finished 99 they didn't shape.
 
+## Quick by default, customizable whenever they want
+Every decision has a recommended default the player can take in one click; deeper options only appear behind "Customize" or when they ask ("let me pick", "more options", "change X"). A default build should take about three clicks: use the defaults → approve the plan → pick a page. Before adding a question, ask yourself whether a good default would do; if it would, use it and say so in one line. Anything defaulted can be changed later just by saying so.
+
 ## Tools
 Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mtg_mtgdb__<tool>`, e.g. `mcp__plugin_mtg_mtgdb__mtg_card`) for every card fact. Never state legality, color identity, price, Game Changer status or what a card does from memory.
 
@@ -39,7 +42,7 @@ Many players aren't deep in Commander jargon. Write like a friend at the table: 
 - **Money comes up once.** Ask about it in intake, show the price at hand-back, and otherwise only mention cost when they picked "keep it cheap", set a budget the deck now exceeds, or ask. Don't keep offering cheaper cards to someone who didn't ask to save.
 
 ## 1. Freshness (every new deck)
-Call `mtg_data_status`. Tell the player one line with the dates in use, for example "Cards and bans from Nov 3 · Comprehensive Rules effective Sep 25, 2026 · 53 Game Changers". If `refresh` is not empty, ask once whether to sync now ("Refresh now (Recommended, about a minute)" / "Use what's here"). A missing index means sync first.
+Call `mtg_data_status`. If anything is missing or stale, refresh it without asking (`mtg_data_sync`, about a minute) and say one line: "Updating card data and rules first, about a minute (say skip if you'd rather not)". Then one line with the dates in use, for example "Cards and bans from Nov 3 · Comprehensive Rules effective Sep 25, 2026 · 53 Game Changers". Only ask if they've said they're offline or in a hurry.
 
 ## 2. Intake (ask, don't assume)
 Follow [references/intake.md](references/intake.md). **Lead with the fast path:** once you know the starting point, offer the recommended defaults in one question; most players should be at the skeleton within a minute. Only run the full rounds (three short ones) if they want to pick everything. Skip anything the player already told you. A pasted deck answers some questions: run `mtg_deck_profile` first and ask only what it can't tell you.
@@ -63,7 +66,7 @@ Ask "Is this the deck you want?": "Yes, build it (Recommended)" / "Adjust the pl
 ## 5. Fill by role, with choices where taste matters
 Build in order: lands and ramp, card advantage, interaction, wipes, then the plan cards.
 - **Decide yourself, and say so:** basics, obvious fixing, staple ramp. List what you auto-picked so the player can override.
-- **Offer choices** for win conditions, theme cards, pet-card slots, and any slot where 2 to 4 cards are close, recommended option first. For many slots at once, use the picker page: write candidates JSON and run `uv run "${CLAUDE_SKILL_DIR}/scripts/picker.py" candidates.json --out picker.html` (format in its `--help`). Each option carries its reason and evidence; add the price only when money matters to them.
+- **Offer choices** where taste really matters, recommended option first. On the default path keep it to the 2 or 3 picks that change how the deck plays (usually the win conditions); auto-pick the rest, list them, and add "Want to pick more of these yourself?". If the player chose "Let me pick everything", also offer theme cards, pet-card slots and any slot where 2 to 4 cards are close. For many slots at once, use the picker page: write candidates JSON and run `uv run "${CLAUDE_SKILL_DIR}/scripts/picker.py" candidates.json --out picker.html` (format in its `--help`). Each option carries its reason and evidence; add the price only when money matters to them.
 - **Copies follow their money answer:**
   - *No limit, normal copies* (default): pick the best card; don't bring up cheaper ones.
   - *Keep it cheap* or a set budget: for cards that push past it, run `mtg_cheaper_alternatives` (with the commander's identity and the deck) and offer the best one next to the original with the price gap.
@@ -84,13 +87,13 @@ If a tool is down, say which check didn't run. Never present an unchecked list a
 - **Price, once:** `mtg_price_plan` in their style, as one line with the three totals ("cheapest $212 · as listed $340 · drippy $1,180") and the date. Add `to_buy_usd` if they have a collection. Store links per card only if they ask how to get the cards.
 - An "Unverified" line for anything you couldn't check.
 
-**Then offer the page, when the deck is ready.** Ready means: `mtg_deck_check` passes with no errors at the target bracket, the commander is on curve per step 6, and every check ran. Ask once, casually ("Want to see it as a page?"), with AskUserQuestion:
-- **"Fancy page (Recommended)":** the full page: card images, charts, cards-to-consider, the 3D card viewer. Then one follow-up about images:
-  - "Shareable link (Recommended): I'll download the card images into the page, about a minute" → `--style fancy`, publish
-  - "Just on my computer: no download, the page loads images from Scryfall" → `--style fancy --images cdn`, hand over the HTML file (artifact pages block outside images, so this one can't be published as is)
-- **"Basic page":** the deck, plan, numbers and Rule 0 summary; no images, ready in seconds → `--style basic`
+**Then offer the page, when the deck is ready.** Ready means: `mtg_deck_check` passes with no errors at the target bracket, the commander is on curve per step 6, and every check ran. Ask once, casually ("Want to see it as a page?"), as one AskUserQuestion:
+- **"Fancy, shareable link (Recommended)":** card images, charts, cards to consider, the 3D card viewer; the card images get downloaded into the page (about a minute) so it can be published → `--style fancy`, publish
+- **"Fancy, just on my computer":** the same page with no download; images load from Scryfall, so it opens in their browser but can't be published → `--style fancy --images cdn`, hand over the HTML file
+- **"Basic":** the deck, plan, numbers and Rule 0 summary; no images, ready in seconds → `--style basic`
 - **"Customize":** then one multi-select of sections (card images, charts, cards to consider, card rankings, card fan header, prices) and one choice of card viewer (3D · simple) → `--style basic` plus `--show ...`, or `--style fancy` plus `--hide ...`, and `--viewer`
-- **"Not now"**
+
+"Not now" is always available as the free-text answer; don't spend an option on it.
 
 Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, then `build_site.py`.
 

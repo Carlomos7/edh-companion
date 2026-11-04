@@ -11,7 +11,7 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
   sync           refresh every data source: cards, tags, rulings, combos, rules (and prices on request)
   status         date and staleness of each source; --remote checks upstream for newer versions
   rules          Comprehensive Rules lookup by number or keyword
-  price-plan     a deck priced cheapest / as listed / bling, exact printings, TCGplayer + Cardmarket links, export
+  price-plan     a deck priced cheapest / as listed / drippy, exact printings, TCGplayer + Cardmarket links, export
   export         a deck as moxfield (exact printings) / arena / plain / csv, in any price style
   alternatives   cheaper cards that fill the same roles (Tagger tags), inside a color identity
   index          download Scryfall bulk "default_cards", build the SQLite index (sync runs this)
@@ -1779,8 +1779,8 @@ def cmd_combos(a):
 
 
 # ---------- price styles, buy links, cheaper alternatives ----------
-PRICE_STYLES = ("budget", "as-listed", "bling")
-BLING_PROMOS = {"galaxyfoil", "surgefoil", "textured", "halofoil", "confettifoil", "raisedfoil", "rainbowfoil",
+PRICE_STYLES = ("budget", "as-listed", "drippy")
+DRIPPY_PROMOS = {"galaxyfoil", "surgefoil", "textured", "halofoil", "confettifoil", "raisedfoil", "rainbowfoil",
                 "stepandcompleat", "oilslick", "neonink", "gilded", "embossed", "fracturefoil", "doublerainbow"}
 
 
@@ -1801,13 +1801,13 @@ def finish_prices(p):
     return sorted(pairs, key=lambda x: x[1])
 
 
-def bling_score(p, finish):
+def drippy_score(p, finish):
     promos, frames = set((p.get("promo_types") or "").split(",")), set((p.get("frame_effects") or "").split(","))
     if "serialized" in promos:
         return -1  # one of a few hundred copies: not something to plan a deck around
     return ((3 if finish in ("foil", "etched") else 0) + (2 if finish == "etched" else 0)
             + (2 if p.get("border") == "borderless" else 0) + (2 if frames & {"showcase", "extendedart"} else 0)
-            + (2 if p.get("full_art") else 0) + (2 if p.get("set_code") == "sld" else 0) + (1 if promos & BLING_PROMOS else 0))
+            + (2 if p.get("full_art") else 0) + (2 if p.get("set_code") == "sld" else 0) + (1 if promos & DRIPPY_PROMOS else 0))
 
 
 def pick_printing(c, oid, style, listed=None, max_card=None):
@@ -1829,8 +1829,8 @@ def pick_printing(c, oid, style, listed=None, max_card=None):
     if max_card is not None:  # nothing under the cap: fall back to the cheapest copy, never the fanciest
         under = [o for o in options if o[2] <= max_card]
         options = under or [min(options, key=lambda o: o[2])]
-    if style == "bling":
-        return max(options, key=lambda o: (bling_score(o[0], o[1]), -o[2]))
+    if style == "drippy":
+        return max(options, key=lambda o: (drippy_score(o[0], o[1]), -o[2]))
     return min(options, key=lambda o: o[2])
 
 
@@ -1840,7 +1840,7 @@ def export_line(qty, name, p, finish):
 
 
 def cmd_price_plan(a):
-    """Price a deck three ways (cheapest, as listed, full bling) and give exact printings with store links."""
+    """Price a deck three ways (cheapest, as listed, full drippy) and give exact printings with store links."""
     c = open_db(a.db)
     parsed = parse_deck(a.deck)
     errors = [r["error"] for r in parsed if "error" in r]
@@ -1854,7 +1854,7 @@ def cmd_price_plan(a):
             continue
         name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
         listed = (r["set"], r["cn"], r.get("finish", "")) if r["set"] else None
-        picks = {s: pick_printing(c, oid, s, listed, a.max_card if s == "bling" else None) for s in PRICE_STYLES}
+        picks = {s: pick_printing(c, oid, s, listed, a.max_card if s == "drippy" else None) for s in PRICE_STYLES}
         for s, pk in picks.items():
             if pk and pk[2] is not None:
                 totals[s] += pk[2] * r["qty"]
@@ -1876,7 +1876,7 @@ def cmd_price_plan(a):
            "totals_usd": {s: round(v, 2) for s, v in totals.items()},
            "total_usd": round(totals[a.style], 2), "unpriced": unpriced, "errors": errors,
            "most_expensive": [{k: x[k] for k in ("qty", "name", "usd", "set", "finish")} for x in cards[:10]],
-           "bling_max_card": a.max_card,
+           "drippy_max_card": a.max_card,
            "cards": cards, "moxfield_export": "\n".join(lines),
            "note": "Prices are Scryfall's daily TCGplayer market prices. Links open the exact printing. "
                    "The export keeps set, collector number and finish, so Moxfield/Archidekt buy buttons pull the same copies."}
@@ -2108,9 +2108,9 @@ def main(argv=None):
     s.add_argument("sources", nargs="*", metavar="SOURCE"); s.set_defaults(f=cmd_sync)
     s = sp.add_parser("status", help="date and staleness of every data source (--remote: check for newer versions)")
     s.add_argument("--remote", action="store_true"); s.set_defaults(f=cmd_status)
-    s = sp.add_parser("price-plan", help="price a deck cheapest / as listed / bling, with exact printings and store links")
+    s = sp.add_parser("price-plan", help="price a deck cheapest / as listed / drippy, with exact printings and store links")
     s.add_argument("deck"); s.add_argument("--style", choices=PRICE_STYLES, default="as-listed")
-    s.add_argument("--max-card", type=float, help="bling only: fanciest printing at or under this price per card")
+    s.add_argument("--max-card", type=float, help="drippy only: fanciest printing at or under this price per card")
     s.set_defaults(f=cmd_price_plan)
     s = sp.add_parser("export", help="write a deck as moxfield / archidekt (exact printings) / arena / plain / csv")
     s.add_argument("deck"); s.add_argument("--format", choices=EXPORT_FORMATS, default="moxfield")

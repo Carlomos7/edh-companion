@@ -1,7 +1,7 @@
 ---
 name: commander-vault
-description: Orchestrates a Commander deck vault for several commanders (any theme or none) rendered as one page (tier lists, bracketed decklists, cards to consider, price ladders, card viewer), leading Sonnet subagents and an independent verifier.
-argument-hint: "[pasted request | @vault-request.md]"
+description: Orchestrates a Commander deck vault for several commanders (any theme or none) rendered as one page (tier lists, bracketed decklists, cards to consider, price ladders, card viewer), leading Sonnet subagents and an independent verifier. Can start from the deck currently being built in this folder.
+argument-hint: "[pasted request | @vault-request.md | nothing, to use the deck you're working on]"
 disable-model-invocation: true
 effort: high
 ---
@@ -16,8 +16,14 @@ Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs
 ## Current state
 ```!
 test -f vault/plan.md && { echo "RESUMING. plan.md:"; cat vault/plan.md; } || echo "Fresh run, no vault/ here."
+test -f deck-brief.md && { echo "DECK IN PROGRESS. deck-brief.md:"; cat deck-brief.md; ls *.txt 2>/dev/null; } || echo "No deck in progress here."
 ```
 Resuming: continue from the first unchecked gate. Don't redo a passed gate unless asked.
+
+**Starting from the deck you're working on.** If the request is empty or says "this deck" (or names a deck file), and there is a deck in progress (a `deck-brief.md` and its `<commander-slug>.txt` from the deckbuilding skill, in this folder or earlier in this conversation), build the vault around it instead of asking for a paste:
+- The brief prefills the request: commander, bracket, hard lines, money answer, collection preference, must/never include, theme.
+- The existing list becomes that commander's deck at its bracket: copy it to `vault/<slug>/b<N>.txt`, run the G2 checks on it, and don't rebuild it unless a check fails.
+- Ask one question (AskUserQuestion): "What should the vault add?" with "Neighbouring brackets for this commander (Recommended)" · "Other commanders too (name them)" · "Just a page for this deck" (that last one: render it per references/pages.md and stop; no agents needed).
 
 ## Accuracy model (why the gates exist)
 1. **Computed facts** (legality, printings, prices, Game Changers, counts): only from `mtgdb.py`. Agents may not state them otherwise.

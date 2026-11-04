@@ -59,16 +59,16 @@ class ServerTest(unittest.IsolatedAsyncioTestCase):
 
                 err, plan = await self.call(s, "mtg_price_plan", deck=DECK, style="budget")
                 self.assertFalse(err)
-                self.assertLess(plan["totals_usd"]["budget"], plan["totals_usd"]["bling"])
+                self.assertLess(plan["totals_usd"]["budget"], plan["totals_usd"]["drippy"])
                 self.assertIn("(C21) 263", plan["moxfield_export"])
 
-                err, ex = await self.call(s, "mtg_export", deck=DECK, format="arena", printings="bling")
+                err, ex = await self.call(s, "mtg_export", deck=DECK, format="arena", printings="drippy")
                 self.assertFalse(err)
                 self.assertTrue(ex["text"].startswith("Commander\n1 Darth Vader"))
                 self.assertNotIn("(", ex["text"])  # arena: names only
-                err, ex = await self.call(s, "mtg_export", deck=DECK, format="archidekt", printings="bling")
+                err, ex = await self.call(s, "mtg_export", deck=DECK, format="archidekt", printings="drippy")
                 self.assertIn("1x Darth Vader (SWT) 12 [Commander{top}]", ex["text"])
-                self.assertIn("(SLD) 999", ex["text"])  # bling picks the Secret Lair Sol Ring
+                self.assertIn("(SLD) 999", ex["text"])  # drippy picks the Secret Lair Sol Ring
                 err, msg = await self.call(s, "mtg_export", deck="1 Darth Vadr\n99 Swamp")
                 self.assertTrue(err)  # unresolved names are refused, not silently dropped
 

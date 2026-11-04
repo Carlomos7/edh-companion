@@ -22,7 +22,7 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 
 ## Features
 - **Built with you, not for you.** A few multiple-choice questions, a plan you approve, then options wherever it's a matter of taste.
-- **Your budget, your way.** Every deck is priced three ways (cheapest, as listed, bling) with a direct store link for each card. Budget style offers cheaper cards that do the same job.
+- **Your money, asked once.** No limit, keep it cheap, a set budget, or drippy (foils, borderless, Secret Lair up to a per-card max). Claude asks once and shows the price at the end: cheapest, as listed and drippy, with a store link for each card if you want one.
 - **Always checked.** 100 cards, singleton, color identity, legality, bracket rules, Game Changers, combos, mana, and how often you'll have your commander out on time.
 - **Current data, your call.** Card data, rules and combos come from Scryfall, Wizards and Commander Spellbook. Claude shows how fresh they are and offers to refresh.
 - **Works with your tools.** Paste a list from Moxfield, Archidekt, MTG Arena or anywhere. Export back with exact printings, so Moxfield's and Archidekt's buy buttons pull the same copies.
@@ -51,7 +51,7 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
    - where you're starting (a commander, colors, a favorite card, a deck to upgrade)
    - your table's power level (bracket 1 to 5) and anything you don't want to see (infinite combos, extra turns, land destruction)
    - what's fun for you, how you like to win, how much interaction
-   - your budget and price style: **budget** (cheapest copies), **balanced**, or **bling** (foils, borderless, Secret Lair, up to a per-card ceiling)
+   - money, once: **no limit** (the default), **keep it cheap**, **a set budget**, or **drippy** (fancy printings up to a per-card max)
    - pet cards and cards you never want
 
    Your answers are saved to `deck-brief.md`, so you can edit them or pick up later.
@@ -79,7 +79,7 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 You don't need the commands; plain requests work too:
 - "Build me a bracket 3 Krenko deck, I like going wide, under $150"
 - "Here's my list (paste). What bracket is it and what should I cut?"
-- "Show me the bling version, nothing over $40 a card"
+- "Show me the drippy version, nothing over $40 a card"
 - "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
 - "Give me this list for Moxfield with the exact printings"
 - "Does deathtouch work with trample?"
@@ -87,6 +87,8 @@ You don't need the commands; plain requests work too:
 
 ## Build your own vault
 A vault is one page with full decks for several commanders at the power levels you play, plus card rankings, cards to consider and price ladders. Any theme works, or none.
+
+**Already building a deck?** Type `/mtg:commander-vault` with nothing after it, in the same folder. It picks up that deck and asks one question: add neighbouring brackets, add other commanders, or just make a page for this deck.
 
 1. Open Claude Code in an empty folder (the vault's files go there).
 2. Copy the block below, change the answers after each colon, and delete any line you don't need (its default is used).
@@ -97,7 +99,7 @@ Commanders: Krenko, Mob Boss; Edgar Markov
 Theme: none
 Brackets: 2 and 3, open on 3
 Budget per deck: $150
-Price style: balanced
+Copies: normal
 Hard lines: no infinite combos
 Collection: none
 Extras: alternative commanders
@@ -109,7 +111,7 @@ Extras: alternative commanders
 | Theme | a franchise, tribe or art style, e.g. "Lord of the Rings", "vampires" | none |
 | Brackets | which power levels to build, and which the page opens on | your bracket plus one above |
 | Budget per deck | e.g. "$150" | no limit, price always shown |
-| Price style | budget, balanced, or bling (with a per-card ceiling) | balanced |
+| Copies | normal, cheapest (keep it cheap), or drippy with a per-card max | normal |
 | Hard lines | what you never want: infinite combos, extra turns, land destruction, stax | what the bracket allows |
 | Collection | paste a list, or a CSV path from Moxfield, Archidekt or ManaBox | none |
 | Extras | alternative commanders, collection planner, splitting a pile between players | none |
@@ -139,7 +141,7 @@ Everything above works on its own. These MCP servers make research richer: popul
 
 Claude checks these at the start of each deck and offers a refresh. To do it yourself: `/mtg:update-data`, or say "refresh the card data". Vendor prices: "sync vendor prices" (about 300 MB more disk).
 
-**Update the plugin:** `/plugin marketplace update carlomos7-mtg-skills`, then restart Claude Code.
+**Update the plugin:** in Claude Code run `/plugin marketplace update carlomos7-mtg-skills`, then restart Claude Code. `/plugin` shows the installed version; [CHANGELOG.md](CHANGELOG.md) says what changed.
 **Uninstall:** `/plugin uninstall mtg@carlomos7-mtg-skills`, then delete the data folder `~/.cache/mtg` (Windows: `%USERPROFILE%\.cache\mtg`).
 
 **Privacy:** the plugin's tools only download public data (Scryfall, Commander Spellbook, Wizards, and MTGJSON if you ask) and keep your decks, answers and collection on your computer. Vault pages are published privately to your own claude.ai account, and add-ons you install follow their own terms.
@@ -176,6 +178,8 @@ Tests (unit, MCP server over stdio, and a headless-browser test of the vault pag
 ```bash
 uv run --with pillow --with ijson --with certifi --with playwright --with "mcp>=2.3" python -m unittest discover -s tests
 ```
+**Releasing:** bump `version` in `plugins/mtg/.claude-plugin/plugin.json` and add a CHANGELOG entry in the same commit. Players only receive an update when the version changes.
+
 Behavior evals use real Claude runs and cost usage: see [plugins/mtg/evals/README.md](plugins/mtg/evals/README.md). When something goes wrong in a real session, add an eval case for it.
 
 ## Credits and license

@@ -161,12 +161,12 @@ def mtg_simulate(deck: str, commanders: int = 1, on_the_draw: bool = False, turn
 
 
 @mcp.tool(annotations=READ)
-def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None,
+def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "drippy"] = "as-listed", max_card: float | None = None,
                    response_format: Format = "concise") -> dict:
     """Price a deck three ways at once (budget = cheapest legal copy of each card, as-listed = the printings in the list,
-    bling = foil, borderless, showcase, Secret Lair) and give the chosen style's exact printing per card (set, number,
+    drippy = foil, borderless, showcase, Secret Lair) and give the chosen style's exact printing per card (set, number,
     finish) with TCGplayer and Cardmarket links, plus a Moxfield/Archidekt export that keeps those printings.
-    max_card caps bling per card. Shows to_buy_usd when the user has imported a collection."""
+    max_card caps drippy per card. Shows to_buy_usd when the user has imported a collection."""
     with deck_file(deck) as path:
         res, _ = run("price-plan", path, "--style", style, *(["--max-card", max_card] if max_card is not None else []))
     if response_format == "concise":
@@ -176,12 +176,12 @@ def mtg_price_plan(deck: str, style: Literal["budget", "as-listed", "bling"] = "
 
 @mcp.tool(annotations=READ)
 def mtg_export(deck: str, format: Literal["moxfield", "archidekt", "arena", "plain", "csv"] = "moxfield",
-               printings: Literal["budget", "as-listed", "bling"] = "as-listed", max_card: float | None = None,
+               printings: Literal["budget", "as-listed", "drippy"] = "as-listed", max_card: float | None = None,
                commanders: int = 1) -> dict:
     """Write a deck for sharing or importing elsewhere. moxfield and archidekt keep exact printings and foil marks, so
     those sites' buy buttons pull the same copies (archidekt also marks the commander; on Moxfield the user picks it in
     the New Deck dialog); arena is names only under Commander/Deck; plain is names only; csv uses Moxfield's collection
-    headers plus price and Scryfall ID. printings picks the copy per card: budget, as-listed or bling. Follow
+    headers plus price and Scryfall ID. printings picks the copy per card: budget, as-listed or drippy. Follow
     `import_into` when telling the user how to import."""
     with deck_file(deck) as path:
         res, code = run("export", path, "--format", format, "--printings", printings, "--commanders", commanders,

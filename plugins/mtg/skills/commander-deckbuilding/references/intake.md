@@ -21,13 +21,15 @@ Why this order: players start from very different places (a commander, colors, a
 6. **Interaction appetite:** light (mostly do my thing) · medium · heavy (lots of removal and counterspells).
 
 ## Round 3: money and cards
-7. **Budget.** Total: under $100 · $100 to $250 · $250 to $500 · no limit. Ask whether proxies are fine at their table only if they bring it up.
-8. **Price style** (decides which copies are suggested and priced):
-   - **Budget:** cheapest legal copy of every card; offer cheaper alternatives for expensive slots
-   - **Balanced:** normal copies; offer alternatives only for the priciest cards
-   - **Bling:** foils, borderless, showcase, Secret Lair. Then ask their per-card ceiling (e.g. "nothing over $30 a copy")
-9. **Collection.** If `mtg_collection` `show` finds one, ask: prefer cards I own · owned cards only where possible · ignore it. If they have none and owning matters, offer to import one (the `collection` skill explains how to export from Moxfield, Archidekt or ManaBox).
-10. **Pet cards and never-plays** (free text): must-includes, and cards or effects they won't play.
+7. **Money: one question, asked once.**
+   - **No limit, normal copies (Recommended):** the best card for each slot; price shown at the end
+   - **Keep it cheap:** cheapest copies, and cheaper cards that do the same job where it matters
+   - **Set a budget:** then ask the number once ("about how much for the whole deck?")
+   - **Make it drippy:** foils, borderless, showcase, Secret Lair. Then ask their per-card max once (e.g. "nothing over $30 a copy")
+
+   Don't ask about proxies unless they bring it up. Don't ask about money again later.
+8. **Collection** (only if `mtg_collection` `show` finds one): "Use cards you own when they're close in quality (Recommended)" · owned cards only where possible · ignore it. If they have none, don't ask; the hand-back can suggest importing one.
+9. **Pet cards and never-plays** (free text): must-includes, and cards or effects they won't play.
 
 ## Ask only when relevant
 - **Theme or flavor:** only if they mention one or picked "theme and flavor" above. Then follow themes.md.
@@ -35,7 +37,7 @@ Why this order: players start from very different places (a commander, colors, a
 - **Popular or original:** if they say they're tired of seeing the same cards, prefer lower-inclusion picks and say so.
 
 ## Defaults when the player says "you pick"
-B3, interaction medium, balanced price style, no total cap but tell them the price, no theme, no proxies. Say which defaults you used in one line.
+B3, interaction medium, no limit with normal copies (price shown at the end), no theme, no proxies. Say which defaults you used in one line.
 
 ## deck-brief.md
 Write it after intake; update it whenever the player changes their mind.
@@ -45,7 +47,7 @@ Write it after intake; update it whenever the player changes their mind.
 - Starting point: <commander / colors / card / upgrade of ...>
 - Bracket: B<n> (<hard lines allowed or excluded>)
 - Fun: <profile>; win style: <style>; interaction: <light/medium/heavy>
-- Budget: <total>; price style: <budget/balanced/bling> (<per-card ceiling>)
+- Money: <no limit / keep it cheap / budget $X / drippy, max $Y per card>
 - Collection: <prefer owned / owned only / ignored / none>
 - Must include: <cards>
 - Never: <cards or effects>

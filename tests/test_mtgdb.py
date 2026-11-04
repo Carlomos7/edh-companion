@@ -375,12 +375,12 @@ class LogicTest(unittest.TestCase):
         self.assertEqual(rows["glossary:Commander Tax"], "Informal term. See rule 903.8.")
         self.assertNotIn("glossary:Contents", rows)
 
-    def test_bling_and_finish(self):
+    def test_drippy_and_finish(self):
         p = {"finishes": "nonfoil,foil", "usd": 1.0, "usd_foil": 4.0, "usd_etched": None, "border": "borderless",
              "frame_effects": "", "promo_types": "", "set_code": "sld", "full_art": 0}
         self.assertEqual(self.m.finish_prices(p), [("nonfoil", 1.0), ("foil", 4.0)])
-        self.assertGreater(self.m.bling_score(p, "foil"), self.m.bling_score(p, "nonfoil"))
-        self.assertEqual(self.m.bling_score(dict(p, promo_types="serialized"), "foil"), -1)
+        self.assertGreater(self.m.drippy_score(p, "foil"), self.m.drippy_score(p, "nonfoil"))
+        self.assertEqual(self.m.drippy_score(dict(p, promo_types="serialized"), "foil"), -1)
 
     def test_direct_link(self):
         aff = "https://partner.tcgplayer.com/c/1/2/3?subId1=api&u=https%3A%2F%2Fwww.tcgplayer.com%2Fproduct%2F671258%3Fpage%3D1"

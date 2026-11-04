@@ -1,6 +1,6 @@
 ---
 name: cheaper
-description: Make a deck cheaper, or see what it costs: cheapest, as listed, and fancy versions, with cheaper swaps.
+description: Make a deck cheaper, or see what it costs: cheapest, as listed and drippy versions, with cheaper swaps.
 argument-hint: "[paste a decklist or a link]"
 disable-model-invocation: true
 ---

@@ -21,7 +21,7 @@ Theme limits: (optional, e.g. "at most 8 off-theme cards", "wider franchise is f
 YOUR TABLE AND WALLET
 Brackets: (e.g. "2 and 3, open on 3"; default: the bracket you play plus one above; bracket 5 only for commanders with real tournament results)
 Budget per deck: no limit (or e.g. "$150"; the price is always shown)
-Price style: balanced (budget = cheapest copies, cheaper swaps offered | balanced | bling = foil, borderless, Secret Lair, with a per-card ceiling like "nothing over $30 a copy")
+Copies: normal (or "cheapest" = cheapest copies and cheaper swaps where it matters | "drippy" = foil, borderless, Secret Lair, with a per-card max like "nothing over $30 a copy")
 Hard lines: (anything you never want, even if the bracket allows it: infinite combos, extra turns, land destruction, stax)
 
 YOUR CARDS

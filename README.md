@@ -28,12 +28,15 @@ By [Carlomos7](https://github.com/Carlomos7). Not a card database or a deckbuild
 | Optional | MCP add-ons ([below](#optional-integrations)) | richer, faster research; everything works without them |
 
 Install uv:
-- **Windows (PowerShell):** `winget install astral-sh.uv`
-- **macOS:** `brew install uv`
-- **Linux:** `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
+| Shell | Command |
+|---|---|
+| bash | `curl -LsSf https://astral.sh/uv/install.sh \| sh` |
+| PowerShell | `winget install astral-sh.uv` |
+| Command Prompt | `winget install astral-sh.uv` |
 
 ## Install
-In Claude Code (same on every OS):
+In Claude Code (the same everywhere):
 ```
 /plugin marketplace add Carlomos7/edh-companion
 /plugin install edh-companion@edh-companion
@@ -41,32 +44,42 @@ In Claude Code (same on every OS):
 Restart Claude Code, then just talk: "I want to build a powerful Spider-Man Commander deck that stays true to Marvel."
 
 ## Working with your decks
-EDH Companion keeps your decks, research and reports in one workspace. By default that's `Documents\EDHCompanion` in your home folder (`~/Documents/EDHCompanion` on macOS and Linux).
+EDH Companion keeps your decks, research and reports in one workspace. By default that's the `EDHCompanion` folder inside `Documents` in your home folder.
 
 **Recommended:** open Claude Code in your main workspace.
 
-Windows (PowerShell):
+bash:
+```bash
+cd ~/Documents/EDHCompanion
+claude
+```
+PowerShell:
 ```powershell
 cd "$HOME\Documents\EDHCompanion"
 claude
 ```
-macOS / Linux:
-```bash
-cd ~/Documents/EDHCompanion
+Command Prompt:
+```bat
+cd /d "%USERPROFILE%\Documents\EDHCompanion"
 claude
 ```
 From there you can create decks, continue existing projects and manage Showcases just by talking to Claude.
 
 **Working on one specific deck?**
 
-Windows (PowerShell):
+bash:
+```bash
+cd ~/Documents/EDHCompanion/projects/spider-man
+claude
+```
+PowerShell:
 ```powershell
 cd "$HOME\Documents\EDHCompanion\projects\spider-man"
 claude
 ```
-macOS / Linux:
-```bash
-cd ~/Documents/EDHCompanion/projects/spider-man
+Command Prompt:
+```bat
+cd /d "%USERPROFILE%\Documents\EDHCompanion\projects\spider-man"
 claude
 ```
 Useful for focused sessions.

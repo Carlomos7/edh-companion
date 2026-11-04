@@ -27,7 +27,8 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 - **Current data, your call.** Card data, rules and combos come from Scryfall, Wizards and Commander Spellbook. Claude shows how fresh they are and offers to refresh.
 - **Works with your tools.** Paste a list from Moxfield, Archidekt, MTG Arena or anywhere. Export back with exact printings, so Moxfield's and Archidekt's buy buttons pull the same copies.
 - **Your collection.** Import it from Moxfield, Archidekt or ManaBox, keep it current as you open packs or trade, see what it's worth, what a deck still needs and what fits a commander. Decks then prefer cards you own.
-- **Vaults.** Full decks for several commanders and power levels on one interactive page.
+- **Deck pages, your way.** A finished deck can become a page: **Fancy** (card images, charts, cards to consider, a 3D card viewer you can spin) or **Basic** (just the deck and numbers, ready in seconds), or pick the sections yourself. Fancy pages can be a shareable link, or a local page that loads images from Scryfall with nothing to download.
+- **Vaults.** Full decks for several commanders and power levels on one page.
 
 ## Quick start
 **You need:** Claude Code, [uv](https://docs.astral.sh/uv/) (a small helper that runs the card-data tools; it installs its own Python), and about 500 MB of disk for card data.
@@ -61,8 +62,9 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 6. **Hand-back.**
    - the list and a short plan
    - a Rule 0 summary to read out at your table
-   - the price three ways, with a store link for every card
+   - the price in one line (cheapest, as listed, drippy); store links if you want them
    - an export for Moxfield, Archidekt, MTG Arena or a spreadsheet (import it into Moxfield or Archidekt for a page you can share)
+   - once the deck passes every check: "Want to see it as a page?" Fancy, Basic, or customize
 
 ## Commands and examples
 | Type | To |
@@ -115,7 +117,8 @@ Extras: alternative commanders
 | Hard lines | what you never want: infinite combos, extra turns, land destruction, stax | what the bracket allows |
 | Collection | paste a list, or a CSV path from Moxfield, Archidekt or ManaBox | none |
 | Extras | alternative commanders, collection planner, splitting a pile between players | none |
-| Card viewer | simple, or 3D (spin cards freely; heavier page) | simple |
+| Page style | fancy (images, charts, rankings, 3D cards) or basic (decks and numbers, no images) | fancy |
+| Images | downloaded into the page (shareable link), or Scryfall links (local page, no download) | downloaded |
 
 Claude asks about anything unclear, shows the plan and a cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. The page is published privately to your claude.ai account when you're signed in, otherwise saved as files you open in a browser. Every option (theme strictness, must-include cards, card labels, look) is in the [full request template](vault-request.md).
 

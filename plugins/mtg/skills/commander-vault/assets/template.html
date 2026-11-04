@@ -6,7 +6,6 @@
 <title>__TITLE__</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 :root{color-scheme:light;
  --bg:#f6f5f2;--surface:#fcfcfb;--surface-2:#efeee9;--line:#dcdad3;
@@ -85,6 +84,8 @@ dialog::backdrop{background:#000c}
 .sheen{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.0;transition:opacity .2s;
  background:radial-gradient(circle at var(--mx,50%) var(--my,30%),#fff5 0%,#fff0 40%),linear-gradient(115deg,#0000 30%,#7af3 45%,#f7a3 55%,#0000 70%)}
 .stage:hover .sheen{opacity:1}
+body.noimg .decklist .ln{grid-template-columns:28px 1fr auto auto}body.noimg .decklist button.name{cursor:default}
+body.noprice .pr,body.noprice .stat.price{display:none}
 .stage.v3 .card3d{display:none}.stage canvas{display:block;margin:0 auto;width:min(420px,86vw);aspect-ratio:488/680;cursor:grab}
 .side{background:#1a1a19ee;border-radius:12px;padding:16px;max-height:80dvh;overflow:auto}
 .side h3{margin-top:0}.side table td,.side table th{color:#f0efec;border-color:#34332f}
@@ -113,12 +114,15 @@ const $=(s,r=document)=>r.querySelector(s), el=(t,a={},...k)=>{const e=document.
 const store={get(k,d){try{const v=localStorage.getItem("mtgp:"+k);return v==null?d:JSON.parse(v)}catch(e){return d}},set(k,v){try{localStorage.setItem("mtgp:"+k,JSON.stringify(v))}catch(e){}}};
 const money=v=>v==null?"–":"$"+(v<10?v.toFixed(2):v<1000?v.toFixed(0):Math.round(v).toLocaleString());
 const cssv=n=>getComputedStyle(document.documentElement).getPropertyValue(n).trim();
-let D, ATL, charts=[];
+let D, ATL, charts=[], SHOW={}, IMG="atlas";
+const CHART_URL="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js";
+const loadScript=src=>new Promise((ok,no)=>{const s=document.createElement("script");s.src=src;s.onload=ok;s.onerror=no;document.head.append(s)});
 
 /* ---------- images from atlas ---------- */
-function artStyle(key){const a=ATL&&ATL.cards[key];if(!a)return "";const[i,x,y]=a,[w,h]=ATL.cell,c=ATL.cols,r=ATL.rows;
+function artStyle(key){if(IMG==="cdn"){const u=(D.image_urls||{})[key];return u?`background-image:url("${u}");background-size:cover;background-position:center`:""}
+ const a=ATL&&ATL.cards[key];if(!a)return "";const[i,x,y]=a,[w,h]=ATL.cell,c=ATL.cols,r=ATL.rows;
  return `background-image:url(${ATL.base}${ATL.atlases[i]});background-size:${c*100}% ${r*100}%;background-position:${c>1?x/w/(c-1)*100:0}% ${r>1?y/h/(r-1)*100:0}%`}
-function art(key,alt){return el("div",{class:"art",role:"img","aria-label":alt||"",style:artStyle(key)})}
+function art(key,alt){if(IMG==="none")return null;return el("div",{class:"art",role:"img","aria-label":alt||"",style:artStyle(key)})}
 
 /* ---------- theme pills ---------- */
 function themeColor(label){const t=D.theme;if(!t)return"var(--muted)";const L=t.labels.find(l=>l.label===label);return L?L.color:"var(--s4)"}
@@ -126,9 +130,9 @@ function pill(label){if(!D.theme||!label)return null;return el("span",{class:"pi
 function themeLegend(){if(!D.theme)return null;return el("div",{class:"legend"},...D.theme.labels.map(l=>pill(l.label)),pill("off-theme"))}
 
 /* ---------- tabs and routing ---------- */
-function tabsList(){const t=[];(D.tiers||[]).forEach(x=>t.push({id:"tier-"+x.id,title:x.title,render:()=>renderTier(x)}));
+function tabsList(){const t=[];if(SHOW.tiers)(D.tiers||[]).forEach(x=>t.push({id:"tier-"+x.id,title:x.title,render:()=>renderTier(x)}));
  (D.groups||[]).forEach(g=>t.push({id:"decks-"+g.id,title:g.title,render:()=>renderGroup(g)}));
- t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
+ if(SHOW.sources)t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
 let TABS=[];
 function go(id,push=true){const tab=TABS.find(t=>t.id===id)||TABS.find(t=>(D.aliases||{})[id]===t.id)||TABS[0];
  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===tab.id));
@@ -194,7 +198,7 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
   const deck=cur.decks.find(d=>d.bracket===b)||cur.decks[0];
   body.append(el("section",{class:"panel"},el("div",{class:"row",style:"justify-content:space-between"},el("h2",{},cur.name),bb),deckSummary(deck,cur)));
   body.append(deckStats(deck,cur));body.append(deckList(deck));
-  const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(sw.length)body.append(swapList(G,cur,b));}
+  const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(SHOW.swaps&&sw.length)body.append(swapList(G,cur,b));}
  drawC()}
 function simAt(sim,mv){const k="turn_"+Math.min((mv||4)+1,8);return sim[k]??"–"}
 function deckSummary(d,c){const s=d.summary||{},w=el("div");
@@ -206,12 +210,13 @@ function deckSummary(d,c){const s=d.summary||{},w=el("div");
  if(s.notes)w.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
  const ch=d.checks||{};w.append(el("p",{class:"muted"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return w}
 function deckStats(d,c){const s=d.stats||{},sec=el("section",{class:"panel"},el("h2",{},"Numbers"));
- sec.append(el("div",{class:"stats"},...[["Price",money(s.price)+(s.unpriced&&s.unpriced.length?" +":"")],["Avg MV",s.avg_mv??"–"],["Lands",s.lands??"–"],["Game Changers",(s.game_changers||[]).length],["On curve",s.sim?simAt(s.sim,c.mv)+"%":"–"],s.cost_to_buy!=null?["To buy",money(s.cost_to_buy)]:null].filter(Boolean).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))));
+ sec.append(el("div",{class:"stats"},...[SHOW.prices?["Price",money(s.price)+(s.unpriced&&s.unpriced.length?" +":"")]:null,["Avg MV",s.avg_mv??"–"],["Lands",s.lands??"–"],["Game Changers",(s.game_changers||[]).length],["On curve",s.sim?simAt(s.sim,c.mv)+"%":"–"],SHOW.prices&&s.cost_to_buy!=null?["To buy",money(s.cost_to_buy)]:null].filter(Boolean).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))));
  if(s.unpriced&&s.unpriced.length)sec.append(el("p",{class:"flag"},`Price excludes ${s.unpriced.length} unpriced card(s): ${s.unpriced.join(", ")}`));
  if(s.template){sec.append(el("h3",{},"Template check"),...Object.entries(s.template).map(([role,[have,lo,hi]])=>{const mx=Math.max(hi*1.4,have,1),cls=have<lo?"short":have>hi?"over":"ok";
    return el("div",{class:"bullet"},el("span",{},role),el("div",{class:"bar",role:"img","aria-label":`${role}: ${have}, target ${lo} to ${hi}`},el("div",{class:"band",style:`left:${lo/mx*100}%;width:${(hi-lo)/mx*100}%`}),el("div",{class:"val",style:`width:${have/mx*100}%;height:8px`})),el("span",{class:"num "+cls},`${have} / ${lo}-${hi}`))}),
   el("p",{class:"muted"},(s.template_source||"Starting ranges, not laws.")+(s.roles_source?` Role counts: ${s.roles_source}.`:"")));
   if(s.role_compare)sec.append(el("p",{class:"muted"},"Where counts disagree: "+Object.entries(s.role_compare).map(([r,v])=>`${r} ${v.tagger} (Tagger) vs ${v.builder} (builder)`).join(" · ")))}
+ if(!SHOW.charts)return sec;
  const ch=el("div",{class:"charts"});sec.append(ch);
  if(s.curve)chart(ch,bars(Object.keys(s.curve),[{label:"Cards",values:Object.values(s.curve)}],{plugins:{legend:{display:false}}}),"Mana curve (nonland)");
  if(s.types)chart(ch,bars(Object.keys(s.types),[{label:"Cards",values:Object.values(s.types)}],{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:cssv("--text-2"),precision:0},grid:{color:cssv("--line")}},y:{ticks:{color:cssv("--text-2")},grid:{display:false}}}}),"Card types");
@@ -257,7 +262,7 @@ function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||
 
 /* ---------- viewer: CSS 3D, drag to rotate, flip, sheen ---------- */
 let V={list:[],i:0,opener:null,ry:0,rx:0,flipped:false};
-function openViewer(c,list,opener){V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
+function openViewer(c,list,opener){if(!SHOW.viewer||IMG==="none")return;V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
 function cardOf(x){return x.card?{...x,name:x.card}:x}
 function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=0;V.ry=0;apply();
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);
@@ -306,13 +311,14 @@ const V3={on:false,want:null,img:{},tex:{},
    $("#stage").prepend(cv);$("#stage").classList.add("v3");this.cv=cv;this.on=true;
    this.reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
   }catch(e){console.warn("3D viewer unavailable, using the simple viewer");this.on=false}},
- loadImg(src){return this.img[src]||(this.img[src]=new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src}))},
+ loadImg(src){return this.img[src]||(this.img[src]=new Promise((ok,no)=>{const i=new Image();if(IMG==="cdn")i.crossOrigin="anonymous";i.onload=()=>ok(i);i.onerror=no;i.src=src}))},
  async texture(key){
-  if(this.tex[key])return this.tex[key];const a=ATL&&ATL.cards[key];if(!a)return null;
-  const[i,x,y]=a,[w,h]=ATL.cell,im=await this.loadImg(ATL.base+ATL.atlases[i]);
+  if(this.tex[key])return this.tex[key];let im,x=0,y=0,w=488,h=680,sw=null,sh=null;
+  if(IMG==="cdn"){const u=(D.image_urls||{})[key];if(!u)return null;im=await this.loadImg(u);sw=im.naturalWidth;sh=im.naturalHeight}  // Scryfall allows any origin
+  else{const a=ATL&&ATL.cards[key];if(!a)return null;[w,h]=ATL.cell;x=a[1];y=a[2];im=await this.loadImg(ATL.base+ATL.atlases[a[0]])}
   const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d"),rad=w*.0475;
   g.beginPath();g.moveTo(rad,0);g.arcTo(w,0,w,h,rad);g.arcTo(w,h,0,h,rad);g.arcTo(0,h,0,0,rad);g.arcTo(0,0,w,0,rad);g.closePath();g.clip();
-  g.drawImage(im,x,y,w,h,0,0,w,h);
+  g.drawImage(im,x,y,sw||w,sh||h,0,0,w,h);
   try{g.getImageData(0,0,1,1)}catch(e){this.off("3D viewer needs the page served over http(s) (opened from disk, the browser blocks card textures); using the simple viewer");return null}
   const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return this.tex[key]=t},
  off(why){if(!this.on)return;this.on=false;this.cv.remove();$("#stage").classList.remove("v3");console.warn(why);apply()},
@@ -333,8 +339,13 @@ const V3={on:false,want:null,img:{},tex:{},
 /* ---------- boot ---------- */
 async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-data.json")).json()}catch(e){$("#main").textContent="Could not load site-data.json.";return}}
  ATL=D.atlas?{...D.atlas,base:D.atlas.base??"img/"}:null;
+ const P=D.page||{};  // basic / fancy / custom: which sections exist and where images come from
+ SHOW=Object.assign({tiers:true,charts:true,swaps:true,sources:true,fan:true,prices:true,viewer:true},P.show||{});
+ IMG=P.images||(ATL?"atlas":D.image_urls?"cdn":"none");
+ document.body.classList.toggle("noimg",IMG==="none");document.body.classList.toggle("noprice",!SHOW.prices);
+ if(SHOW.charts)await loadScript(CHART_URL).catch(()=>{});  // charts degrade to a note when offline
  document.title=D.title||document.title;$("#title").textContent=D.title||"";$("#subtitle").textContent=D.subtitle||"";
- const fan=$("#fan"),fc=(D.fan||[]).slice(0,7);fc.forEach((k,i)=>{const a=art(k,"");const m=(fc.length-1)/2;a.style.setProperty("--r",(i-m)*6+"deg");a.style.setProperty("--y",Math.abs(i-m)*4+"px");fan.append(a)});
+ const fan=$("#fan"),fc=SHOW.fan&&IMG!=="none"?(D.fan||[]).slice(0,7):[];fc.forEach((k,i)=>{const a=art(k,"");const m=(fc.length-1)/2;a.style.setProperty("--r",(i-m)*6+"deg");a.style.setProperty("--y",Math.abs(i-m)*4+"px");fan.append(a)});
  const t=store.get("theme",null);if(t)document.documentElement.dataset.theme=t;
  $("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;store.set("theme",n);go(store.get("tab"),false)};
  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>go(store.get("tab"),false));

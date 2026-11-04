@@ -28,7 +28,7 @@ Against the target bracket and construction.md: role gaps (Tagger counts), mana 
 - Respect the change budget and locked cards. Order by impact.
 - Close calls go to the picker page (`scripts/picker.py`).
 - Money: only with "keep it cheap" or a limit they'd exceed do adds come with `mtg_cheaper_alternatives` options; with "drippy", printing upgrades within their per-card max are their own optional list; with "no limit", don't bring up price until the hand-back.
-- Theme cost is shown when a theme is on: "Off-theme upgrade available: X (+power) instead of Y."
+- Theme on: every upgrade stays inside their theme mode. Don't propose off-theme upgrades unless they ask for them.
 
 ## 6. Apply and verify
 Write `after.txt`, then run `mtg_deck_check` (CLI `validate --themes/--reasons` if themed), `mtg_simulate` and `mtg_price_plan` in the player's price style. Then `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" diff before.txt after.txt`.

@@ -38,7 +38,7 @@ class PagesTest(unittest.TestCase):
                                          "sources": [{"url": "https://edhrec.com/x", "date": "2026-11-01", "kind": "edhrec"}]}) + "\n" +
                              json.dumps({"id": "2", "type": "plan", "claim": "Vader wins by turn 7", "status": "unverified", "subject": "vader", "sources": []}) + "\n")
         sd = lambda *a: subprocess.run([sys.executable, os.path.join(PAGES, "site_data.py")] + list(a), capture_output=True, text=True, env=cls.env)
-        cls.steps = [sd("init", cls.site, "--title", "Sith <Vault>", "--bracket", "3", "--themes", tm),
+        cls.steps = [sd("init", cls.site, "--title", "Sith <Vault>", "--bracket", "3", "--themes", tm, "--viewer", "simple"),
                      sd("add-deck", cls.site, "--group", "Sith decks", "--slug", "vader", "--deck", cls.deck, "--bracket", "3", "--notes", notes, "--reasons", reasons),
                      sd("add-deck", cls.site, "--group", "Sith decks", "--slug", "vader", "--deck", cls.deck4, "--bracket", "4"),
                      sd("add-tier", cls.site, "--id", "sith", "--title", "Sith cards", "--cards", cards),
@@ -167,6 +167,72 @@ class PagesTest(unittest.TestCase):
                 pg.close()
             b.close()
         print("screenshots in", self.w, file=sys.stderr)
+
+    def build_variant(self, name, **page):
+        D = json.load(open(self.site, encoding="utf-8"))
+        D["page"] = {**D["page"], **page}
+        path = os.path.join(self.w, name + ".json")
+        json.dump(D, open(path, "w", encoding="utf-8"))
+        out = os.path.join(self.w, name)
+        r = subprocess.run([sys.executable, os.path.join(PAGES, "build_site.py"), path, "--out", out, "--raw-cache", self.raw],
+                           capture_output=True, text=True, env=self.env)
+        return r, out
+
+    def test_page_styles(self):
+        """basic: no images, no charts, no viewer, no image download; cdn: Scryfall links, no download, a publish warning."""
+        sd = lambda *a: subprocess.run([sys.executable, os.path.join(PAGES, "site_data.py"), "init", *a], capture_output=True,
+                                       text=True, env=self.env)
+        for style, want in (("basic", ("none", False, "simple")), ("fancy", ("atlas", True, "three"))):
+            path = os.path.join(self.w, f"init-{style}.json")
+            self.assertEqual(sd(path, "--title", "T", "--style", style).returncode, 0)
+            D = json.load(open(path, encoding="utf-8"))
+            self.assertEqual((D["page"]["images"], D["page"]["show"]["charts"], D["viewer"]), want)
+            self.assertEqual(D["page"]["style"], style)
+        path = os.path.join(self.w, "init-custom.json")
+        sd(path, "--title", "T", "--style", "basic", "--show", "charts", "--images", "cdn")
+        D = json.load(open(path, encoding="utf-8"))
+        self.assertEqual((D["page"]["style"], D["page"]["show"]["charts"], D["page"]["images"]), ("custom", True, "cdn"))
+        self.assertNotEqual(sd(path, "--title", "T", "--hide", "nonsense").returncode, 0)
+
+        basic = dict(images="none", show={"tiers": False, "charts": False, "swaps": False, "sources": True, "fan": False,
+                                          "prices": True, "viewer": False})
+        r, out = self.build_variant("basic", **basic)
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(os.path.exists(os.path.join(out, "img")))  # nothing downloaded
+        r, out_cdn = self.build_variant("cdn", images="cdn")
+        self.assertEqual(r.returncode, 0, r.stdout + r.stderr)
+        self.assertFalse(os.path.exists(os.path.join(out_cdn, "img")))
+        self.assertIn("artifact", r.stdout + r.stderr)  # says it can't be published as is
+        html = open(os.path.join(out_cdn, "index.html"), encoding="utf-8").read()
+        self.assertIn('"image_urls"', html)
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            self.skipTest("playwright not installed")
+        chrome = shutil.which("google-chrome") or shutil.which("chromium")
+        with sync_playwright() as p:
+            try:
+                b = p.chromium.launch(**({"executable_path": chrome} if chrome else {"channel": "chrome"}), args=["--no-sandbox"])
+            except Exception as e:
+                self.skipTest(f"no Chrome: {str(e)[:80]}")
+            pg = b.new_page(viewport={"width": 390, "height": 900})
+            errors, scripts = [], []
+            pg.on("pageerror", lambda e: errors.append(str(e)))
+            pg.on("request", lambda req: scripts.append(req.url) if req.resource_type == "script" else None)
+            pg.route("https://fonts.*/**", lambda r: r.fulfill(body="", content_type="text/css"))
+            pg.goto(pathlib.Path(out, "index.html").resolve().as_uri())
+            pg.wait_for_selector("#tabs button")
+            self.assertEqual(pg.locator("#tabs button").all_inner_texts(), ["Sith decks", "Sources & accuracy"])
+            pg.wait_for_selector(".decklist .ln")
+            self.assertEqual(pg.locator(".decklist .art").count(), 0)
+            self.assertEqual(pg.locator("canvas").count(), 0)
+            self.assertFalse(any("chart" in u.lower() or "three" in u for u in scripts), scripts)  # basic loads no libraries
+            pg.locator(".decklist button.name").first.click()
+            self.assertFalse(pg.evaluate("document.querySelector('#viewer').open"))
+            overflow = pg.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
+            self.assertLessEqual(overflow, 0)
+            self.assertEqual(errors, [])
+            b.close()
 
     def test_three_viewer_option(self):
         """--viewer 3d: the page loads three.js only then, spins the card, and falls back to the CSS viewer without it."""

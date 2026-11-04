@@ -20,7 +20,7 @@ The Command Zone's template ("Commander Deckbuilding Template for the New Era", 
 - Commander tax: if the plan depends on the commander, include protection or recursion.
 
 ## Theme vs power
-- When a theme forces a weaker card, say so and name the stronger option.
+- When the player chose a theme, build the best deck inside it. Mention a big trade-off once at the skeleton; don't name stronger off-theme cards unless they ask (see themes.md, "The player's theme is the goal").
 - Never claim a card is "on theme" without checking its printing (art and set), see the vault theme rules.
 
 ## Weak card heuristics (always read the card first)

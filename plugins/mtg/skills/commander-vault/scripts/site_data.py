@@ -5,7 +5,11 @@
 # ///
 """Assemble site-data.json from mtgdb output, so no number on the page is typed by hand.
 
-  site_data.py init site-data.json --title "..." [--subtitle ...] [--bracket 3] [--themes map.json] [--viewer simple|3d]
+  site_data.py init site-data.json --title "..." [--subtitle ...] [--bracket 3] [--themes map.json]
+               [--style fancy|basic] [--images atlas|cdn|none] [--viewer simple|3d] [--show a,b] [--hide a,b]
+     styles: fancy = every section, card images, charts, 3D viewer (the default); basic = summary, numbers,
+     decklist, sources, no images (instant, tiny). --images: atlas = downloaded into the page (needed to publish),
+     cdn = Scryfall's image links (local page, no download), none. Sections: tiers, charts, swaps, sources, fan, prices, viewer
   site_data.py add-deck site-data.json --group "Atraxa decks" --slug atraxa --deck b3.txt --bracket 3
                [--notes notes.json] [--commanders 2] [--budget 300] [--reasons off-theme.json]
   site_data.py add-tier site-data.json --id atraxa --title "Atraxa staples" --cards edhrec.json [--staples staples.json]
@@ -93,11 +97,38 @@ def ladder(D, name, themes):
                for p in rows[:12]]
 
 
+SECTIONS = ("tiers", "charts", "swaps", "sources", "fan", "prices", "viewer")
+PRESETS = {
+    "fancy": {"show": dict.fromkeys(SECTIONS, True), "images": "atlas", "viewer": "three"},
+    "basic": {"show": {"tiers": False, "charts": False, "swaps": False, "sources": True, "fan": False, "prices": True,
+                       "viewer": False}, "images": "none", "viewer": "simple"},
+}
+
+
+def page_settings(a):
+    """Style preset, then the player's overrides. Returns (page, viewer)."""
+    p = PRESETS[a.style]
+    show = dict(p["show"])
+    for flag, val in (("show", True), ("hide", False)):
+        for name in filter(None, (getattr(a, flag) or "").split(",")):
+            name = name.strip()
+            if name not in SECTIONS:
+                sys.exit(f"unknown section '{name}': choose from {', '.join(SECTIONS)}")
+            show[name] = val
+    images = a.images or p["images"]
+    viewer = {"3d": "three", "simple": "simple"}.get(a.viewer) or p["viewer"]
+    if images == "none":
+        show["viewer"] = show["fan"] = False  # nothing to show without images
+    style = a.style if not (a.images or a.viewer or a.show or a.hide) else "custom"
+    return {"style": style, "show": show, "images": images}, viewer
+
+
 def cmd_init(a):
     D = {"schema": 1, "title": a.title, "subtitle": a.subtitle or "", "generated": time.strftime("%Y-%m-%d"),
          "default_bracket": a.bracket, "theme": None, "tiers": [], "groups": [], "printings": {}, "images": {},
          "sources": [], "accuracy": {"checks": [], "unverified": []}, "data_dates": {}, "fan": [],
-         "viewer": "three" if a.viewer == "3d" else "simple"}
+         "viewer": "simple"}
+    D["page"], D["viewer"] = page_settings(a)
     info = mtgdb("info")
     D["data_dates"] = {"card_index": info.get("bulk_updated") or info.get("built"), "prices": info.get("bulk_updated"),
                        "game_changers": f"{info.get('game_changers')} cards ({info.get('gc_source')})"}
@@ -275,8 +306,12 @@ def main():
     sp = ap.add_subparsers(dest="cmd", required=True)
     s = sp.add_parser("init"); s.add_argument("site"); s.add_argument("--title", required=True); s.add_argument("--subtitle")
     s.add_argument("--bracket", type=int, default=3); s.add_argument("--themes")
-    s.add_argument("--viewer", choices=["simple", "3d"], default="simple",
-                   help="card viewer: simple (CSS, light, default) or 3d (three.js, spin freely; falls back to simple without WebGL)")
+    s.add_argument("--style", choices=sorted(PRESETS), default="fancy", help="page preset (fancy is the full page)")
+    s.add_argument("--images", choices=["atlas", "cdn", "none"], help="where card images come from (default: the style's)")
+    s.add_argument("--viewer", choices=["simple", "3d"],
+                   help="card viewer: simple (CSS) or 3d (three.js; falls back to simple without WebGL). Default: the style's")
+    s.add_argument("--show", help=f"comma list of sections to turn on ({', '.join(SECTIONS)})")
+    s.add_argument("--hide", help="comma list of sections to turn off")
     s.set_defaults(f=cmd_init)
     s = sp.add_parser("add-deck"); s.add_argument("site"); s.add_argument("--group", required=True); s.add_argument("--slug", required=True)
     s.add_argument("--deck", required=True); s.add_argument("--bracket", type=int, required=True); s.add_argument("--notes")

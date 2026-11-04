@@ -32,7 +32,9 @@ Never include: (cards or effects you refuse to play)
 
 WHAT GOES ON THE PAGE
 Extras: (any of: alternative commanders | collection planner | split a pile between players, e.g. "split this Secret Lair between Sam and me; Sam wants every Gandalf card")
-Card viewer: simple (or "3D": spin the cards freely with three.js; a heavier page, falls back to simple on devices without 3D)
+Page style: fancy (images, charts, cards to consider, rankings, 3D cards) | basic (decks and numbers only, no images) | or list what you want
+Images: download into the page so it can be shared (or "Scryfall links": local page only, no download)
+Card viewer: 3D (or "simple": lighter; 3D falls back to simple on devices without 3D)
 Card labels: neutral (Play, Good, Situational, Binder, Bracket 4+; never "weak")
 Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 lines")
 ```

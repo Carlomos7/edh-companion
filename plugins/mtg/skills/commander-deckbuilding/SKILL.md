@@ -84,17 +84,21 @@ If a tool is down, say which check didn't run. Never present an unchecked list a
 - **Price, once:** `mtg_price_plan` in their style, as one line with the three totals ("cheapest $212 · as listed $340 · drippy $1,180") and the date. Add `to_buy_usd` if they have a collection. Store links per card only if they ask how to get the cards.
 - An "Unverified" line for anything you couldn't check.
 
-**Then offer the page, when the deck is ready.** Ready means: `mtg_deck_check` passes with no errors at the target bracket, the commander is on curve per step 6, and every check ran. Ask once, with AskUserQuestion:
-- "See it as a commander vault page (Recommended, about 2 minutes)": render this one deck with the vault page scripts, following the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` with the commander's name as title and this bracket, `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, then `build_site.py`, then publish (or hand over the HTML folder).
-- "Same, with the 3D card viewer": as above with `init --viewer 3d` (spin cards freely; a heavier page that falls back to the normal viewer on devices without 3D support)
-- "Build a full vault around it": more brackets or more commanders; tell them to type `/mtg:commander-vault` in this folder and it will start from this deck (30 minutes or more).
-- "Not now"
+**Then offer the page, when the deck is ready.** Ready means: `mtg_deck_check` passes with no errors at the target bracket, the commander is on curve per step 6, and every check ran. Ask once, casually ("Want to see it as a page?"), with AskUserQuestion:
+- **"Fancy page (Recommended)":** the full page: card images, charts, cards-to-consider, the 3D card viewer. Then one follow-up about images:
+  - "Shareable link (Recommended): I'll download the card images into the page, about a minute" → `--style fancy`, publish
+  - "Just on my computer: no download, the page loads images from Scryfall" → `--style fancy --images cdn`, hand over the HTML file (artifact pages block outside images, so this one can't be published as is)
+- **"Basic page":** the deck, plan, numbers and Rule 0 summary; no images, ready in seconds → `--style basic`
+- **"Customize":** then one multi-select of sections (card images, charts, cards to consider, card rankings, card fan header, prices) and one choice of card viewer (3D · simple) → `--style basic` plus `--show ...`, or `--style fancy` plus `--hide ...`, and `--viewer`
+- **"Not now"**
 
-**Finally, recommend next steps** (pick the 2 or 3 that fit): export it for Moxfield or Archidekt (`mtg_export`; Moxfield keeps exact printings), check what they still need from their collection (`mtg_collection` `have`), build another bracket of the same commander, or start a new deck.
+Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, then `build_site.py`.
+
+**Finally, recommend next steps** (pick the 2 or 3 that fit): a full vault with more brackets or commanders (`/mtg:commander-vault` in this folder starts from this deck), export it for Moxfield or Archidekt (`mtg_export`; Moxfield keeps exact printings), check what they still need from their collection (`mtg_collection` `have`), build another bracket of the same commander, or start a new deck.
 
 ## Other requests
 - **Review a deck:** `mtg_deck_profile` + `mtg_deck_check` + `mtg_simulate`, then report legality, bracket (with reasons), role gaps, mana problems, weakest cards (read each before calling it weak), and combos present or one card away. Recommend next steps: upgrade it, make it cheaper, or leave it.
 - **Optimize or upgrade:** follow [references/optimize.md](references/optimize.md). Every add names a specific cut and passes `mtg_deck_swap`. Never cut a combo piece, a commander enabler or the last card in a role without saying so.
 - **Make it cheaper:** `mtg_price_plan` (budget style shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
-- **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md).
+- **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md); the theme is their goal, so build inside it and don't argue it.
 - **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a deck link (Moxfield, Archidekt, ...), use an installed add-on that can read that site; if none can, ask the player to paste the site's export. Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.

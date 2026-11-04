@@ -24,6 +24,7 @@ Resuming: continue from the first unchecked gate. Don't redo a passed gate unles
 - The brief prefills the request: commander, bracket, hard lines, money answer, collection preference, must/never include, theme.
 - The existing list becomes that commander's deck at its bracket: copy it to `vault/<slug>/b<N>.txt`, run the G2 checks on it, and don't rebuild it unless a check fails.
 - Ask one question (AskUserQuestion): "What should the vault add?" with "Neighbouring brackets for this commander (Recommended)" · "Other commanders too (name them)" · "Just a page for this deck" (that last one: render it per references/pages.md and stop; no agents needed).
+- Then the page question, quick options first: "Fancy (Recommended)" · "Basic" · "Customize" (as in the deckbuilding skill's page offer, including the images follow-up for Fancy).
 
 ## Accuracy model (why the gates exist)
 1. **Computed facts** (legality, printings, prices, Game Changers, counts): only from `mtgdb.py`. Agents may not state them otherwise.
@@ -33,7 +34,7 @@ Resuming: continue from the first unchecked gate. Don't redo a passed gate unles
 5. **Disclosure**: the page shows data dates, checks run and what stayed unverified.
 
 ## Intake
-The request is pasted after the command or passed as a file, and usually follows the repo's `vault-request.md` template (lines like `Brackets: 2 and 3`; text in parentheses is a hint, not an answer) (sections: what it's about, table and wallet, your cards, what goes on the page). Resolve: commanders, brackets + default, budget, price style, hard lines, collection and owned-card preference, must/never include, tab grouping, page extras, card viewer (simple by default; "3D" uses three.js via `site_data.py init --viewer 3d`), label style (default neutral verdicts: Play, Good, Situational, Binder, Bracket 4+; never "weak"), and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium).
+The request is pasted after the command or passed as a file, and usually follows the repo's `vault-request.md` template (lines like `Brackets: 2 and 3`; text in parentheses is a hint, not an answer) (sections: what it's about, table and wallet, your cards, what goes on the page). Resolve: commanders, brackets + default, budget, price style, hard lines, collection and owned-card preference, must/never include, tab grouping, page style (Fancy by default: images, charts, cards to consider, card rankings, 3D viewer; Basic: decks and numbers only, no images; or a custom set of sections), images for Fancy (downloaded into the page so it can be shared, by default; or Scryfall links for a local-only page with no download), label style (default neutral verdicts: Play, Good, Situational, Binder, Bracket 4+; never "weak"), and theme (default none; if wanted, the themes.md intake question: mode, franchise, limits, premium).
 Extras the page template can't render yet (alternative commanders, collection planner, splitting a pile between players) go out as Markdown files in `vault/` (`alternatives.md`, `collection-plan.md`): every placement passes `mtgdb.py validate` color identity for that deck, and cards that fit no commander are listed with their colors. Note the template gap in `plan.md`. Ask (AskUserQuestion, multiple choice) only for those; default the rest. If the user asks a question, answer it and don't build. Over 6 commanders or 18 decks: give the scale and confirm.
 Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimate, and the checklist `G0` to `G5`.
 
@@ -69,9 +70,9 @@ Gate, every deck, run by you (never trust the agent's report):
 Gate: `mtgdb.py audit-claims vault/<slug>/claims.verified.jsonl --since SINCE --require-verified` passes, and every `refuted` / `unverifiable` item in `verification.md` is resolved by you: fixed, removed, or kept with a visible "unverified" label.
 
 ## G5 Page (you, following [references/pages.md](references/pages.md))
-1. `site_data.py init vault/site-data.json` (with `--themes` if themed), then for each deck `add-deck` (agents' `deck-notes.md` condensed into `notes.json` per deck), `add-tier` per tier tab (EDHREC numbers with `n`), `add-swaps` per tab, `add-claims` with every `claims.verified.jsonl`.
+1. `site_data.py init vault/site-data.json` with the page choice (`--style fancy|basic`, `--images cdn` for local-only, `--show`/`--hide`/`--viewer` for custom; `--themes` if themed), then for each deck `add-deck` (agents' `deck-notes.md` condensed into `notes.json` per deck), `add-tier` per tier tab (EDHREC numbers with `n`), `add-swaps` per tab, `add-claims` with every `claims.verified.jsonl`.
 2. `build_site.py vault/site-data.json --out vault/site`. Fix every error.
-3. Follow pages.md steps 4 and 5: look at it at desktop and 390 px, spot-check 10 random cards against `mtgdb.py`, publish.
+3. Follow pages.md steps 4 and 5: look at it at desktop and 390 px, spot-check 10 random cards against `mtgdb.py`, then publish (or, for a local-only page with Scryfall images, hand over the file).
 4. Reply in a few lines: what's in it, theme counts (themed vaults), accuracy summary (claims verified / labelled unverified, data dates), accepted exceptions.
 
 Don't hand-build or restyle the page. If the template is missing something every vault needs, note it in `plan.md` as a template change for later.

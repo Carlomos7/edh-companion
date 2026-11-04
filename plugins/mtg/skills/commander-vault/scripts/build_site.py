@@ -23,6 +23,8 @@ def validate(D):
     errs, warns = [], []
     req = lambda o, keys, where: [errs.append(f"{where}: missing {k}") for k in keys if k not in o]
     req(D, ["title", "groups", "tiers"], "site")
+    if (D.get("page") or {}).get("images", "atlas") not in ("atlas", "cdn", "none"):
+        errs.append(f"page images must be atlas, cdn or none, not {D['page'].get('images')!r}")
     if D.get("viewer", "simple") not in ("simple", "three"):
         errs.append(f"viewer must be simple or three, not {D.get('viewer')!r}")
     if not D.get("groups") and not D.get("tiers"):
@@ -81,7 +83,12 @@ def main():
     os.makedirs(a.out, exist_ok=True)
     img_dir = os.path.join(a.out, "img")
     failed = []
-    if not a.no_images and D.get("images"):
+    mode = "none" if a.no_images else (D.get("page") or {}).get("images", "atlas")
+    if mode == "cdn":  # local page: images load from Scryfall's CDN (it allows any origin); no download
+        D["image_urls"] = D.get("images", {})
+        warns.append("card images load from Scryfall's servers: open this page locally; to publish it as an artifact, "
+                      "rebuild with images downloaded (--images atlas) because artifact pages block outside images")
+    if mode == "atlas" and D.get("images"):
         sys.path.insert(0, HERE)
         import atlas
         man, failed = atlas.build(D["images"], img_dir, raw_dir=a.raw_cache, width=a.width)

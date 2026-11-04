@@ -6,3 +6,8 @@ vault/
 *.sqlite
 .DS_Store
 plugins/*/evals/results/
+
+# Player projects and generated output (never commit)
+EDHCompanion/
+reports/
+deck_check.json

@@ -1,0 +1,190 @@
+{
+ "schema_version": "1.0",
+ "version": 1,
+ "created": "2026-11-04",
+ "scope": {
+  "question": "How do players build Krenko, Mob Boss Goblin decks at brackets 3 and 4?",
+  "theme": "Goblins",
+  "depth": "quick"
+ },
+ "methodology": {
+  "approach": "Card facts from Scryfall, usage from EDHREC, play patterns from two deck-tech videos and one community thread.",
+  "tools_used": [
+   "Scryfall API",
+   "EDHREC",
+   "YouTube transcripts"
+  ],
+  "tools_failed": [
+   {
+    "capability": "Commander Spellbook",
+    "error": "not queried in this quick pass",
+    "fallback": null
+   }
+  ],
+  "coverage": {
+   "card_data": 1,
+   "stats": 1,
+   "video": 2,
+   "community": 1,
+   "official": 1
+  },
+  "recency_cutoff": "2026-11-04"
+ },
+ "sources": [
+  {
+   "id": "src-001",
+   "title": "Krenko, Mob Boss on Scryfall",
+   "url": "https://scryfall.com/search?q=%21%22Krenko%2C+Mob+Boss%22",
+   "type": "card_data",
+   "accessed": "2026-11-04",
+   "primary": true
+  },
+  {
+   "id": "src-002",
+   "title": "EDHREC: Krenko, Mob Boss",
+   "url": "https://edhrec.com/commanders/krenko-mob-boss",
+   "type": "stats",
+   "accessed": "2026-11-04",
+   "sample_size": null,
+   "primary": false
+  },
+  {
+   "id": "src-003",
+   "title": "2 Minute Commander: Krenko, Mob Boss",
+   "url": "https://www.youtube.com/watch?v=iJ2pfciBdlU",
+   "type": "video",
+   "author": "MTG Bear",
+   "published": "2021-12-21",
+   "accessed": "2026-11-04",
+   "timestamps": [
+    "0:25",
+    "1:13",
+    "1:29"
+   ],
+   "primary": false
+  },
+  {
+   "id": "src-004",
+   "title": "6 KEYS to WINNING with Krenko, Mob Boss",
+   "url": "https://www.youtube.com/watch?v=E5jrhdGCXso",
+   "type": "video",
+   "author": "Yawgfather Reborn EDH",
+   "published": "2025-03-03",
+   "accessed": "2026-11-04",
+   "primary": false
+  },
+  {
+   "id": "src-005",
+   "title": "r/EDH search: Krenko",
+   "url": "https://www.reddit.com/r/EDH/search/?q=krenko",
+   "type": "community",
+   "accessed": "2026-11-04",
+   "primary": false
+  },
+  {
+   "id": "src-006",
+   "title": "Commander Brackets (Wizards of the Coast)",
+   "url": "https://magic.wizards.com/en/formats/commander",
+   "type": "official",
+   "accessed": "2026-11-04",
+   "primary": true
+  }
+ ],
+ "findings": [
+  {
+   "id": "fnd-001",
+   "claim": "Krenko makes X Goblin tokens where X is the number of Goblins you control, so the deck snowballs.",
+   "class": "verified_fact",
+   "confidence": "high",
+   "evidence": [
+    "src-001"
+   ],
+   "cards": [
+    "Krenko, Mob Boss"
+   ]
+  },
+  {
+   "id": "fnd-002",
+   "claim": "Run about six to eight Goblin lords and anthem effects to make the tokens lethal.",
+   "class": "community_opinion",
+   "confidence": "medium",
+   "evidence": [
+    "src-003"
+   ]
+  },
+  {
+   "id": "fnd-003",
+   "claim": "Impact Tremors and Purphoros are good alternatives to winning through combat.",
+   "class": "community_opinion",
+   "confidence": "medium",
+   "evidence": [
+    "src-003"
+   ],
+   "cards": [
+    "Impact Tremors",
+    "Purphoros, God of the Forge"
+   ]
+  },
+  {
+   "id": "fnd-004",
+   "claim": "Battle Hymn and Brightstone Ritual turn a wide board into a burst of red mana.",
+   "class": "community_opinion",
+   "confidence": "low",
+   "evidence": [
+    "src-003"
+   ],
+   "cards": [
+    "Brightstone Ritual"
+   ]
+  },
+  {
+   "id": "fnd-005",
+   "claim": "Game Changers are limited to three in bracket 3 and allowed in bracket 4.",
+   "class": "verified_fact",
+   "confidence": "high",
+   "evidence": [
+    "src-006"
+   ]
+  },
+  {
+   "id": "fnd-006",
+   "claim": "Haste for Krenko is the most important support package.",
+   "class": "model_assessment",
+   "confidence": "medium",
+   "evidence": [
+    "src-004"
+   ]
+  },
+  {
+   "id": "fnd-007",
+   "claim": "Whether Krenko plays closer to bracket 4 with Skirk Prospector loops.",
+   "class": "unresolved",
+   "confidence": "low",
+   "evidence": []
+  }
+ ],
+ "commanders": [
+  {
+   "card": {
+    "name": "Krenko, Mob Boss"
+   },
+   "strategy": "Go wide with Goblins and activate Krenko with haste.",
+   "advantages": [
+    "Explosive from one activation",
+    "Cheap, widely printed Goblins"
+   ],
+   "disadvantages": [
+    "Everything depends on Krenko surviving",
+    "Board wipes reset the horde"
+   ],
+   "evidence": [
+    "fnd-001",
+    "fnd-006"
+   ]
+  }
+ ],
+ "gaps": [
+  "No real decklists sampled in this quick pass."
+ ],
+ "project": "krenko"
+}

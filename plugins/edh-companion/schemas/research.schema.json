@@ -1,0 +1,399 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "research.schema.json",
+  "title": "research.json: evidence gathered by mtg-research",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "version",
+    "created",
+    "scope",
+    "methodology",
+    "sources",
+    "findings",
+    "gaps"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.schema.json#/$defs/schema_version"
+    },
+    "project": {
+      "type": "string"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Bumped each time research is extended or revised."
+    },
+    "created": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "scope": {
+      "type": "object",
+      "required": [
+        "question"
+      ],
+      "properties": {
+        "question": {
+          "type": "string"
+        },
+        "theme": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "constraints": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "objectives": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "depth": {
+          "enum": [
+            "quick",
+            "standard",
+            "deep"
+          ]
+        }
+      }
+    },
+    "methodology": {
+      "type": "object",
+      "required": [
+        "approach",
+        "coverage"
+      ],
+      "properties": {
+        "approach": {
+          "type": "string"
+        },
+        "tools_used": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Capabilities that answered (e.g. 'Scryfall via MTG MCP', 'Exa search')."
+        },
+        "tools_failed": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "capability",
+              "error"
+            ],
+            "properties": {
+              "capability": {
+                "type": "string"
+              },
+              "error": {
+                "type": "string"
+              },
+              "fallback": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        },
+        "coverage": {
+          "type": "object",
+          "description": "Source type -> number of sources actually read. Types: card_data, stats, decklist, combo, video, community, article, official, tournament, price.",
+          "additionalProperties": {
+            "type": "integer",
+            "minimum": 0
+          }
+        },
+        "recency_cutoff": {
+          "$ref": "common.schema.json#/$defs/date",
+          "description": "Date of the latest bans / Game Changers update; power and legality evidence older than this is flagged."
+        }
+      }
+    },
+    "sources": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "title",
+          "url",
+          "type",
+          "accessed"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/source_id"
+          },
+          "title": {
+            "type": "string"
+          },
+          "url": {
+            "type": "string",
+            "pattern": "^https?://"
+          },
+          "type": {
+            "enum": [
+              "card_data",
+              "stats",
+              "decklist",
+              "combo",
+              "video",
+              "community",
+              "article",
+              "official",
+              "tournament",
+              "price",
+              "rules"
+            ]
+          },
+          "author": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "published": {
+            "$ref": "common.schema.json#/$defs/date"
+          },
+          "accessed": {
+            "$ref": "common.schema.json#/$defs/date"
+          },
+          "timestamps": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9]{1,2}:[0-9]{2}(:[0-9]{2})?$"
+            },
+            "description": "Video positions actually cited (mm:ss)."
+          },
+          "sample_size": {
+            "type": [
+              "integer",
+              "null"
+            ],
+            "description": "Deck count behind a statistic, when the source gives one."
+          },
+          "primary": {
+            "type": "boolean",
+            "description": "true for authoritative/primary data (Scryfall, Wizards, Spellbook, tournament results, a decklist itself); false for commentary."
+          }
+        }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "claim",
+          "class",
+          "confidence",
+          "evidence"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/finding_id"
+          },
+          "claim": {
+            "type": "string"
+          },
+          "explanation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "class": {
+            "$ref": "common.schema.json#/$defs/evidence_class"
+          },
+          "confidence": {
+            "$ref": "common.schema.json#/$defs/confidence"
+          },
+          "evidence": {
+            "$ref": "common.schema.json#/$defs/evidence_refs"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "limitations": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "commanders": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "card",
+          "strategy",
+          "evidence"
+        ],
+        "properties": {
+          "card": {
+            "$ref": "common.schema.json#/$defs/card_ref"
+          },
+          "strategy": {
+            "type": "string"
+          },
+          "advantages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "disadvantages": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "theme_fit": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "common.schema.json#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "card_candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "card",
+          "relevance",
+          "evidence"
+        ],
+        "properties": {
+          "card": {
+            "$ref": "common.schema.json#/$defs/card_ref"
+          },
+          "relevance": {
+            "type": "string"
+          },
+          "synergy": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "role": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "theme_fit": {
+            "enum": [
+              "on_theme",
+              "off_theme",
+              "unchecked",
+              null
+            ]
+          },
+          "evidence": {
+            "$ref": "common.schema.json#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "alternatives": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "option",
+          "why"
+        ],
+        "properties": {
+          "option": {
+            "type": "string"
+          },
+          "why": {
+            "type": "string"
+          },
+          "evidence": {
+            "$ref": "common.schema.json#/$defs/evidence_refs"
+          }
+        }
+      }
+    },
+    "disagreements": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "topic",
+          "positions"
+        ],
+        "properties": {
+          "topic": {
+            "type": "string"
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "position",
+                "evidence"
+              ],
+              "properties": {
+                "position": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "$ref": "common.schema.json#/$defs/evidence_refs"
+                }
+              }
+            }
+          },
+          "explanation": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "recommendations": {
+      "$ref": "common.schema.json#/$defs/advice"
+    },
+    "recommended_next_steps": {
+      "$ref": "common.schema.json#/$defs/next_steps"
+    },
+    "follow_up_questions": {
+      "$ref": "common.schema.json#/$defs/follow_up_questions"
+    }
+  }
+}

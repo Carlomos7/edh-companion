@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: act-research-anti-venom
+description: "\"What are people saying about X\" routes to mtg-research, not deckbuilding."
+tags: [activation, research]
+execution: {prompt: "What are people saying about Anti-Venom as a commander?", max_turns: 25, timeout_seconds: 900}
+runs: 1
+graders:
+  - {type: tool_used, name: research-fired, tool: Skill, input_match: "edh-companion:research", min: 1}
+  - {type: tool_used, name: no-brew, tool: Skill, input_match: "edh-companion:brew", min: 0, max: 0}
+  - {type: llm, name: cited, criteria: "PASS if the answer summarises community opinion with at least two linked sources (Reddit, article, video or EDHREC page) and separates popularity numbers from opinions. FAIL if it has no links, presents a full decklist, or states statistics without saying where they come from."}

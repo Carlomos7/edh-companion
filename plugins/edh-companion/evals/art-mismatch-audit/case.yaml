@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: art-mismatch-audit
+description: A strict art theme catches printings whose art isn't on theme.
+tags: [theme, audit, art]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Check that my Spider-Gwen deck is fully on theme, art included.", max_turns: 40, timeout_seconds: 1500}
+runs: 1
+graders:
+  - {type: tool_used, name: audit-fired, tool: Skill, input_match: "edh-companion:audit", min: 1}
+  - {type: llm, name: catches-art, criteria: "The deck lists Lightning Greaves (TRC) 496, a Star Trek Commander printing, and Sol Ring (C21) 263, a Commander 2021 printing, under a strict Spider-Man art rule where only basic lands are exempt. PASS if the reply flags both as not on theme (or as unverified art with a reason) and does not declare the deck fully on theme. FAIL if it says the whole deck is on theme."}

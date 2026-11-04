@@ -1,0 +1,191 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "common.schema.json",
+  "title": "Shared definitions for the edh-companion project files",
+  "$defs": {
+    "schema_version": {
+      "type": "string",
+      "pattern": "^1\\.[0-9]+$",
+      "description": "Contract version. Minor bumps only add optional fields."
+    },
+    "date": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "pattern": "^[0-9]{4}-[0-9]{2}(-[0-9]{2})?$",
+      "description": "ISO date (YYYY-MM-DD or YYYY-MM). null when unknown; never guessed."
+    },
+    "source_id": {
+      "type": "string",
+      "pattern": "^src-[0-9]{3,}$"
+    },
+    "finding_id": {
+      "type": "string",
+      "pattern": "^fnd-[0-9]{3,}$"
+    },
+    "rec_id": {
+      "type": "string",
+      "pattern": "^rec-[0-9]{3,}$"
+    },
+    "check_id": {
+      "type": "string",
+      "pattern": "^chk-[a-z0-9-]+$"
+    },
+    "evidence_class": {
+      "enum": [
+        "verified_fact",
+        "calculated",
+        "popularity_metric",
+        "community_opinion",
+        "model_assessment",
+        "unresolved"
+      ],
+      "description": "verified_fact: read from an authoritative source (Scryfall, Wizards, Spellbook, Comprehensive Rules). calculated: computed from verified data by a script or tool. popularity_metric: usage statistics (EDHREC, decklist counts) with a sample size. community_opinion: what players or creators say. model_assessment: Claude's own judgment. unresolved: not established."
+    },
+    "confidence": {
+      "enum": [
+        "high",
+        "medium",
+        "low"
+      ]
+    },
+    "card_ref": {
+      "type": "object",
+      "required": [
+        "name"
+      ],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Exact Scryfall card name (front face name for double-faced cards is acceptable only if it resolves)."
+        },
+        "oracle_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scryfall oracle_id: identifies the card across printings."
+        },
+        "printing_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scryfall card id: identifies one printing. Required when the theme depends on art or a specific printing."
+        },
+        "set": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "collector_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "deck_ref": {
+      "type": "object",
+      "required": [
+        "version",
+        "deck_hash"
+      ],
+      "properties": {
+        "version": {
+          "type": "integer",
+          "minimum": 1
+        },
+        "deck_hash": {
+          "type": "string",
+          "pattern": "^[0-9a-f]{12}$",
+          "description": "From deck_check.py: hash of the sorted card names and quantities (printings excluded). Changes whenever the list changes."
+        },
+        "printings_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{12}$",
+          "description": "Hash including set and collector number; changes when a printing changes."
+        }
+      }
+    },
+    "evidence_refs": {
+      "type": "array",
+      "items": {
+        "type": "string",
+        "pattern": "^(src|fnd|chk)-[0-9a-z-]+$"
+      },
+      "description": "IDs of sources, findings or audit checks that support a statement."
+    },
+    "next_steps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Concrete next steps worth offering the player, recommended first. May be empty."
+    },
+    "follow_up_questions": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "question"
+        ],
+        "properties": {
+          "question": {
+            "type": "string"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the answer changes."
+          },
+          "options": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "recommended": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      },
+      "description": "Questions whose answers materially change the work. May be empty."
+    },
+    "advice": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "text"
+        ],
+        "properties": {
+          "text": {
+            "type": "string"
+          },
+          "why": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "$ref": "#/$defs/evidence_refs"
+          }
+        }
+      },
+      "description": "Recommendations with their reasons. May be empty."
+    }
+  }
+}

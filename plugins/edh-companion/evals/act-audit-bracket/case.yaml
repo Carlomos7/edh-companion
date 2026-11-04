@@ -1,0 +1,23 @@
+schema_version: "1.0"
+name: act-audit-bracket
+description: "\"Is my deck really bracket 3?\" routes to mtg-audit and catches the deterministic problems."
+tags: [activation, audit]
+execution:
+  prompt: |
+    Is my deck really bracket 3? Commander first.
+
+    1 Atraxa, Praetors' Voice
+    1 Sol Ring
+    1 Rhystic Study
+    1 Smothering Tithe
+    1 Demonic Tutor
+    1 Vampiric Tutor
+    1 Cyclonic Rift
+    93 Forest
+  max_turns: 25
+  timeout_seconds: 900
+runs: 2
+graders:
+  - {type: tool_used, name: audit-fired, tool: Skill, input_match: "edh-companion:audit", min: 1}
+  - {type: tool_used, name: no-brew, tool: Skill, input_match: "edh-companion:brew", min: 0, max: 0}
+  - {type: llm, name: correct, criteria: "PASS if the reply says the deck is not bracket 3 because it has more than 3 Game Changers (it lists at least four of Rhystic Study, Smothering Tithe, Demonic Tutor, Vampiric Tutor, Cyclonic Rift as Game Changers), and keeps that count separate from any opinion about power. FAIL if it calls the deck bracket 3 or cites an automatic bracket estimate as proof."}

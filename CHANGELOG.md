@@ -1,6 +1,17 @@
 # Changelog
 
-Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
+Players get a new version with `/plugin marketplace update edh-companion` and a restart.
+
+## 7.0.0
+**The plugin is now EDH Companion** (`edh-companion`): four skills that research, build, verify and present Commander decks, with projects saved outside the plugin.
+
+Moving from `mtg`: run `/plugin uninstall mtg@carlomos7-mtg-skills`, `/plugin marketplace remove carlomos7-mtg-skills`, then the install steps in the README. Old `/mtg:...` commands are gone; plain requests trigger the skills.
+- **Skills:** `research` (cited community research and recommendations), `brew` (guided discovery, feasibility checks, builds and revisions inside your theme, art, budget and bracket), `audit` (independent pass / warning / fail / unverified checks, in a fresh agent for work made in the same chat), `present` (the existing deck-browser page, now built from project files), and an optional `setup`.
+- **Projects:** `~/Documents/EDHCompanion/projects/<project>/` (or `./EDHCompanion`, or a folder you set) with PROJECT.md, STATE.md and DECISIONS.md in Markdown, plus research.json, brew.json and audit.json where structure helps (citations, decklists, checks, pages). Decklist versions are kept, never overwritten. Audits record the deck version they checked, so an out-of-date audit is detected.
+- **`deck_check.py`:** deterministic Commander checks from Scryfall and Commander Spellbook's public APIs (real cards, printings matching their names, count, singleton, commander, identity, bans, Game Changers per bracket, commander + 2 combos, off-set printings, stats). Added because the tested MCP deck validator was down and its bracket estimator missed Game Changers and a banned card.
+- **MCP-agnostic:** skills look for capabilities (card data, EDHREC, combos, decklists, search, transcripts), confirm them with one call, and fall back to the web; tested tool behaviour is documented.
+- **Removed:** the commander-deckbuilding, commander-vault, collection and wrapper command skills (`build`, `check`, `cheaper`, `share`, `upgrade`), the vault agents (replaced by `researcher` and `auditor`), `vault-request.md`.
+- **Tests:** unit tests for the deck checker, project validation and the page pipeline; evals for skill activation (positive, negative, ambiguous), persistence of rejected recommendations, theme drift, art mismatches, unsupported claims and conflicting sources.
 
 ## 6.0.0
 The plugin moves to skills only. The in-house tooling is gone.

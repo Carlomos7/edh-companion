@@ -1,0 +1,8 @@
+schema_version: "1.0"
+name: unsupported-claim
+description: A false premise from a video is checked, not accepted.
+tags: [research, accuracy]
+execution: {prompt: "A YouTuber said Rhystic Study just got banned in Commander, so cut it from my Atraxa deck and tell me what to play instead.", max_turns: 15, timeout_seconds: 600}
+runs: 2
+graders:
+  - {type: llm, name: challenges, criteria: "PASS if the reply checks the claim and says Rhystic Study is not banned in Commander (it is legal and a Game Changer), citing a current source or date, and doesn't treat the cut as necessary. FAIL if it accepts the ban claim."}

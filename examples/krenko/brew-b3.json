@@ -1,0 +1,545 @@
+{
+ "schema_version": "1.0",
+ "version": 1,
+ "deck_hash": "60bc1a87b46c",
+ "variant": "b3",
+ "updated": "2026-11-04",
+ "research_version": 1,
+ "commander": {
+  "cards": [
+   {
+    "name": "Krenko, Mob Boss"
+   }
+  ],
+  "rationale": "Krenko turns every Goblin into more Goblins, so a deck full of cheap Goblins snowballs from one activation.",
+  "evidence": [
+   "fnd-001"
+  ]
+ },
+ "theme_policy": {
+  "mode": "prefer",
+  "eligibility": "Goblin creatures and cards that make Goblins; utility cards exempt",
+  "art_required": false,
+  "exceptions": [
+   {
+    "card": "Coat of Arms",
+    "reason": "anthem that scales with the whole tribe",
+    "approved_by": "player"
+   }
+  ],
+  "unresolved": [
+   "Do non-Goblin token makers like Hellrider count as on theme?"
+  ]
+ },
+ "target_bracket": {
+  "bracket": 3,
+  "restrictions": [
+   "no extra turns",
+   "no mass land denial",
+   "no Game Changers"
+  ],
+  "intended_win_turn": "7-9"
+ },
+ "strategy": {
+  "archetype": "Goblin tokens",
+  "game_plan": "Make a few Goblins early, protect Krenko, then activate him with haste and swing or sacrifice the horde.",
+  "key_synergies": [
+   "Krenko + haste enablers (Goblin Warchief, Lightning Greaves)",
+   "Wide board + Impact Tremors / Goblin Bombardment"
+  ],
+  "win_conditions": [
+   "combat with lords",
+   "Impact Tremors and Goblin Bombardment drain"
+  ]
+ },
+ "deck": [
+  {
+   "name": "Goblin Lackey",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Instigator",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Mogg War Marshal",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Beetleback Chief",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Siege-Gang Commander",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Krenko, Tin Street Kingpin",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Rabblemaster",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Legion Loyalist",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Ib Halfheart, Goblin Tactician",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Pashalik Mons",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Goon",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Foundry Street Denizen",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Matron",
+   "qty": 1,
+   "role": "tutor",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Recruiter",
+   "qty": 1,
+   "role": "tutor",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Skirk Prospector",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Warchief",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Chieftain",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin King",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Piledriver",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Battle Cry Goblin",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Bushwhacker",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Muxus, Goblin Grandee",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Motivator",
+   "qty": 1,
+   "role": "win",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Ringleader",
+   "qty": 1,
+   "role": "draw",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Conspicuous Snoop",
+   "qty": 1,
+   "role": "draw",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Sharpshooter",
+   "qty": 1,
+   "role": "removal",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Goblin Trashmaster",
+   "qty": 1,
+   "role": "removal",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Moggcatcher",
+   "qty": 1,
+   "role": "tutor",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Hellrider",
+   "qty": 1,
+   "role": "win",
+   "theme": "off_theme"
+  },
+  {
+   "name": "Purphoros, God of the Forge",
+   "qty": 1,
+   "role": "win",
+   "theme": "off_theme"
+  },
+  {
+   "name": "Impact Tremors",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Goblin Bombardment",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Boggart Shenanigans",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Shared Animosity",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Goblin War Drums",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Goblin Rally",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Krenko's Command",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Dragon Fodder",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Hordeling Outburst",
+   "qty": 1,
+   "role": "synergy",
+   "theme": "on_theme"
+  },
+  {
+   "name": "Sol Ring",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Arcane Signet",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Mind Stone",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Fire Diamond",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Thought Vessel",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Brightstone Ritual",
+   "qty": 1,
+   "role": "ramp",
+   "theme": "n/a"
+  },
+  {
+   "name": "Lightning Greaves",
+   "qty": 1,
+   "role": "protection",
+   "theme": "n/a"
+  },
+  {
+   "name": "Swiftfoot Boots",
+   "qty": 1,
+   "role": "protection",
+   "theme": "n/a"
+  },
+  {
+   "name": "Skullclamp",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Faithless Looting",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Unexpected Windfall",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Big Score",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Thrill of Possibility",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Valakut Awakening // Valakut Stoneforge",
+   "qty": 1,
+   "role": "draw",
+   "theme": "n/a"
+  },
+  {
+   "name": "Coat of Arms",
+   "qty": 1,
+   "role": "win",
+   "theme": "exception"
+  },
+  {
+   "name": "Lightning Bolt",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Chaos Warp",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Abrade",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Shock",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Heated Debate",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Comet Storm",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Vandalblast",
+   "qty": 1,
+   "role": "removal",
+   "theme": "n/a"
+  },
+  {
+   "name": "Blasphemous Act",
+   "qty": 1,
+   "role": "wipe",
+   "theme": "n/a"
+  },
+  {
+   "name": "Tempt with Vengeance",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Mob Rule",
+   "qty": 1,
+   "role": "win",
+   "theme": "n/a"
+  },
+  {
+   "name": "Castle Embereth",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "Den of the Bugbear",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "Rogue's Passage",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "War Room",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "Command Tower",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "Myriad Landscape",
+   "qty": 1,
+   "role": "land",
+   "theme": "n/a"
+  },
+  {
+   "name": "Mountain",
+   "qty": 29,
+   "role": "land",
+   "theme": "n/a"
+  }
+ ],
+ "recommendations": [
+  {
+   "id": "rec-001",
+   "kind": "swap",
+   "add": "Goblin Surprise",
+   "cut": "Shock",
+   "reason": "Instant-speed Goblins or a team pump; better than a 2-damage burn spell here.",
+   "evidence": [
+    "fnd-002"
+   ],
+   "theme": "on_theme",
+   "status": "proposed"
+  },
+  {
+   "id": "rec-002",
+   "kind": "swap",
+   "add": "Cyclonic Rift",
+   "cut": "Chaos Warp",
+   "reason": "Not in Krenko's colors.",
+   "status": "rejected"
+  },
+  {
+   "id": "rec-003",
+   "kind": "cut",
+   "cut": "Mob Rule",
+   "reason": "Rarely cast in testing.",
+   "status": "pending"
+  }
+ ],
+ "alternatives": [
+  {
+   "option": "Purphoros as an extra damage engine",
+   "why": "kept as a non-Goblin payoff"
+  }
+ ],
+ "statistics": {
+  "source": "deck_check.py",
+  "cards": 100,
+  "lands": 35,
+  "average_mv": 2.7,
+  "curve": {
+   "1": 14,
+   "2": 19,
+   "3": 15,
+   "4": 10,
+   "5": 3,
+   "6": 2,
+   "7+": 1
+  },
+  "types": {
+   "Creature": 30,
+   "Enchantment": 5,
+   "Sorcery": 9,
+   "Artifact": 9,
+   "Instant": 11,
+   "Land": 35
+  },
+  "game_changers": [],
+  "price_usd": 222.9
+ },
+ "project": "krenko",
+ "decklist": "decklists/b3-v1.txt"
+}

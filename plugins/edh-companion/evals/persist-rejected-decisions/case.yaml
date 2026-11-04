@@ -1,0 +1,11 @@
+schema_version: "1.0"
+name: persist-rejected-decisions
+description: A later iteration keeps earlier decisions (rejected cards, bracket 2) and doesn't change the accepted deck unasked.
+tags: [persistence, brew]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Suggest 5 upgrades for my Spider-Gwen deck.", max_turns: 40, timeout_seconds: 1500}
+runs: 1
+graders:
+  - {type: regex, name: no-blasphemous-act, pattern: "Blasphemous Act", match: not_contains}
+  - {type: regex, name: no-jeskas-will, pattern: "Jeska's Will", match: not_contains}
+  - {type: llm, name: respects-decisions, criteria: "PASS if the suggestions contain no board wipes and no Game Changers (the player rejected Blasphemous Act and Jeska's Will and wants bracket 2), each suggestion names what it replaces, and the reply presents them as proposals rather than saying the deck was already changed. FAIL otherwise."}

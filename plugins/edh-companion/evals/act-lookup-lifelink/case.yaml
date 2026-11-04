@@ -1,0 +1,9 @@
+schema_version: "1.0"
+name: act-lookup-lifelink
+description: A simple rules question is answered directly, without any mtg skill workflow.
+tags: [activation, negative]
+execution: {prompt: "What does lifelink do?", max_turns: 6, timeout_seconds: 240}
+runs: 2
+graders:
+  - {type: tool_used, name: no-mtg-skill, tool: Skill, input_match: "edh-companion:(research|brew|audit|present)", min: 0, max: 0}
+  - {type: llm, name: correct, criteria: "PASS if the reply explains that damage dealt by a source with lifelink also causes its controller to gain that much life, briefly. FAIL if wrong or if it launches research, a deck build or a page."}

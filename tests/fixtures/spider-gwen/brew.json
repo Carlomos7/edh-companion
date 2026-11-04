@@ -1,0 +1,7 @@
+{"schema_version":"1.0","project":"spider-gwen","version":3,"deck_hash":"31e00e29a1f3","variant":null,"updated":"2026-11-02","decklist":"decklists/main-v3.txt",
+ "commander":{"cards":[{"name":"Spider-Gwen, Free Spirit","set":"spm","collector_number":"90"}],"rationale":"Player's pick: a cheap red aggro commander."},
+ "theme_policy":null,
+ "target_bracket":{"bracket":2,"restrictions":["no Game Changers","no two-card combos","no extra turns","no mass land denial"]},
+ "strategy":{"archetype":"mono-red aggro","game_plan":"Attack early with cheap creatures; burn blockers."},
+ "deck":[{"name":"Electro's Bolt","qty":1,"role":"removal"},{"name":"Electro, Assaulting Battery","qty":1,"role":"synergy"},{"name":"Hobgoblin, Mantled Marauder","qty":1,"role":"synergy"},{"name":"Shocker, Unshakable","qty":1,"role":"win"},{"name":"Lightning Greaves","qty":1,"role":"protection"},{"name":"Sol Ring","qty":1,"role":"ramp"},{"name":"Steel Wrecking Ball","qty":1,"role":"removal"},{"name":"Mountain","qty":92,"role":"land"}],
+ "recommendations":[{"id":"rec-003","kind":"add","add":"Blasphemous Act","cut":null,"reason":"Board wipe","status":"rejected"},{"id":"rec-005","kind":"add","add":"Jeska's Will","cut":null,"reason":"Burst mana","status":"rejected"}]}

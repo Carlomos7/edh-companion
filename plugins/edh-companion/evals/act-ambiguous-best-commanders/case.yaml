@@ -1,0 +1,11 @@
+schema_version: "1.0"
+name: act-ambiguous-best-commanders
+description: Finding the best commanders is research, not a build or a page.
+tags: [activation, ambiguous]
+execution: {prompt: "Find the best Spider-Man commanders.", max_turns: 25, timeout_seconds: 900}
+runs: 1
+graders:
+  - {type: tool_used, name: research-fired, tool: Skill, input_match: "edh-companion:research", min: 1}
+  - {type: tool_used, name: no-brew, tool: Skill, input_match: "edh-companion:brew", min: 0, max: 0}
+  - {type: tool_used, name: no-present, tool: Skill, input_match: "edh-companion:present", min: 0, max: 0}
+  - {type: llm, name: no-decklist, criteria: "PASS if the reply compares several real Spider-Man commanders with reasons and does not hand over a 100-card decklist or build an HTML page. FAIL otherwise."}

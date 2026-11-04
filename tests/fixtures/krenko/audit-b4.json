@@ -1,0 +1,100 @@
+{
+ "schema_version": "1.0",
+ "created": "2026-11-04",
+ "subject": {
+  "kind": "deck",
+  "path": "brew-b4.json",
+  "deck": {
+   "version": 1,
+   "deck_hash": "a1b2c3d4e5f6"
+  },
+  "bracket": 4,
+  "brew_file": "brew-b4.json"
+ },
+ "auditor": {
+  "independent": true,
+  "how": "deck_check.py plus a separate auditor context",
+  "tools_used": [
+   "deck_check.py"
+  ]
+ },
+ "checks": [
+  {
+   "id": "chk-cards-1",
+   "area": "other",
+   "requirement": "Every name is a real paper card",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": ""
+  },
+  {
+   "id": "chk-count-1",
+   "area": "count",
+   "requirement": "Exactly 100 cards including commanders",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": "100 cards"
+  },
+  {
+   "id": "chk-singleton-1",
+   "area": "singleton",
+   "requirement": "No duplicates except basics and 'any number' cards",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": ""
+  },
+  {
+   "id": "chk-legality-2",
+   "area": "legality",
+   "requirement": "Commander can be a commander (legendary creature or says so)",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": ""
+  },
+  {
+   "id": "chk-identity-1",
+   "area": "identity",
+   "requirement": "Every card within the commander color identity (R)",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": ""
+  },
+  {
+   "id": "chk-legality-1",
+   "area": "legality",
+   "requirement": "No banned or non-Commander-legal cards",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": ""
+  },
+  {
+   "id": "chk-game-changers-1",
+   "area": "game_changers",
+   "requirement": "Game Changers within bracket 4 limit (any)",
+   "kind": "deterministic",
+   "status": "pass",
+   "detail": "3: Ancient Tomb, Gamble, Jeska's Will",
+   "cards": [
+    "Ancient Tomb",
+    "Gamble",
+    "Jeska's Will"
+   ]
+  },
+  {
+   "id": "chk-theme-1",
+   "area": "theme",
+   "requirement": "Off-theme cards are exceptions the player approved or utility cards",
+   "kind": "judgment",
+   "status": "warning",
+   "detail": "Hellrider and Purphoros are off theme without an approved exception (open question in theme_policy)."
+  }
+ ],
+ "required_fixes": [],
+ "verdict": {
+  "status": "pass_with_warnings",
+  "summary": "Legal, 100 cards, bracket rules met; theme has two open off-theme cards.",
+  "limitations": [
+   "combos not checked (--no-combos)"
+  ]
+ }
+}

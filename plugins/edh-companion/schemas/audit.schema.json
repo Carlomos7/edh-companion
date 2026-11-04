@@ -1,0 +1,380 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "audit.schema.json",
+  "title": "audit.json: independent verification by mtg-audit",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "created",
+    "subject",
+    "auditor",
+    "checks",
+    "required_fixes",
+    "verdict"
+  ],
+  "properties": {
+    "schema_version": {
+      "$ref": "common.schema.json#/$defs/schema_version"
+    },
+    "created": {
+      "$ref": "common.schema.json#/$defs/date"
+    },
+    "subject": {
+      "type": "object",
+      "required": [
+        "kind"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "deck",
+            "research",
+            "recommendations"
+          ]
+        },
+        "path": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "deck": {
+          "$ref": "common.schema.json#/$defs/deck_ref"
+        },
+        "research_version": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "bracket": {
+          "type": [
+            "integer",
+            "null"
+          ]
+        },
+        "brew_file": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "brew.json or brew-<variant>.json that was audited."
+        }
+      }
+    },
+    "auditor": {
+      "type": "object",
+      "required": [
+        "independent"
+      ],
+      "properties": {
+        "independent": {
+          "type": "boolean",
+          "description": "true only when the judgment checks ran in a context that did not produce the work (mtg-auditor subagent), or the work came from the player. Script checks are independent by nature."
+        },
+        "how": {
+          "type": "string"
+        },
+        "tools_used": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "tools_unavailable": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "id",
+          "area",
+          "requirement",
+          "status",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "$ref": "common.schema.json#/$defs/check_id"
+          },
+          "area": {
+            "enum": [
+              "legality",
+              "identity",
+              "count",
+              "singleton",
+              "game_changers",
+              "bracket",
+              "combos",
+              "theme",
+              "printing",
+              "mana",
+              "composition",
+              "research",
+              "recommendation",
+              "other"
+            ]
+          },
+          "requirement": {
+            "type": "string"
+          },
+          "kind": {
+            "enum": [
+              "deterministic",
+              "sourced",
+              "judgment"
+            ],
+            "description": "deterministic: script/tool result. sourced: checked against a cited source. judgment: subjective assessment (never shown as proven)."
+          },
+          "status": {
+            "enum": [
+              "pass",
+              "warning",
+              "fail",
+              "unverified"
+            ]
+          },
+          "detail": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            },
+            "description": "URLs, Scryfall ids, rule numbers, Spellbook ids or src-/fnd- ids."
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "theme_violations": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "card",
+          "problem"
+        ],
+        "properties": {
+          "card": {
+            "type": "string"
+          },
+          "printing_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "problem": {
+            "type": "string"
+          },
+          "evidence": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          }
+        }
+      }
+    },
+    "legality_issues": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "card",
+          "problem"
+        ],
+        "properties": {
+          "card": {
+            "type": "string"
+          },
+          "problem": {
+            "type": "string"
+          },
+          "rule": {
+            "type": [
+              "string",
+              "null"
+            ]
+          }
+        }
+      }
+    },
+    "bracket_findings": {
+      "type": "object",
+      "properties": {
+        "deterministic": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Facts with fixed limits: Game Changer count, banned cards, two-card combos found by Spellbook."
+        },
+        "indicators": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Detected signs (extra turns, MLD, tutors, fast mana) that need reading in context."
+        },
+        "assessment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Subjective read of where the deck plays (model_assessment)."
+        },
+        "uncertainty": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
+    },
+    "combo_findings": {
+      "type": "object",
+      "properties": {
+        "included": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "cards"
+            ],
+            "properties": {
+              "cards": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "spellbook_id": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "result": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "two_card": {
+                "type": "boolean",
+                "description": "true when it needs at most two cards besides the commander."
+              }
+            }
+          }
+        },
+        "almost_included": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "cards": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "missing": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              }
+            }
+          }
+        },
+        "unresolved": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "research_gaps": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "required_fixes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "check",
+          "fix"
+        ],
+        "properties": {
+          "check": {
+            "$ref": "common.schema.json#/$defs/check_id"
+          },
+          "fix": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recommendations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    },
+    "verdict": {
+      "type": "object",
+      "required": [
+        "status",
+        "summary"
+      ],
+      "properties": {
+        "status": {
+          "enum": [
+            "pass",
+            "pass_with_warnings",
+            "fail",
+            "incomplete"
+          ],
+          "description": "pass only if no check is fail or unverified among the required ones."
+        },
+        "summary": {
+          "type": "string"
+        },
+        "limitations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "recommended_next_steps": {
+      "$ref": "common.schema.json#/$defs/next_steps"
+    },
+    "follow_up_questions": {
+      "$ref": "common.schema.json#/$defs/follow_up_questions"
+    }
+  }
+}

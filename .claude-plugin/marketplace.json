@@ -1,15 +1,15 @@
 {
-  "name": "carlomos7-mtg-skills",
+  "name": "edh-companion",
   "owner": {
     "name": "Carlomos7",
     "url": "https://github.com/Carlomos7"
   },
   "plugins": [
     {
-      "name": "mtg",
-      "source": "./plugins/mtg",
-      "description": "Build, review, price and share Commander decks with the player."
+      "name": "edh-companion",
+      "source": "./plugins/edh-companion",
+      "description": "Research commanders and strategies from real community sources, build theme-true decks with you, verify them independently, and present them as interactive pages."
     }
   ],
-  "description": "Magic: The Gathering Commander deckbuilding for Claude Code, built with the player on checked card data."
+  "description": "EDH Companion: research, brew, audit and present Commander decks with Claude Code."
 }

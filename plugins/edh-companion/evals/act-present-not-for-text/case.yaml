@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: act-present-not-for-text
+description: A plain decklist request doesn't build a page.
+tags: [activation, negative, present]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Give me my Spider-Gwen decklist as plain text so I can paste it into Moxfield.", max_turns: 8, timeout_seconds: 300}
+runs: 2
+graders:
+  - {type: tool_used, name: no-present, tool: Skill, input_match: "edh-companion:present", min: 0, max: 0}
+  - {type: regex, name: has-list, pattern: "Spider-Gwen, Free Spirit", match: contains}

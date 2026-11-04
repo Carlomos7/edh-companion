@@ -175,8 +175,13 @@ class PagesTest(unittest.TestCase):
                 # bracket switch
                 pg.locator("button.btn", has_text="B4").click()
                 self.assertIn("Game Changers", pg.inner_text("main"))
+                if width > 700:  # hover preview: shows on hover, never sticks after a click
+                    nm = pg.locator(".decklist button.name").first
+                    nm.hover(); pg.mouse.move(5, 5); nm.hover()
+                    self.assertFalse(pg.evaluate("document.querySelector('.tip').hidden"))
                 # viewer: open, flip with F, arrows, close restores focus
                 pg.locator(".decklist button.name").first.click()
+                self.assertTrue(pg.evaluate("document.querySelector('.tip')?.hidden ?? true"))
                 pg.wait_for_selector("dialog[open]")
                 t0 = pg.eval_on_selector("#card3d", "e => e.style.transform")
                 pg.keyboard.press("f")

@@ -2,6 +2,9 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.5
+- **Hover preview fix:** 5.5.4 hid the preview on scroll, which hid it as soon as it showed. It now shows on hover and hides on click, key press, tab change and when the viewer opens. A browser test covers it.
+
 ## 5.5.4
 Fixes from an independent review against every requirement:
 - **Privacy:** deck pages no longer contain local file paths (a ledger path with the Windows username was leaking), and `build_site.py` refuses to build a page that contains one.

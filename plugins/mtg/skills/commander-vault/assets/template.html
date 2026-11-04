@@ -537,7 +537,7 @@ const V3={on:false,want:null,img:{},tex:{},
 /* ---------- hover preview (desktop) ---------- */
 let hideTip=()=>{};
 function initTip(){const tip=el("div",{class:"tip art",hidden:true});document.body.append(tip);hideTip=()=>{tip.hidden=true};
- ["click","scroll","keydown"].forEach(t=>addEventListener(t,hideTip,{capture:true,passive:true}));
+ ["click","keydown"].forEach(t=>addEventListener(t,hideTip,{capture:true,passive:true}));
  document.addEventListener("pointerover",e=>{const t=e.target.closest&&e.target.closest("[data-img]");if(!t||IMG==="none"||e.pointerType==="touch"){tip.hidden=true;return}
   tip.setAttribute("style",artStyle(t.dataset.img));tip.hidden=false});
  document.addEventListener("pointermove",e=>{if(tip.hidden)return;const x=Math.min(e.clientX+18,innerWidth-236),y=Math.min(e.clientY+18,innerHeight-320);tip.style.left=x+"px";tip.style.top=y+"px"},{passive:true});

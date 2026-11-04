@@ -2,6 +2,13 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.6.0
+Page redesign: mobile first, one design system, accessible.
+- **One set of tokens:** spacing (4 to 48px), type sizes, corner radii and card corners come from shared variables, so every panel, control and card lines up. Layout is written phone first and widens at 641, 821 and 1025px.
+- **Card images:** the decklist has a List / Cards switch; Cards shows every card as an image grid (2 across on phones), with quantity, Game Changer and swap badges. Swap suggestions show a card thumbnail. All cards share one fixed 63x88 box with real card corners and a placeholder, so nothing jumps while images load. The viewer sizes the card to the screen so its buttons never fall off it, and the hover preview sits beside the pointer instead of over the next names.
+- **Accessibility:** no automated WCAG 2.2 AA failures in light or dark mode (was about 300). Every target is at least 24px, 44px on touch screens. Theme tags pick a text color that passes contrast. Headings are in order, the tabs are a labelled nav, there's a footer, and pressed states read as pressed. No sideways scroll at 320px.
+- **Also:** sticky tabs no longer hide focused items, safe-area insets for notched phones, and a print style that prints the decklist as text.
+
 ## 5.5.6
 - **Better page filters:** the decklist filters are now chips you can combine: card type, mana value, role, theme and tags (Game Changers, cards with swap options, flagged cards). Chips in one row widen the list (Instant or Sorcery); rows narrow it (and Removal). Each chip shows how many cards it would leave, empty ones grey out, and Clear filters resets everything. Search also matches type and role. The card-rankings tab gets tier, price and theme chips in place of the max-price box. Filters are remembered and scroll sideways on phones. A browser test covers them.
 

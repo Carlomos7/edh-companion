@@ -176,6 +176,13 @@ class PagesTest(unittest.TestCase):
                 pg.locator(".decklist .chips .chipclr").click()
                 self.assertFalse(pg.locator(".decklist .chips .chipclr").is_visible())
                 self.assertEqual(pg.locator(".decklist .ln").count(), 4)
+                # List / Cards view: card images in a grid, pressed state is a real "true"
+                cards = pg.locator(".viewtog button", has_text="Cards")
+                cards.click()
+                self.assertEqual(cards.get_attribute("aria-pressed"), "true")
+                self.assertEqual(pg.locator(".decklist .tile").count(), 4)
+                pg.locator(".viewtog button", has_text="List").click()
+                self.assertEqual(pg.locator(".decklist .ln").count(), 4)
                 body = pg.inner_text("main")
                 self.assertIn("Vader <b>hunts</b>.", body)  # agent text is shown as text, never parsed as HTML
                 self.assertNotIn("<b>hunts</b>", pg.inner_html("main"))

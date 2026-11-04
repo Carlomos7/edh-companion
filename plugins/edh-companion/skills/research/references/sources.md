@@ -2,6 +2,46 @@
 
 Find tools by capability. Names differ between installs (a claude.ai connector prefixes `mcp__claude_ai_…`, a local server doesn't), so read the tool list and pick by what a tool does. Confirm with one cheap call before depending on it. When a capability is missing or failing, use the fallback and record it.
 
+## First research: capabilities and depth
+Check each capability with one cheap call and judge the answer, not just that something came back (an empty, generic or wrong result is a failure):
+
+| Capability | Cheap check | Working means |
+|---|---|---|
+| Card data | look up Sol Ring | text and Commander legality come back |
+| EDHREC stats | staples for a popular commander (e.g. Atraxa, Praetors' Voice) | a deck count above 0 and real cards |
+| Combos | combos for a known pair (commander + 2 cards) | the known combo is found |
+| Decklists | read one known public deck link, or a site search | real 100-card lists for that commander |
+| Web / community search | search a Reddit EDH thread about a commander | relevant threads with URLs |
+| Semantic discovery | "deck tech article for <commander>" | relevant articles |
+| Video transcripts | transcript of one short MTG video | timestamped text |
+| Scripts (uv) | `companion.py where` | paths print |
+
+Show the result as one short table (working / not working / missing, and what each missing one costs), then offer:
+- **Comprehensive (Recommended)**: every working source: data, decklists, creator videos with timestamps, Reddit and forums, articles; about 5 to 15 minutes per commander. Best recommendations, best citations.
+- **Quick**: card data, EDHREC, one or two community threads, a video only if one is clearly central; about 1 to 3 minutes. Good for a first look.
+- **Custom**: the player picks sources to include or exclude (and can name preferred tools).
+- **Skip**: no web research; answers from verified card data and rules only, clearly labelled as unresearched.
+Save to the config file (`~/.config/edh-companion/config.yaml`), keeping everything else in it:
+```yaml
+research:
+  depth: comprehensive        # comprehensive | quick | custom | skip
+  prefer: []                  # sources to favour, e.g. [EDHREC, Reddit, The Command Zone]
+  exclude: []                 # sources never to use
+  tools: {}                   # optional, e.g. {semantic_search: Exa, web_search: Parallel}
+  capabilities_seen: [card_data, edhrec, combos, web_search, semantic_search, transcripts, scripts]
+  checked: 2026-11-04
+```
+Ask again only when a capability appears, disappears or starts failing compared with `capabilities_seen`, or when the player asks.
+
+## Which tool for which job
+Use the strongest tool for each job, not every tool for every job:
+- **Card facts, legality, printings, prices, combos:** the MTG data tool (Scryfall- and Spellbook-backed), or Scryfall/Spellbook directly. Never a search engine.
+- **Finding deck techs, primers and articles by description:** semantic search (e.g. Exa).
+- **Reddit, forums and keyword searches, reading pages:** web search + fetch (e.g. Parallel, or the built-in tools).
+- **What a creator actually said:** transcripts, quoted with mm:ss.
+- **Real lists:** read known deck links; find links with web search when the deck tool's search doesn't filter.
+Don't repeat a search with a second engine unless the first came back empty or wrong, and don't refetch a page already read this session. When a tool fails mid-research, switch to its fallback, note it in `methodology.tools_failed`, and keep going.
+
 Tested 2026-11-04 with the j4th MTG MCP (claude.ai connector), Parallel Search, Exa and jkawamoto YouTube Transcript:
 
 | Capability | Typical tool | Tested result | Fallback |

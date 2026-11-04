@@ -2,6 +2,11 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.6.0
+- **Research onboarding:** on the first substantial research request, research checks each capability with a cheap call (card data, EDHREC, combos, decklists, web and semantic search, video transcripts, scripts), judges the results rather than trusting that a tool is installed, shows a short working / missing table, and offers Comprehensive (Recommended, 5 to 15 min per commander), Quick (1 to 3 min), Custom or Skip. The choice and the capabilities seen are saved in the config and reused in every session and project; it only asks again when a capability appears, disappears or starts failing.
+- **Smarter tool use:** each job goes to the tool that does it best (MTG data for facts, semantic search for deck techs and articles, web search for Reddit and forums, transcripts for what creators said), no duplicate searches unless the first failed, no re-reading pages, fallbacks noted. Comprehensive research includes creator deck techs with timestamps when transcripts work.
+- **Setup:** can save default research depth, preferred and excluded sources, and which tool to use when several can do a job.
+
 ## 7.5.0
 Reports, built on the existing deck-browser template.
 - **Three modes:** Deck Summary (clean Markdown, export to Word/PDF with installed skills), Interactive Report (images, decklists, filters, comparisons, prices, essential charts; no 3D viewer or card fan) and Showcase (the full template). `--mode summary|interactive|showcase`.

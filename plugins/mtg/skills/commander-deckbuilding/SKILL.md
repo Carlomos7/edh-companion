@@ -27,14 +27,19 @@ Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mt
 | Share or import elsewhere | `mtg_export` |
 | What the player owns, what a deck still needs | `mtg_collection` (the `collection` skill manages it) |
 | Rules questions | `mtg_rules` |
+| Research checklist for a commander | `mtg_research_plan` |
+| EDHREC numbers, and what the deck lacks | `mtg_edhrec` (built in, no add-on needed) |
+| Real public decklists, and how the deck compares | `mtg_decklists` |
+| Record every source you cite; check coverage | `mtg_research_log`, `mtg_research_report` |
 
 No `mtg_*` tools available? The plugin's data server needs `uv`. Tell the player in one line: "The deck tools need a small helper called uv: install it (Windows: `winget install astral-sh.uv`, macOS: `brew install uv`, Linux: see docs.astral.sh/uv), then restart Claude Code." If `uv` is installed, the same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.
 
 **Use the add-ons whenever they're there, without asking.** At the start of a deck, look at the tools you actually have (rules in the `mtg-research` skill's references/sources.md, "Optional MCP servers"):
-- **EDHREC data** (e.g. `edhrec_commander_staples`, `edhrec_card_synergy`): used in steps 4, 5 and 6 below to ground the plan, the options and the review in what real decks with this commander play. Quote it with the deck count ("in 61% of 4,210 Krenko decks").
+- **EDHREC data**: `mtg_edhrec` is built in; an add-on (e.g. `edhrec_card_synergy`) adds card-to-card synergy. Used in steps 4, 5 and 6 to ground the plan, the options and the review in what real decks play. Quote it with the deck count ("in 61% of 4,210 Krenko decks").
+- **A second MTG server** (e.g. `mtg-commander` next to `mtg-mcp`): cross-check decklists and EDHREC numbers; note disagreements.
 - **Bracket estimate** (e.g. `spellbook_estimate_bracket`): step 6.
-- **Deck links** (e.g. `moxfield_decklist`): importing.
-- **Web search and videos** (e.g. `parallel-search`, `youtube-transcript`, or the built-in WebSearch/WebFetch): community research, step 4. Runs on every new deck, not only when asked.
+- **Deck links and search** (e.g. `moxfield_decklist`, `moxfield_search_decks`): importing, and more real decklists next to `mtg_decklists`.
+- **Web search and videos** (e.g. `parallel-search`, `youtube-transcript`, or the built-in WebSearch/WebFetch): the research pass, step 4. Runs on every new deck, not only when asked.
 
 Card facts and deck checks still always come from the `mtgdb` tools. If an add-on isn't installed, build anyway and say once, in one line, what wasn't available ("no EDHREC data here, so picks are from card data and roles only"). Load the `mtg-research` skill for research beyond this.
 
@@ -60,15 +65,17 @@ Work in the current folder so nothing is lost and other commands (like `/mtg:com
 - `deck-brief.md`: the intake answers (template in intake.md), updated whenever the player changes their mind.
 - `<commander-slug>.txt` (e.g. `krenko-mob-boss.txt`): the current list in Moxfield format, commander first, rewritten after every accepted change.
 
-## 4. Community research, then the skeleton
-**Research the community before proposing anything** (no question; tell the player in one line: "Checking what players and creators say about <commander>, about a minute"). Run these in parallel, following the `mtg-research` skill's references/youtube.md and sources.md:
-- **Reddit** (r/EDH, r/EDHBrews, r/CompetitiveEDH): primers, "struggles" and "too strong for bracket N?" threads. These carry the play tips, traps and table reactions.
-- **Articles**: EDHREC articles, Card Kingdom, Commander's Herald and similar, plus Moxfield/Archidekt primers.
-- **2 or 3 creator videos** from the last 12 months (deck techs, "mistakes", upgrade videos). If the transcript tool is blocked (YouTube blocks some IPs), fetch the video URL with a web fetch tool; it usually returns the transcript.
+## 4. Research pass, then the skeleton
+**Research before proposing anything; this is what makes the deck good.** No question needed; tell the player in one line ("Researching <commander>: EDHREC, real decklists, combos, videos and Reddit, a few minutes").
+- **Start it as soon as the commander is known**, in parallel with intake: dispatch the `vault-researcher` agent in the background with the brief "research pass for <commander>, bracket <N>, theme <theme or none>, deck folder <path>, follow mtg-research references/research-pass.md". No agents available? Run the pass yourself.
+- `mtg_research_plan` lists every source type, the minimum for each and ready-made queries: EDHREC (`mtg_edhrec`), real decklists (`mtg_decklists`, plus Moxfield through an add-on), combos, 3+ creator videos, 4+ Reddit threads or primers, 3+ articles, a live price check, and the current Wizards bracket page (plus cEDH results at bracket 4 and 5).
+- Every source goes into `research/claims.jsonl` with `mtg_research_log` (kind, url, date, locator, what it was used for). `mtg_research_report` shows coverage; say any shortfall in one line ("no Command Zone video on her yet").
+- Card facts still only come from `mtg_card`. A combo the community mentions is a bracket check: `mtg_deck_swap` now blocks swaps that complete one.
+- Takes that disagree, with each other or with the player's theme, are shown on the page, not acted on unless the player wants to.
 
-Keep 6 to 10 takes worth sharing, each with its source URL, site or creator, and date: tips, traps, combos, bracket expectations, and takes that disagree with each other or with the player's theme (show them, don't act on them unless the player wants to). Check every card named against `mtg_card`, and every combo against the bracket: a community "combo alert" is a hard check, not trivia. Save them to `notes.json` as `community` and `youtube`, and every source to `claims.jsonl` (they become the page's sources). Nothing to find, or no search tools? Say so in one line and carry on.
+Outputs feed everything after: `research/takes.json` → `community` in notes.json; videos → `youtube`; tested swaps → `swaps.json`; the ledger → the page's Sources tab, grouped by source type.
 
-Then, if EDHREC data is available, pull the commander's staples and themes (one call, no question) and let them shape the plan, the role targets and the key cards; say "based on N decks". Then propose, in under 15 lines:
+Then use what the research found (EDHREC numbers, what most real lists play, creator traps) to propose, in under 15 lines, with "based on N decks and M lists":
 - the plan in 2 to 3 sentences, and the turn it should threaten to win at this bracket
 - role targets adjusted to their answers ([references/construction.md](references/construction.md)), with any deviation explained
 - 3 to 5 key cards with a reason each (read each with `mtg_card` first)
@@ -116,7 +123,7 @@ In the same AskUserQuestion call, ask a second question: "Want swap options for 
 
 Every swap passes `mtg_deck_swap` at the deck's bracket and every card is read with `mtg_card` before its "why" is written. Write them as `swaps.json` (`[{"card","why","fits":[{"deck":"<slug>/b<bracket>","swap_out","note"}]}]`) and add them with `site_data.py add-swaps`. No page wanted? Give the same swaps as a short list in the reply.
 
-Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses, Rule 0 summary and the community research, `add-swaps` if they wanted swaps, `add-claims --ledger claims.jsonl` for the sources, then `build_site.py`. The page shows the community takes with links, the videos, and every source.
+Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses, Rule 0 summary and the community research, `add-swaps` if they wanted swaps, `add-claims --ledger research/claims.jsonl` for the sources, then `build_site.py`. The page shows the community takes with links, the videos, and every source.
 
 **Finally, recommend next steps** (pick the 2 or 3 that fit): a full vault with more brackets or commanders (`/mtg:commander-vault` in this folder starts from this deck), export it for Moxfield or Archidekt (`mtg_export`; Moxfield keeps exact printings), check what they still need from their collection (`mtg_collection` `have`), build another bracket of the same commander, or start a new deck.
 

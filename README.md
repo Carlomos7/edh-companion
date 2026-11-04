@@ -25,6 +25,7 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 ## Features
 - **Built with you, not for you.** A few multiple-choice questions, a plan you approve, then options wherever it's a matter of taste.
 - **Your money, asked once.** No limit, keep it cheap, a set budget, or drippy (foils, borderless, Secret Lair up to a per-card max). Claude asks once and shows the price at the end: cheapest, as listed and drippy, with a store link for each card if you want one.
+- **Researched like a person would.** Before proposing a plan, Claude researches your commander: EDHREC numbers, real public decklists, combos, creator videos, Reddit threads, articles, live prices and the current Wizards rules. Every source is logged and cited on the deck page, grouped by type, and takes that disagree with each other (or with your theme) are shown, not hidden.
 - **Always checked.** 100 cards, singleton, color identity, legality, bracket rules, Game Changers, combos, mana, and how often you'll have your commander out on time.
 - **Current data, your call.** Card data, rules and combos come from Scryfall, Wizards and Commander Spellbook. Claude shows how fresh they are and offers to refresh.
 - **Works with your tools.** Paste a list from Moxfield, Archidekt, MTG Arena or anywhere. Export back with exact printings, so Moxfield's and Archidekt's buy buttons pull the same copies.
@@ -125,15 +126,16 @@ Extras: alternative commanders
 Claude asks about anything unclear, shows the plan and a cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. The page is published privately to your claude.ai account when you're signed in, otherwise saved as files you open in a browser. Every option (theme strictness, must-include cards, card labels, look) is in the [full request template](vault-request.md).
 
 ## Optional add-ons
-Everything above works on its own. These MCP servers make research richer: popularity numbers, deck links, creator videos and news. When they're installed Claude uses them automatically, with no setup questions: EDHREC data shapes your deck's plan and picks. Without them everything still works, and Claude says once what wasn't available. Card facts and deck checks always come from the plugin's own data, even when an add-on has a similar tool.
+Everything above works on its own: EDHREC numbers and real Archidekt decklists are built in. These MCP servers make research richer: Moxfield decklists, bracket estimates, creator videos, Reddit and articles. When they're installed Claude uses them automatically, with no setup questions: EDHREC data shapes your deck's plan and picks. Without them everything still works, and Claude says once what wasn't available. Card facts and deck checks always come from the plugin's own data, even when an add-on has a similar tool.
 
 | Add-on | What it adds | Install in Claude Code |
 |---|---|---|
 | [MTG MCP server](https://github.com/j4th/mtg-mcp-server) (j4th) | EDHREC popularity numbers, Moxfield deck links, Commander Spellbook bracket estimates | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
 | [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | Deck techs from creators like The Command Zone, quoted with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
-| Web search, e.g. [Parallel](https://parallel.ai) | Wizards announcements, tournament results, articles | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
+| Web search, e.g. [Parallel](https://parallel.ai) | Reddit threads, articles, Wizards announcements, tournament results; also reads video transcripts when YouTube blocks the transcript server | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` (Claude Code's built-in web search also works) |
 
 - **Install the MTG server one way, not both:** the command above, or (if you also use claude.ai or Claude Desktop) the hosted connector: Settings → Connectors → Add custom connector → `https://mtg-mcp-server.fastmcp.app/mcp`. Connectors appear in Claude Code when you're signed in with a Claude account (not an API key). Having both loads every tool twice.
+- A second MTG server (e.g. `mtg-commander`) is used to cross-check decklists and EDHREC numbers when present.
 - Restart Claude Code after adding one; `/mcp` shows whether it connected.
 
 ## Keeping data current
@@ -150,7 +152,7 @@ Claude checks these at the start of each deck and offers a refresh. To do it you
 **Update the plugin:** in Claude Code run `/plugin marketplace update carlomos7-mtg-skills`, then restart Claude Code. `/plugin` shows the installed version; [CHANGELOG.md](CHANGELOG.md) says what changed.
 **Uninstall:** `/plugin uninstall mtg@carlomos7-mtg-skills`, then delete the data folder `~/.cache/mtg` (Windows: `%USERPROFILE%\.cache\mtg`).
 
-**Privacy:** the plugin's tools only download public data (Scryfall, Commander Spellbook, Wizards, and MTGJSON if you ask) and keep your decks, answers and collection on your computer. Vault pages are published privately to your own claude.ai account, and add-ons you install follow their own terms.
+**Privacy:** the plugin's tools only download public data (Scryfall, Commander Spellbook, Wizards, EDHREC, Archidekt, and MTGJSON if you ask) and keep your decks, answers and collection on your computer. Vault pages are published privately to your own claude.ai account, and add-ons you install follow their own terms.
 
 ## Troubleshooting
 | Problem | Fix |
@@ -166,6 +168,7 @@ Claude checks these at the start of each deck and offers a refresh. To do it you
 ## How it works
 - **Skills** (`plugins/mtg/skills/`) hold the workflow: deckbuilding with intake and approval, research rules and sources, the multi-agent vault, and the short `/mtg:*` commands.
 - **The `mtgdb` MCP server** (`plugins/mtg/scripts/server.py`) serves card facts and deck checks from a local SQLite index built from official bulk files. The same code runs as a command-line tool (`mtgdb.py`), so the tools, the hook and the tests can't disagree.
+- **The research pass** (`mtg_research_plan`, `mtg_edhrec`, `mtg_decklists`, `mtg_research_log`) runs on every new deck, usually as a background research agent: every source type has a minimum, every source is logged with what it was used for, and shortfalls are said out loud. Swaps are tested for combos they would complete.
 - **A hook** validates vault decks and research logs the moment they're written, and only runs for files in a `vault/` folder.
 - **Accuracy:** card names from pastes and videos are matched to real cards before use; opinions need two independent dated sources; vault work is re-checked by a separate verifier; anything unchecked is labelled.
 

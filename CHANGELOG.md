@@ -2,6 +2,12 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.0
+- **Research pass built into the MCP server:** `mtg_research_plan` (every source type, its minimum, the tool and ready-made queries), `mtg_edhrec` (EDHREC numbers built in, no add-on needed; with a deck, what it lacks), `mtg_decklists` (recent public Archidekt lists by bracket; cards most lists play that you don't, and your cards nobody plays), and `mtg_research_log` / `mtg_research_report` (a cited source ledger with coverage and shortfalls).
+- **Every new deck runs it**, usually as the background research agent while you answer the intake: EDHREC, 6+ real decklists, combos, 3+ creator videos, 4+ Reddit threads, 3+ articles, live prices, the Wizards bracket page, and cEDH results at bracket 4 and 5.
+- **Combo fix:** a combo that needs only the commander plus two cards now counts as a two-card combo for brackets 1 to 3 (before, Azula + Frantic Search + Narset's Reversal slipped through), and `mtg_deck_swap` blocks swaps that complete one.
+- **Deck pages:** "researched from N sources" in the deck header, and a Sources tab grouped by type (decklists, videos, community, articles...) with what each source was used for.
+
 ## 5.4.0
 - **Community research on every build:** before the plan, the build checks Reddit (r/EDH, r/EDHBrews, r/CompetitiveEDH), articles and primers, and 2 or 3 recent creator videos, then keeps 6 to 10 takes with their sources. Combos the community mentions are checked against your bracket.
 - **"What the community says" on the page:** each take links to its thread, article or video, with a Watch list and every source in Sources & accuracy.

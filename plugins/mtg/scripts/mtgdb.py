@@ -756,7 +756,20 @@ def cmd_swaptest(a):
     theme, reasons = theme_args(a)
     _, rep = check(c, t.name, load_themes(a.themes) if theme and theme["spec"]["mode"] != "none" else {},
                    a.bracket, a.commanders, a.budget, theme, reasons)
+    new_rows = [r for r in parse_deck(t.name) if "error" not in r]
     os.unlink(t.name)
+    old_rows = [r for r in parse_deck(a.deck) if "error" not in r]
+    after, before = local_combos(c, new_rows), local_combos(c, old_rows)
+    if after is not None:
+        cmdrs = [r["name"] for r in new_rows[:a.commanders]]
+        had = {v["id"] for v in short_combos(before, cmdrs)}
+        added = [v for v in short_combos(after, cmdrs) if v["id"] not in had]
+        rep["combos_added"] = [{"cards": v["cards"], "produces": v["produces"][:3], "commander_enabled": v["commander_enabled"],
+                                "url": v["url"]} for v in added]
+        if added and a.bracket <= 3:
+            rep["errors"].extend(f"swap completes a combo ({' + '.join(v['cards'])}: {', '.join(v['produces'][:2])}); "
+                                 f"brackets 1 to 3 shouldn't have it" for v in added)
+        rep["not_checked"] = "intent and table expectations (Rule 0)"
     rep["deck"], rep["swaps"] = a.deck, applied
     rep["errors"] = problems + rep["errors"]
     rep["pass"] = not rep["errors"]
@@ -1758,6 +1771,18 @@ def local_combos(c, rows):
     return sorted(res, key=lambda v: (len(v["cards"]), -(v["popularity"] or 0)))
 
 
+def short_combos(inc, commanders):
+    """Combos needing at most two cards from the 99 (the commander is always available) and nothing else:
+    the line brackets 1 to 3 draw. deck_pieces are the cards besides the commander."""
+    cm = {n.lower() for n in commanders}
+    res = []
+    for v in inc or []:
+        pieces = [n for n in v["cards"] if n.lower() not in cm and n.split(" // ")[0].lower() not in cm]
+        if len(pieces) <= 2 and not v["also_requires"]:
+            res.append({**v, "deck_pieces": pieces, "commander_enabled": len(pieces) < len(v["cards"])})
+    return res
+
+
 def cmd_combos(a):
     rows = [r for r in parse_deck(a.deck) if "error" not in r]
     inc = None if a.live else local_combos(open_db(a.db), rows)
@@ -1777,7 +1802,7 @@ def cmd_combos(a):
                 "also_requires": [r.get("template", {}).get("name") for r in v.get("requires", [])],
                 "url": f"https://commanderspellbook.com/combo/{v.get('id')}/"} for v in res["included"]]
         source = "Commander Spellbook API (live)"
-    two = [v for v in inc if len(v["cards"]) == 2 and not v["also_requires"]]
+    two = short_combos(inc, [r["name"] for r in rows[:a.commanders]])
     out({"deck": a.deck, "count": len(inc), "two_card": two, "included": inc, "source": source,
          "note": "also_requires lists extra conditions (e.g. a creature with power 3 or greater): check them against the deck"})
 
@@ -2053,6 +2078,166 @@ def cmd_hook(a):
 
 
 # ---------- cli ----------
+# ---------- research: EDHREC, real decklists, cited sources ----------
+RESEARCH_KINDS = ("card-data", "stats", "combos", "decklist", "video", "community", "article", "price", "official", "cedh", "tool")
+RESEARCH_MIN = {"stats": 1, "combos": 1, "decklist": 6, "video": 3, "community": 4, "article": 3, "price": 1, "official": 1}
+RESEARCH_LABELS = {"card-data": "Card data", "stats": "Deck statistics", "combos": "Combos", "decklist": "Real decklists",
+                   "video": "Videos", "community": "Community", "article": "Articles", "price": "Prices",
+                   "official": "Official (Wizards)", "cedh": "cEDH results", "tool": "Tools"}
+
+
+def web_slug(name):
+    import unicodedata
+    front = unicodedata.normalize("NFKD", name.split(" // ")[0]).encode("ascii", "ignore").decode().lower()
+    return re.sub(r"[^a-z0-9]+", "-", re.sub(r"['\u2019,.!?:\"]", "", front)).strip("-")
+
+
+def cached_web_json(key, url, max_age_h=24, data=None, headers=None):
+    """Light, cached reads of public JSON (EDHREC, Archidekt): one fetch per day per page."""
+    d = os.path.join(CACHE, "web")
+    os.makedirs(d, exist_ok=True)
+    p = os.path.join(d, re.sub(r"[^a-z0-9_.-]+", "-", key.lower()) + ".json")
+    if os.path.exists(p) and time.time() - os.path.getmtime(p) < max_age_h * 3600:
+        with open(p, encoding="utf-8") as f:
+            return json.load(f)
+    res = json.loads(http_get(url, data=data, headers=headers))
+    with open(p, "w", encoding="utf-8") as f:
+        json.dump(res, f)
+    return res
+
+
+def deck_names(path):
+    rows = [r for r in parse_deck(path) if "error" not in r] if path else []
+    return rows, {r["name"].lower() for r in rows} | {r["name"].split(" // ")[0].lower() for r in rows}
+
+
+def cmd_edhrec(a):
+    slug, page = web_slug(a.commander), f"https://edhrec.com/commanders/{web_slug(a.commander)}"
+    try:
+        e = cached_web_json("edhrec-" + slug, f"https://json.edhrec.com/pages/commanders/{slug}.json")
+    except Exception as ex:
+        out({"error": f"no EDHREC page for {a.commander} ({ex})", "url": page}, fail=True)
+    jd = e.get("container", {}).get("json_dict", {})
+    _, have = deck_names(a.deck)
+    lists, seen = [], {}
+    for L in jd.get("cardlists", []):
+        cards = []
+        for v in L.get("cardviews", []):
+            x = {"name": v["name"], "inclusion_pct": round(100 * v["num_decks"] / v["potential_decks"], 1) if v.get("potential_decks") else None,
+                 "decks": v.get("num_decks"), "synergy_pct": round(100 * v["synergy"]) if v.get("synergy") is not None else None}
+            if a.deck:
+                x["in_deck"] = v["name"].lower() in have
+            cards.append(x)
+            seen.setdefault(v["name"], x)
+        lists.append({"list": L.get("header"), "cards": cards[:a.limit]})
+    res = {"commander": a.commander, "url": page, "decks": jd.get("card", {}).get("num_decks"),
+           "decks_by_bracket": e.get("bracket_counts"), "lists": lists,
+           "source": "EDHREC (json.edhrec.com, cached 24h). Inclusion = share of decks that could play the card that do."}
+    if a.deck:
+        miss = [x for x in seen.values() if not x["in_deck"]]
+        res["popular_missing"] = sorted([x for x in miss if (x["inclusion_pct"] or 0) >= a.min_pct], key=lambda x: -x["inclusion_pct"])[:20]
+        res["high_synergy_missing"] = sorted([x for x in miss if (x["synergy_pct"] or 0) >= 20], key=lambda x: -x["synergy_pct"])[:15]
+    out(res)
+
+
+def cmd_decklists(a):
+    """Recent public Archidekt lists for a commander, and how the player's deck compares."""
+    url = ("https://archidekt.com/api/decks/v3/?commanderName=" + quote(a.commander) + "&orderBy=-updatedAt&pageSize=50")
+    try:
+        found = cached_web_json(f"archidekt-{web_slug(a.commander)}", url, 12)
+    except Exception as ex:
+        out({"error": f"Archidekt search failed ({ex})"}, fail=True)
+    decks = []
+    for x in found.get("results", []):
+        if len(decks) >= a.count:
+            break
+        b = x.get("edhBracket")
+        if a.bracket and b and abs(b - a.bracket) > 1:
+            continue
+        try:
+            d = cached_web_json(f"archidekt-deck-{x['id']}", f"https://archidekt.com/api/decks/{x['id']}/", 24 * 7)
+        except Exception:
+            continue
+        skip = {c["name"] for c in d.get("categories", []) if not c.get("includedInDeck", True)}
+        names = {cc["card"]["oracleCard"]["name"] for cc in d.get("cards", [])
+                 if not skip.intersection(cc.get("categories") or [])}
+        if len(names) < 60 or (d.get("name") or "").lower().startswith("copy of"):  # unfinished brews and copies
+            continue
+        decks.append({"name": d.get("name"), "url": f"https://archidekt.com/decks/{x['id']}", "owner": (d.get("owner") or {}).get("username"),
+                      "bracket": d.get("edhBracket"), "updated": (d.get("updatedAt") or "")[:10], "cards": names})
+    if not decks:
+        out({"error": f"no public Archidekt lists found for {a.commander}"}, fail=True)
+    count = {}
+    for d in decks:
+        for n in d["cards"]:
+            count[n] = count.get(n, 0) + 1
+    basics = {"plains", "island", "swamp", "mountain", "forest", "wastes"}
+    rows, have = deck_names(a.deck)
+    res = {"commander": a.commander, "lists": [{k: v for k, v in d.items() if k != "cards"} | {"size": len(d["cards"])} for d in decks],
+           "most_played": sorted(([n, k] for n, k in count.items() if n.lower() not in basics and n.lower() != a.commander.lower()),
+                                 key=lambda t: -t[1])[:30],
+           "source": "Archidekt public decks (archidekt.com API, newest first, cached 12h)"}
+    if a.deck:
+        need = max(2, math.ceil(len(decks) * a.share))
+        res["popular_missing"] = [[n, k] for n, k in res["most_played"] if k >= need and n.lower() not in have]
+        res["in_no_list"] = sorted(r["name"] for r in rows[a.commanders:] if r["name"].lower() not in basics
+                                   and not any(r["name"] in d["cards"] or r["name"].split(" // ")[0] in d["cards"] for d in decks))
+        res["note"] = f"popular_missing = in {need}+ of {len(decks)} lists; in_no_list = your cards none of them play"
+    out(res)
+
+
+def research_rows(folder):
+    p = os.path.join(folder, "claims.jsonl")
+    if not os.path.exists(p):
+        return []
+    with open(p, encoding="utf-8") as f:
+        return [json.loads(ln) for ln in f if ln.strip()]
+
+
+def cmd_research(a):
+    os.makedirs(a.folder, exist_ok=True)
+    if a.action == "log":
+        entries = json.loads(open(a.entries, encoding="utf-8").read() if os.path.isfile(a.entries) else a.entries)
+        entries = entries if isinstance(entries, list) else [entries]
+        bad = [e for e in entries if not e.get("url") or e.get("kind") not in RESEARCH_KINDS]
+        if bad:
+            out({"error": f"every entry needs a url and a kind from {list(RESEARCH_KINDS)}", "bad": bad[:5]}, fail=True)
+        with open(os.path.join(a.folder, "claims.jsonl"), "a", encoding="utf-8") as f:
+            for e in entries:
+                f.write(json.dumps({"claim": e.get("claim") or e.get("used_for") or "source", "subject": e.get("subject", ""),
+                                    "status": e.get("status", "verified"),
+                                    "sources": [{k: e.get(k) for k in ("title", "url", "kind", "date", "locator", "used_for") if e.get(k)}]},
+                                   ensure_ascii=False) + "\n")
+        a.action = "report"
+    rows = research_rows(a.folder)
+    by = {}
+    for r in rows:
+        for src in r.get("sources", []):
+            k = src.get("kind") or "other"
+            g = by.setdefault(k, {})
+            x = g.setdefault(src["url"], {"title": src.get("title") or src["url"], "url": src["url"], "date": src.get("date"),
+                                          "used_for": set(), "citations": 0})
+            x["citations"] += 1
+            if src.get("used_for"):
+                x["used_for"].add(src["used_for"])
+    need = dict(RESEARCH_MIN, **({"cedh": 1} if (a.bracket or 0) >= 4 else {}))
+    short = {k: f"{len(by.get(k, {}))} of {n}" for k, n in need.items() if len(by.get(k, {})) < n}
+    groups = [{"kind": k, "label": RESEARCH_LABELS.get(k, k), "sources": len(g), "citations": sum(x["citations"] for x in g.values()),
+               "items": sorted(({**x, "used_for": sorted(x["used_for"])} for x in g.values()), key=lambda x: -x["citations"])}
+              for k, g in sorted(by.items(), key=lambda kv: RESEARCH_KINDS.index(kv[0]) if kv[0] in RESEARCH_KINDS else 99)]
+    md = ["# Research sources", "", f"{sum(g['sources'] for g in groups)} sources, {len(rows)} claims.", ""]
+    for g in groups:
+        md += [f"## {g['label']} ({g['sources']} sources, cited {g['citations']} times)", ""]
+        md += [f"- [{x['title']}]({x['url']}){' · ' + x['date'] if x.get('date') else ''}"
+               f"{' · used for: ' + '; '.join(x['used_for']) if x['used_for'] else ''}" for x in g["items"]] + [""]
+    if short:
+        md += ["## Shortfalls", ""] + [f"- {RESEARCH_LABELS.get(k, k)}: {v}" for k, v in short.items()] + [""]
+    with open(os.path.join(a.folder, "sources.md"), "w", encoding="utf-8") as f:
+        f.write("\n".join(md))
+    out({"folder": a.folder, "claims": len(rows), "groups": [{k: g[k] for k in ("kind", "label", "sources", "citations")} for g in groups],
+         "shortfalls": short, "complete": not short, "report": os.path.join(a.folder, "sources.md")})
+
+
 def main(argv=None):
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8")  # Windows pipes default to cp1252
@@ -2108,6 +2293,17 @@ def main(argv=None):
     s = sp.add_parser("combos", help="combos in a deck from the local Commander Spellbook file (--live: API)")
     s.add_argument("deck"); s.add_argument("--commanders", type=int, default=1); s.add_argument("--live", action="store_true")
     s.set_defaults(f=cmd_combos)
+    s = sp.add_parser("edhrec", help="EDHREC staples, synergy and articles for a commander (--deck: what it lacks)")
+    s.add_argument("commander"); s.add_argument("--deck"); s.add_argument("--limit", type=int, default=15)
+    s.add_argument("--min-pct", type=float, default=40); s.set_defaults(f=cmd_edhrec)
+    s = sp.add_parser("decklists", help="recent public Archidekt lists for a commander and how a deck compares")
+    s.add_argument("commander"); s.add_argument("--deck"); s.add_argument("--commanders", type=int, default=1)
+    s.add_argument("--count", type=int, default=8); s.add_argument("--bracket", type=int)
+    s.add_argument("--share", type=float, default=0.5, help="popular = in this share of the lists"); s.set_defaults(f=cmd_decklists)
+    s = sp.add_parser("research", help="log cited sources (kind, url, used_for) and report coverage by source type")
+    s.add_argument("action", choices=["log", "report"]); s.add_argument("folder")
+    s.add_argument("--entries", help="log: JSON list or a .json file of {kind,title,url,date,locator,used_for,claim}")
+    s.add_argument("--bracket", type=int); s.set_defaults(f=cmd_research)
     s = sp.add_parser("sync", help=f"refresh data sources: {', '.join(SYNC_SOURCES)} (default: all but prices)")
     s.add_argument("sources", nargs="*", metavar="SOURCE"); s.set_defaults(f=cmd_sync)
     s = sp.add_parser("status", help="date and staleness of every data source (--remote: check for newer versions)")

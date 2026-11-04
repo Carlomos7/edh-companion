@@ -28,7 +28,9 @@ mcp = MCPServer(
     instructions=(
         "Local Magic: The Gathering data: card facts, legality, printings, prices, Game Changers, role tags, rulings, "
         "Commander Spellbook combos and the Comprehensive Rules. Use these tools for any card fact instead of memory. "
-        "Call mtg_data_status at the start of deck work; if anything is stale, offer the user mtg_data_sync."),
+        "Call mtg_data_status at the start of deck work; if anything is stale, offer the user mtg_data_sync. "
+        "For a new deck, run the research pass: mtg_research_plan lists every source type, mtg_edhrec and "
+        "mtg_decklists cover EDHREC and real decklists, and mtg_research_log records what you cite."),
 )
 
 
@@ -135,9 +137,94 @@ def mtg_deck_check(deck: str, bracket: int, commanders: int = 1, budget: float |
 @mcp.tool(annotations=READ)
 def mtg_deck_swap(deck: str, bracket: int, swaps: list[str], commanders: int = 1, budget: float | None = None) -> dict:
     """Test swaps on a copy of a deck and re-run the hard checks. Each swap is "-Card Out +Card In". Returns whether the
-    deck still passes, new problems and the cost change. Never suggest a swap that fails here."""
+    deck still passes, new problems and the cost change. Also lists combos the swap completes (combos_added; at
+    brackets 1 to 3 any combo needing only the commander plus two cards is an error). Never suggest a swap that fails here."""
     with deck_file(deck) as path:
         res, _ = run("swaptest", path, *deck_args(bracket, commanders, budget), *[x for s in swaps for x in ("--swap", s)])
+    return res
+
+
+WEB_READ = ToolAnnotations(read_only_hint=True, open_world_hint=True)
+CHANNELS = ["The Command Zone", "EDHRECast", "Commander's Quarters", "Tolarian Community College", "MTGGoldfish Commander",
+            "CovertGoBlue", "Game Knights"]
+
+
+@mcp.tool(annotations=WEB_READ)
+def mtg_edhrec(commander: str, deck: str | None = None, limit: int = 15) -> dict:
+    """EDHREC for a commander, built in (no add-on needed): how many decks, decks per bracket, and its card lists
+    (top cards, high synergy, by type) with inclusion % and synergy. Pass the player's deck to get popular and
+    high-synergy cards it lacks. Cached for a day; cite the returned url."""
+    if deck:
+        with deck_file(deck) as path:
+            res, code = run("edhrec", commander, "--deck", path, "--limit", limit)
+    else:
+        res, code = run("edhrec", commander, "--limit", limit)
+    if code:
+        raise ToolError(res.get("error") if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=WEB_READ)
+def mtg_decklists(commander: str, deck: str | None = None, bracket: int | None = None, count: int = 8, commanders: int = 1) -> dict:
+    """Real public decklists for a commander (newest Archidekt lists, within one bracket of `bracket` when given),
+    each with url, owner, bracket and date, plus the most played cards across them. With the player's deck: cards
+    most lists play that it lacks (popular_missing) and its cards no list plays (in_no_list). Cite each list's url."""
+    args = ["decklists", commander, "--count", count, "--commanders", commanders] + (["--bracket", bracket] if bracket else [])
+    if deck:
+        with deck_file(deck) as path:
+            res, code = run(*args, "--deck", path)
+    else:
+        res, code = run(*args)
+    if code:
+        raise ToolError(res.get("error") if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=READ)
+def mtg_research_plan(commander: str, bracket: int) -> dict:
+    """The research pass for a new deck: every source type to cover, the minimum per type, which tool answers it,
+    and ready-made search queries. Work through it (in parallel where you can), log every source with
+    mtg_research_log, and check coverage with mtg_research_report before writing the plan."""
+    q = commander
+    steps = [
+        {"kind": "stats", "min": 1, "do": "mtg_edhrec with the commander (and the deck once there is one)"},
+        {"kind": "decklist", "min": 6, "do": "mtg_decklists (Archidekt, built in); a Moxfield add-on adds more (moxfield_search_decks)"},
+        {"kind": "combos", "min": 1, "do": "mtg_deck_check on the list (local Commander Spellbook); a Spellbook add-on adds a bracket estimate"},
+        {"kind": "video", "min": 3, "do": "web search, then the transcript tool; if it's blocked, web-fetch the video URL (returns the transcript)",
+         "queries": [f"{q} deck tech", f"{q} commander upgrade", f"{q} The Command Zone", f"{q} mistakes"], "channels_first": CHANNELS},
+        {"kind": "community", "min": 4, "do": "web search + fetch; read whole threads, not snippets",
+         "queries": [f"site:reddit.com/r/EDH {q}", f"site:reddit.com/r/EDHBrews {q}", f"{q} too strong bracket {bracket}", f"{q} primer moxfield"]},
+        {"kind": "article", "min": 3, "do": "web search + fetch",
+         "queries": [f"{q} EDHREC article", f"{q} commander guide", f"{q} Card Kingdom", f"{q} Commander's Herald"]},
+        {"kind": "price", "min": 1, "do": "mtg_price_plan, then a live price tool or TCGplayer for the 10 priciest cards; flag gaps over 20%"},
+        {"kind": "official", "min": 1, "do": "the current bracket rules and Game Changers announcement on magic.wizards.com"},
+    ]
+    if bracket >= 4:
+        steps.append({"kind": "cedh", "min": 1, "do": "EDHTop16 (edhtop16.com) or the cEDH Decklist Database"})
+    return {"commander": commander, "bracket": bracket, "steps": steps,
+            "rules": ["Card facts only from mtg_card / mtg_resolve_names, never a video or thread",
+                      "A combo the community mentions is a bracket check: test it with mtg_deck_swap",
+                      "Show takes that disagree (with each other or the player's theme); don't act on them unless asked",
+                      "Log each source with its kind, url, date, locator (mm:ss or section) and what you used it for"],
+            "log_with": "mtg_research_log(folder='<deck folder>/research', entries=[...])"}
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=False, idempotent_hint=False, open_world_hint=False))
+def mtg_research_log(folder: str, entries: list[dict]) -> dict:
+    """Record cited sources for a deck in <folder>/claims.jsonl and return coverage by source type. Each entry:
+    {kind, title, url, date, locator, used_for, claim}; kind is one of card-data, stats, combos, decklist, video,
+    community, article, price, official, cedh, tool. Also writes <folder>/sources.md (grouped, with counts)."""
+    res, code = run("research", "log", os.path.expanduser(folder), "--entries", json.dumps(entries))
+    if code:
+        raise ToolError(json.dumps(res)[:1500])
+    return res
+
+
+@mcp.tool(annotations=READ)
+def mtg_research_report(folder: str, bracket: int | None = None) -> dict:
+    """Coverage of a deck's research by source type against the minimums (shortfalls), and the grouped source list in
+    <folder>/sources.md. Run before writing the plan; say any shortfall in one line."""
+    res, _ = run("research", "report", os.path.expanduser(folder), *(["--bracket", bracket] if bracket else []))
     return res
 
 

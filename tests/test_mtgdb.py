@@ -319,6 +319,36 @@ class LogicTest(unittest.TestCase):
         import mtgdb
         cls.m = mtgdb
 
+    def test_commander_plus_two_is_a_two_card_combo(self):
+        combo = lambda cards, req=(): {"id": "x", "cards": cards, "also_requires": list(req), "produces": ["Infinite looting"]}
+        got = self.m.short_combos([combo(["Fire Lord Azula", "Narset's Reversal", "Frantic Search"]),
+                                   combo(["Twinning Staff", "Narset's Reversal"]),
+                                   combo(["A", "B", "C"]), combo(["A", "B"], ["a creature with power 3"])], ["Fire Lord Azula"])
+        self.assertEqual([g["deck_pieces"] for g in got], [["Narset's Reversal", "Frantic Search"], ["Twinning Staff", "Narset's Reversal"]])
+        self.assertEqual([g["commander_enabled"] for g in got], [True, False])
+
+    def test_research_log_and_coverage(self):
+        d = tempfile.mkdtemp()
+        entries = [{"kind": "video", "title": "Deck tech", "url": "https://youtu.be/x", "used_for": "traps", "locator": "1:23"},
+                   {"kind": "video", "title": "Deck tech", "url": "https://youtu.be/x", "used_for": "plan"},
+                   {"kind": "decklist", "title": "List", "url": "https://archidekt.com/decks/1"}]
+        p = subprocess.run([sys.executable, SCRIPT, "research", "log", d, "--entries", json.dumps(entries), "--bracket", "4"],
+                           capture_output=True, text=True)
+        res = json.loads(p.stdout)
+        self.assertEqual(res["claims"], 3)
+        self.assertEqual({g["kind"]: (g["sources"], g["citations"]) for g in res["groups"]}, {"video": (1, 2), "decklist": (1, 1)})
+        self.assertEqual(res["shortfalls"]["decklist"], "1 of 6")
+        self.assertIn("cedh", res["shortfalls"])  # bracket 4 needs cEDH results
+        self.assertIn("used for: plan; traps", open(os.path.join(d, "sources.md"), encoding="utf-8").read())
+        bad = subprocess.run([sys.executable, SCRIPT, "research", "log", d, "--entries", json.dumps([{"kind": "rumor", "url": "u"}])],
+                             capture_output=True, text=True)
+        self.assertNotEqual(bad.returncode, 0)
+
+    def test_web_slug(self):
+        self.assertEqual(self.m.web_slug("Narset's Reversal"), "narsets-reversal")
+        self.assertEqual(self.m.web_slug("Brazen Borrower // Petty Theft"), "brazen-borrower")
+        self.assertEqual(self.m.web_slug("Lim-Dûl the Necromancer"), "lim-dul-the-necromancer")
+
     def write(self, text):
         f = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
         f.write(text); f.close()

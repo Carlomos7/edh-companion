@@ -3,6 +3,13 @@
 ## Local (preferred for every card fact)
 The plugin's `mtgdb` MCP server: `mtg_card`, `mtg_resolve_names`, `mtg_deck_check`, `mtg_deck_swap`, `mtg_deck_profile`, `mtg_simulate`, `mtg_price_plan`, `mtg_cheaper_alternatives`, `mtg_export`, `mtg_rules`, `mtg_data_status`, `mtg_data_sync`. The same commands (plus `search`, `audit-claims`, `selftest`, `theme-build`, `contact-sheet`, `collection`) run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command>`. Built from official bulk files, so no rate limits.
 
+## Built-in research tools (this plugin's server)
+- `mtg_research_plan`: the checklist for a new deck (see research-pass.md).
+- `mtg_edhrec`: EDHREC's public commander data (decks, decks per bracket, inclusion %, synergy), cached for a day; with a deck, what it lacks.
+- `mtg_decklists`: the newest public Archidekt lists for a commander, filtered by bracket; with a deck, cards most lists play that it lacks and its cards nobody plays.
+- `mtg_research_log` / `mtg_research_report`: the source ledger (`research/claims.jsonl`, `research/sources.md`) and coverage against the minimums.
+- Reddit and YouTube block direct requests from some networks; reach them through a web search or fetch tool.
+
 ## Optional MCP servers (find them by what they do)
 Players install add-ons under their own names, and different servers name their tools differently. Look at the tools you actually have and judge by what each one does; tool names below are examples, not requirements.
 

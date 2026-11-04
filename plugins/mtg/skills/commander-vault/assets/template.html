@@ -121,6 +121,9 @@ th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:1px;color:v
 .decklist button.name{all:unset;cursor:zoom-in;min-width:0;overflow-wrap:anywhere;font-weight:500}
 .decklist button.name:hover{color:var(--s1)}.decklist button.name:focus-visible{outline:3px solid var(--s1);outline-offset:1px}
 .decklist .off{color:var(--gold)}
+.srcs{margin:0;padding-left:18px;display:grid;gap:8px;font-size:14px}.srcs a{color:var(--s1)}.srcs .note{margin-top:2px}
+a.stat:hover{outline:2px solid var(--s1)}
+.deckhead .note a{color:var(--s1)}
 .ovgrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:18px;align-items:start}
 .ovgrid .hero{float:none;width:100%;margin:0}.sumgrid{clear:none!important}
 @media (max-width:640px){.ovgrid{grid-template-columns:minmax(0,1fr) 92px;gap:12px}}
@@ -327,7 +330,8 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
    el("b",{},"B"+d.bracket),el("small",{},`${BR[d.bracket]||""}${SHOW.prices?" · "+money((d.stats||{}).price):""}`))));
   const flat=orderedCards(deck);CUR={G,slug:cur.slug,b:deck.bracket};
   const copy=el("button",{class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
-  body.append(el("div",{class:"deckhead"},el("div",{},el("h2",{},cur.name),el("p",{class:"note",style:"margin:4px 0 0"},`Bracket ${deck.bracket} · ${BR[deck.bracket]||""} · ${deck.cards.reduce((a,c)=>a+c.qty,0)} cards`)),
+  body.append(el("div",{class:"deckhead"},el("div",{},el("h2",{},cur.name),el("p",{class:"note",style:"margin:4px 0 0"},`Bracket ${deck.bracket} · ${BR[deck.bracket]||""} · ${deck.cards.reduce((a,c)=>a+c.qty,0)} cards`,
+    (D.sources||[]).length&&SHOW.sources?[" · ",el("a",{href:"#sources",onclick:e=>{e.preventDefault();go("sources");scrollTo(0,0)}},`researched from ${D.sources.length} sources →`)]:"")),
    el("div",{class:"row"},cur.decks.length>1?seg:null,copy)));
   body.append(el("div",{class:"overview"},el("section",{class:"panel"},deckSummary(deck,cur,flat)),deckNumbers(deck,cur)));
   body.append(deckList(deck));
@@ -427,11 +431,17 @@ function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent
  function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}
 
 /* ---------- sources & accuracy ---------- */
-function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||{};
- host.append(el("section",{class:"panel"},el("h2",{},"Where the data comes from"),el("table",{},el("tbody",{},...Object.entries(dd).map(([k,v])=>el("tr",{},el("th",{},k.replace(/_/g," ")),el("td",{class:"num"},/^\d{4}-\d\d-\d\dT/.test(String(v))?niceDate(v):String(v))))))));
+const KIND_LABEL={"card-data":"Card data","stats":"Deck statistics","combos":"Combos","decklist":"Real decklists","video":"Videos","community":"Community","article":"Articles","price":"Prices","official":"Official (Wizards)","cedh":"cEDH results","tool":"Tools"};
+function sourceGroups(){const g={};(D.sources||[]).forEach(x=>(g[x.kind||"other"]=g[x.kind||"other"]||[]).push(x));const order=Object.keys(KIND_LABEL);
+ return Object.keys(g).sort((a,b)=>((order.indexOf(a)+1)||99)-((order.indexOf(b)+1)||99)).map(k=>({kind:k,label:KIND_LABEL[k]||k,items:g[k]}))}
+function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||{},src=D.sources||[],G=sourceGroups();
+ if(src.length){host.append(el("section",{class:"panel"},el("h2",{},`Researched from ${src.length} sources`),el("p",{class:"note"},"Every take, swap and number on this page traces back to one of these. Card facts always come from Scryfall's data; opinions are labelled as opinions."),
+   el("div",{class:"stats"},...G.map(g=>el("a",{class:"stat",href:"#src-"+g.kind,style:"text-decoration:none;color:inherit"},el("b",{class:"num"},g.items.length),el("span",{},g.label))))));
+  G.forEach(g=>host.append(el("section",{class:"panel",id:"src-"+g.kind},el("h2",{},`${g.label} · ${g.items.length}`),el("ul",{class:"srcs"},...g.items.map(x=>el("li",{},ext(x.url,`Open ${x.title||x.url}`,"",x.title||x.url," ↗"),
+   el("span",{class:"muted"},[x.date,x.locator].filter(Boolean).map(v=>" · "+v).join("")),x.used_for?el("div",{class:"note"},"Used for: "+x.used_for):null))))))}
+ host.append(el("section",{class:"panel"},el("h2",{},"Data freshness"),el("table",{},el("tbody",{},...Object.entries(dd).map(([k,v])=>el("tr",{},el("th",{},k.replace(/_/g," ")),el("td",{class:"num"},/^\d{4}-\d\d-\d\dT/.test(String(v))?niceDate(v):String(v))))))));
  host.append(el("section",{class:"panel"},el("h2",{},"Accuracy"),el("div",{class:"stats"},...[["Claims verified",A.claims_verified],["Unverified (labelled)",A.claims_unverified],["Decks validated",A.decks_validated]].filter(x=>x[1]!=null).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))),
-  (A.checks||[]).length?el("ul",{},...A.checks.map(c=>el("li",{},c))):null,(A.unverified||[]).length?el("div",{},el("h3",{},"Still unverified"),el("ul",{},...A.unverified.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," · "+u.where):"")))):null));
- const src=D.sources||[];if(src.length)host.append(el("section",{class:"panel"},el("h2",{},`Sources (${src.length})`),el("ul",{},...src.map(s=>el("li",{},el("a",{href:s.url,target:"_blank",rel:"noopener"},s.title||s.url)," ",el("span",{class:"muted"},[s.kind,s.date,s.locator].filter(Boolean).join(" · ")))))))}
+  (A.checks||[]).length?el("ul",{},...A.checks.map(c=>el("li",{},c))):null,(A.unverified||[]).length?el("div",{},el("h3",{},"Still unverified"),el("ul",{},...A.unverified.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," · "+u.where):"")))):null))}
 
 /* ---------- viewer: CSS 3D, drag to rotate, flip, sheen ---------- */
 let V={list:[],i:0,opener:null,ry:0,rx:0,hx:0,hy:0,flipped:false};

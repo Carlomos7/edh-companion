@@ -275,7 +275,12 @@ def cmd_add_claims(a):
     D = load(a.site)
     acc, seen = D["accuracy"], {s["url"] for s in D["sources"]}
     ver = unver = 0
+    done = set(acc.setdefault("ledgers", []))
     for path in a.ledger:
+        key = os.path.abspath(path)
+        if key in done:  # already counted; sources are deduped by url anyway
+            continue
+        acc["ledgers"].append(key)
         for ln in open(path, encoding="utf-8"):
             if not ln.strip():
                 continue
@@ -289,7 +294,8 @@ def cmd_add_claims(a):
                 if s.get("url") and s["url"] not in seen:
                     seen.add(s["url"])
                     D["sources"].append({"title": s.get("title") or s.get("author") or s["url"], "url": s["url"],
-                                         "kind": s.get("kind"), "date": s.get("date"), "locator": s.get("locator")})
+                                         "kind": s.get("kind"), "date": s.get("date"), "locator": s.get("locator"),
+                                         "used_for": s.get("used_for")})
     acc["claims_verified"] = acc.get("claims_verified", 0) + ver
     acc["claims_unverified"] = acc.get("claims_unverified", 0) + unver
     save(a.site, D)

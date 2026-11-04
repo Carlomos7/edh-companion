@@ -8,7 +8,8 @@ SERVER = os.path.join(os.path.dirname(base.SCRIPT), "server.py")
 DECK = "1 Darth Vader\n1 Sol Ring\n1 Demonic Tutor\n97 Swamp\n"
 TOOLS = {"mtg_card", "mtg_resolve_names", "mtg_deck_check", "mtg_deck_swap", "mtg_deck_profile", "mtg_simulate",
          "mtg_rules", "mtg_data_status", "mtg_data_sync", "mtg_price_plan", "mtg_cheaper_alternatives", "mtg_export",
-         "mtg_collection", "mtg_collection_edit"}
+         "mtg_collection", "mtg_collection_edit", "mtg_edhrec", "mtg_decklists", "mtg_research_plan", "mtg_research_log",
+         "mtg_research_report"}
 
 
 class ServerTest(unittest.IsolatedAsyncioTestCase):

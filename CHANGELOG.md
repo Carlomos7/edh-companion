@@ -2,6 +2,18 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.2
+- **Edge cases fixed in the research tools:**
+  - `mtg_edhrec` and `mtg_decklists` fall back to the last cached copy (flagged stale) when offline.
+  - Cache files are written atomically.
+  - Archidekt cards without card data no longer crash the comparison.
+- **The research log:**
+  - accepts a JSON list, one object, or a JSONL file (including its own ledger), with a clear error for bad JSON
+  - writes the full claims format, so `audit-claims` passes
+  - the report lists sources missing a date or a video timestamp
+- **`mtg_research_log`** needs a full folder path and passes entries through a file, so large logs work on Windows.
+- **`mtg_deck_swap`** now reports every combo a swap completes. Ones needing only the commander plus two cards still fail brackets 1 to 3; bigger ones are a Rule 0 warning.
+
 ## 5.5.1
 - **Best tool first, then fall back:** the research pass now has an explicit order per source type (card data, stats, combos, bracket estimate, decklists, videos, community, articles, prices, official, cEDH): installed add-ons first for the best results, then the built-in tools, then web search or fetch, never memory. Which tool answered is logged, and a row that only got the last resort is said out loud. `mtg_research_plan` returns the order too.
 

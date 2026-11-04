@@ -213,20 +213,33 @@ def mtg_research_plan(commander: str, bracket: int) -> dict:
 
 @mcp.tool(annotations=ToolAnnotations(read_only_hint=False, idempotent_hint=False, open_world_hint=False))
 def mtg_research_log(folder: str, entries: list[dict]) -> dict:
-    """Record cited sources for a deck in <folder>/claims.jsonl and return coverage by source type. Each entry:
+    """Record cited sources for a deck in <folder>/claims.jsonl (folder = full path, e.g. <deck folder>/research)
+    and return coverage by source type. Each entry:
     {kind, title, url, date, locator, used_for, claim}; kind is one of card-data, stats, combos, decklist, video,
     community, article, price, official, cedh, tool. Also writes <folder>/sources.md (grouped, with counts)."""
-    res, code = run("research", "log", os.path.expanduser(folder), "--entries", json.dumps(entries))
+    folder = research_folder(folder)
+    with tempfile.TemporaryDirectory() as d:
+        path = os.path.join(d, "entries.json")
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump(entries, f)
+        res, code = run("research", "log", folder, "--entries", path)
     if code:
         raise ToolError(json.dumps(res)[:1500])
     return res
+
+
+def research_folder(folder):
+    folder = os.path.expanduser(folder)
+    if not os.path.isabs(folder):
+        raise ToolError(f"pass the full path to the research folder (e.g. the deck folder + /research), not '{folder}'")
+    return folder
 
 
 @mcp.tool(annotations=READ)
 def mtg_research_report(folder: str, bracket: int | None = None) -> dict:
     """Coverage of a deck's research by source type against the minimums (shortfalls), and the grouped source list in
     <folder>/sources.md. Run before writing the plan; say any shortfall in one line."""
-    res, _ = run("research", "report", os.path.expanduser(folder), *(["--bracket", bracket] if bracket else []))
+    res, _ = run("research", "report", research_folder(folder), *(["--bracket", bracket] if bracket else []))
     return res
 
 

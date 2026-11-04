@@ -762,10 +762,16 @@ def cmd_swaptest(a):
     after, before = local_combos(c, new_rows), local_combos(c, old_rows)
     if after is not None:
         cmdrs = [r["name"] for r in new_rows[:a.commanders]]
-        had = {v["id"] for v in short_combos(before, cmdrs)}
-        added = [v for v in short_combos(after, cmdrs) if v["id"] not in had]
-        rep["combos_added"] = [{"cards": v["cards"], "produces": v["produces"][:3], "commander_enabled": v["commander_enabled"],
-                                "url": v["url"]} for v in added]
+        had = {v["id"] for v in before or []}
+        new_all = [v for v in after if v["id"] not in had]
+        added = short_combos(new_all, cmdrs)
+        short_ids = {v["id"] for v in added}
+        rep["combos_added"] = [{"cards": v["cards"], "produces": v["produces"][:3], "also_requires": v["also_requires"],
+                                "bracket_tag": v["bracket_tag"], "blocks_low_brackets": v["id"] in short_ids,
+                                "url": v["url"]} for v in new_all]
+        if a.bracket <= 3 and len(new_all) > len(added):
+            rep["warnings"].append(f"swap completes {len(new_all) - len(added)} combo(s) needing 3+ cards or extra conditions: "
+                                   "allowed at this bracket, but mention them at Rule 0")
         if added and a.bracket <= 3:
             rep["errors"].extend(f"swap completes a combo ({' + '.join(v['cards'])}: {', '.join(v['produces'][:2])}); "
                                  f"brackets 1 to 3 shouldn't have it" for v in added)
@@ -2100,9 +2106,20 @@ def cached_web_json(key, url, max_age_h=24, data=None, headers=None):
     if os.path.exists(p) and time.time() - os.path.getmtime(p) < max_age_h * 3600:
         with open(p, encoding="utf-8") as f:
             return json.load(f)
-    res = json.loads(http_get(url, data=data, headers=headers))
-    with open(p, "w", encoding="utf-8") as f:
+    try:
+        res = json.loads(http_get(url, data=data, headers=headers))
+    except Exception:
+        if not os.path.exists(p):
+            raise
+        with open(p, encoding="utf-8") as f:  # offline or the site is down: last good copy, flagged
+            res = json.load(f)
+        if isinstance(res, dict):
+            res["_stale_cache"] = time.strftime("%Y-%m-%d", time.localtime(os.path.getmtime(p)))
+        return res
+    tmp = p + ".tmp"
+    with open(tmp, "w", encoding="utf-8") as f:
         json.dump(res, f)
+    os.replace(tmp, p)  # never leave a half-written cache file
     return res
 
 
@@ -2131,7 +2148,7 @@ def cmd_edhrec(a):
             seen.setdefault(v["name"], x)
         lists.append({"list": L.get("header"), "cards": cards[:a.limit]})
     res = {"commander": a.commander, "url": page, "decks": jd.get("card", {}).get("num_decks"),
-           "decks_by_bracket": e.get("bracket_counts"), "lists": lists,
+           "decks_by_bracket": e.get("bracket_counts"), "lists": lists, "stale_cache": e.get("_stale_cache"),
            "source": "EDHREC (json.edhrec.com, cached 24h). Inclusion = share of decks that could play the card that do."}
     if a.deck:
         miss = [x for x in seen.values() if not x["in_deck"]]
@@ -2159,8 +2176,8 @@ def cmd_decklists(a):
         except Exception:
             continue
         skip = {c["name"] for c in d.get("categories", []) if not c.get("includedInDeck", True)}
-        names = {cc["card"]["oracleCard"]["name"] for cc in d.get("cards", [])
-                 if not skip.intersection(cc.get("categories") or [])}
+        names = {((cc.get("card") or {}).get("oracleCard") or {}).get("name") for cc in d.get("cards", [])
+                 if not skip.intersection(cc.get("categories") or [])} - {None}
         if len(names) < 60 or (d.get("name") or "").lower().startswith("copy of"):  # unfinished brews and copies
             continue
         decks.append({"name": d.get("name"), "url": f"https://archidekt.com/decks/{x['id']}", "owner": (d.get("owner") or {}).get("username"),
@@ -2197,15 +2214,32 @@ def research_rows(folder):
 def cmd_research(a):
     os.makedirs(a.folder, exist_ok=True)
     if a.action == "log":
-        entries = json.loads(open(a.entries, encoding="utf-8").read() if os.path.isfile(a.entries) else a.entries)
+        if not a.entries:
+            out({"error": "log needs --entries (a JSON list, one JSON object, or a .json/.jsonl file)"}, fail=True)
+        text = open(a.entries, encoding="utf-8").read() if os.path.isfile(a.entries) else a.entries
+        try:
+            entries = json.loads(text)
+        except json.JSONDecodeError:
+            try:
+                entries = [json.loads(ln) for ln in text.splitlines() if ln.strip()]
+            except json.JSONDecodeError as ex:
+                out({"error": f"entries aren't valid JSON or JSONL ({ex})"}, fail=True)
         entries = entries if isinstance(entries, list) else [entries]
+        # a line already in ledger format ({claim, sources: [...]}) is flattened to its sources
+        entries = [dict(src, claim=e.get("claim"), status=e.get("status")) for e in entries if isinstance(e, dict) and "sources" in e
+                   for src in e["sources"]] + [e for e in entries if isinstance(e, dict) and "sources" not in e]
         bad = [e for e in entries if not e.get("url") or e.get("kind") not in RESEARCH_KINDS]
         if bad:
             out({"error": f"every entry needs a url and a kind from {list(RESEARCH_KINDS)}", "bad": bad[:5]}, fail=True)
+        base = len(research_rows(a.folder))
         with open(os.path.join(a.folder, "claims.jsonl"), "a", encoding="utf-8") as f:
             for e in entries:
-                f.write(json.dumps({"claim": e.get("claim") or e.get("used_for") or "source", "subject": e.get("subject", ""),
-                                    "status": e.get("status", "verified"),
+                base += 1
+                f.write(json.dumps({"id": e.get("id") or f"src-{base:04d}-{web_slug(e.get('title') or e['url'])[:30]}",
+                                    "type": e.get("type") or "source", "confidence": e.get("confidence") or "medium",
+                                    **({"n": e["n"]} if e.get("n") else {}), **({"cards": e["cards"]} if e.get("cards") else {}),
+                                    "claim": e.get("claim") or e.get("used_for") or "source", "subject": e.get("subject", ""),
+                                    "status": e.get("status") or "verified",
                                     "sources": [{k: e.get(k) for k in ("title", "url", "kind", "date", "locator", "used_for") if e.get(k)}]},
                                    ensure_ascii=False) + "\n")
         a.action = "report"
@@ -2225,6 +2259,9 @@ def cmd_research(a):
     groups = [{"kind": k, "label": RESEARCH_LABELS.get(k, k), "sources": len(g), "citations": sum(x["citations"] for x in g.values()),
                "items": sorted(({**x, "used_for": sorted(x["used_for"])} for x in g.values()), key=lambda x: -x["citations"])}
               for k, g in sorted(by.items(), key=lambda kv: RESEARCH_KINDS.index(kv[0]) if kv[0] in RESEARCH_KINDS else 99)]
+    gaps = sorted({f"{src.get('url')}: " + ("no date" if not src.get("date") else "video without mm:ss")
+                   for r in rows for src in r.get("sources", [])
+                   if not src.get("date") or (src.get("kind") == "video" and not src.get("locator"))})
     md = ["# Research sources", "", f"{sum(g['sources'] for g in groups)} sources, {len(rows)} claims.", ""]
     for g in groups:
         md += [f"## {g['label']} ({g['sources']} sources, cited {g['citations']} times)", ""]
@@ -2235,7 +2272,7 @@ def cmd_research(a):
     with open(os.path.join(a.folder, "sources.md"), "w", encoding="utf-8") as f:
         f.write("\n".join(md))
     out({"folder": a.folder, "claims": len(rows), "groups": [{k: g[k] for k in ("kind", "label", "sources", "citations")} for g in groups],
-         "shortfalls": short, "complete": not short, "report": os.path.join(a.folder, "sources.md")})
+         "shortfalls": short, "complete": not short, "gaps": gaps[:20], "report": os.path.join(a.folder, "sources.md")})
 
 
 def main(argv=None):

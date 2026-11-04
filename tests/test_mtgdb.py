@@ -344,6 +344,39 @@ class LogicTest(unittest.TestCase):
                              capture_output=True, text=True)
         self.assertNotEqual(bad.returncode, 0)
 
+    def test_web_cache_falls_back_when_offline(self):
+        m, d = self.m, tempfile.mkdtemp()
+        old_cache, old_get = m.CACHE, m.http_get
+        try:
+            m.CACHE = d
+            m.http_get = lambda *a, **k: b'{"v": 1}'
+            self.assertEqual(m.cached_web_json("k", "https://x", 24), {"v": 1})
+            os.utime(os.path.join(d, "web", "k.json"), (0, 0))  # make the cache old
+            def down(*a, **k):
+                raise OSError("offline")
+            m.http_get = down
+            got = m.cached_web_json("k", "https://x", 24)
+            self.assertEqual(got["v"], 1)
+            self.assertIn("_stale_cache", got)
+            with self.assertRaises(OSError):  # nothing cached: the error surfaces
+                m.cached_web_json("never", "https://x", 24)
+        finally:
+            m.CACHE, m.http_get = old_cache, old_get
+
+    def test_research_log_accepts_jsonl_and_rejects_garbage(self):
+        d = tempfile.mkdtemp()
+        f = os.path.join(d, "e.jsonl")
+        with open(f, "w", encoding="utf-8") as h:
+            h.write(json.dumps({"kind": "article", "url": "https://a"}) + "\n" + json.dumps({"kind": "community", "url": "https://b"}) + "\n")
+        ok = subprocess.run([sys.executable, SCRIPT, "research", "log", os.path.join(d, "r"), "--entries", f], capture_output=True, text=True)
+        self.assertEqual(json.loads(ok.stdout)["claims"], 2)
+        again = subprocess.run([sys.executable, SCRIPT, "research", "log", os.path.join(d, "r2"), "--entries",
+                                os.path.join(d, "r", "claims.jsonl")], capture_output=True, text=True)
+        self.assertEqual(json.loads(again.stdout)["claims"], 2)  # its own ledger format is accepted too
+        bad = subprocess.run([sys.executable, SCRIPT, "research", "log", d, "--entries", "{nope"], capture_output=True, text=True)
+        self.assertNotEqual(bad.returncode, 0)
+        self.assertIn("valid JSON", json.loads(bad.stdout)["error"])
+
     def test_web_slug(self):
         self.assertEqual(self.m.web_slug("Narset's Reversal"), "narsets-reversal")
         self.assertEqual(self.m.web_slug("Brazen Borrower // Petty Theft"), "brazen-borrower")

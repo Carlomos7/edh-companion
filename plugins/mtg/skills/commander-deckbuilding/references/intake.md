@@ -21,13 +21,13 @@ Why this order: players start from very different places (a commander, colors, a
 6. **Interaction appetite:** light (mostly do my thing) · medium · heavy (lots of removal and counterspells).
 
 ## Round 3: money and cards
-7. **Money: one question, asked once.**
-   - **No limit, normal copies (Recommended):** the best card for each slot; price shown at the end
-   - **Keep it cheap:** cheapest copies, and cheaper cards that do the same job where it matters
-   - **Set a budget:** then ask the number once ("about how much for the whole deck?")
-   - **Make it drippy:** foils, borderless, showcase, Secret Lair. Then ask their per-card max once (e.g. "nothing over $30 a copy")
+7. **Money: one question, asked once, in a casual voice.** Ask something like "How do you wanna do cards?" with:
+   - **"Just build it, I'll see the price at the end" (Recommended):** the best card for each slot, normal copies
+   - **"Keep it cheap":** cheapest copies, and cheaper cards that do the same job where it matters
+   - **"I've got a budget":** then ask once, "Cool, about how much for the whole deck?"
+   - **"Wanna drip out your cards?":** foils, borderless, showcase, Secret Lair. Then ask once, "How much are you down to spend on a single card?" (e.g. "nothing over $30")
 
-   Don't ask about proxies unless they bring it up. Don't ask about money again later.
+   Keep this tone for the follow-ups too ("Want me to drip out the commander too?" is fine). Don't ask about proxies unless they bring it up. Don't ask about money again later.
 8. **Collection** (only if `mtg_collection` `show` finds one): "Use cards you own when they're close in quality (Recommended)" · owned cards only where possible · ignore it. If they have none, don't ask; the hand-back can suggest importing one.
 9. **Pet cards and never-plays** (free text): must-includes, and cards or effects they won't play.
 

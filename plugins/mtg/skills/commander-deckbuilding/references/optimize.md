@@ -13,7 +13,7 @@ Tell the user in 4 to 6 lines what you found **before** the questions, so the qu
 2. **Theme** (only if the profile shows a theme lean, or the user mentioned one), per themes.md: Ignore theme · Themed printings only (power) · Theme first with upgrades (prefer) · Strict.
    - Follow-up only if they chose prefer or strict and the theme has factions or a franchise: "What counts as on theme?" Options: Any <franchise> · Only <side A> (e.g. the Fellowship) · Only <side B> (Sauron's forces) · <character> only.
 3. **How much change**: Light tune, 5 to 10 swaps (Recommended for a first pass) · Solid upgrade (15 to 25) · Rebuild around the commander.
-4. **Money** (the only money question): No limit (Recommended) · Keep it cheap (cheapest copies, cheaper swaps where it matters) · Up to $X of new cards · No new spend (cards I own; needs a collection) · Drippy (fancy printings; then ask the per-card max). AskUserQuestion shows 4 options at most: offer "No new spend" only if they have a collection, otherwise leave it out.
+4. **Money** (the only money question): No limit (Recommended) · Keep it cheap (cheapest copies, cheaper swaps where it matters) · Up to $X of new cards · No new spend (cards I own; needs a collection) · "Wanna drip it out?" (fancy printings; then ask "how much are you down to spend on a single card?"). AskUserQuestion shows 4 options at most: offer "No new spend" only if they have a collection, otherwise leave it out.
 
 Then, in plain text, one optional line: "Any cards that must stay (pet cards)?"
 

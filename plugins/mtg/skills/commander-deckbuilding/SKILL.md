@@ -30,7 +30,7 @@ No `mtg_*` tools available? The plugin's data server needs `uv`. Tell the player
 Optional add-ons (EDHREC data, deck links, bracket estimates, videos, web search): follow the add-on rules in the `mtg-research` skill (references/sources.md, "Optional MCP servers"). In short: card facts and deck checks always come from the `mtgdb` tools, and a missing add-on means saying which check didn't run. Load the `mtg-research` skill for anything beyond card facts.
 
 ## Talking to the player
-Many players aren't deep in Commander jargon. Write like a friend at the table:
+Many players aren't deep in Commander jargon. Write like a friend at the table: casual and short ("wanna drip out your cards?", "cool, here's the plan"), never stiff or salesy:
 - Explain a term in a few words the first time it comes up: bracket ("Wizards' 1 to 5 power scale; 3 is a typical upgraded deck"), Game Changer ("a card Wizards lists as unusually strong; bracket 3 allows up to 3"), Rule 0 ("the quick pregame chat about power level"), on curve ("castable on the turn its cost allows").
 - Lead with what matters to them (is it legal, how strong, what to change), then the detail.
 - Keep each reply short; offer more ("want the full numbers?") instead of dumping every stat.
@@ -67,7 +67,7 @@ Build in order: lands and ramp, card advantage, interaction, wipes, then the pla
 - **Copies follow their money answer:**
   - *No limit, normal copies* (default): pick the best card; don't bring up cheaper ones.
   - *Keep it cheap* or a set budget: for cards that push past it, run `mtg_cheaper_alternatives` (with the commander's identity and the deck) and offer the best one next to the original with the price gap.
-  - *Drippy*: fancy printings (foil, borderless, showcase, Secret Lair) up to their per-card max, passed as `max_card`.
+  - *Drippy* ("wanna drip out your cards?"): fancy printings (foil, borderless, showcase, Secret Lair) up to their per-card max, passed as `max_card`.
 - Before finalizing, run the mtg-research commander-text search: any card that copies, doubles or scales the commander's ability must be in the deck or named with the reason it's out.
 
 ## 6. Check loop (repeat until clean)

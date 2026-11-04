@@ -42,10 +42,12 @@ Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 
 ## What's always on the page
 - one tab per commander group, with a commander picker and a bracket switcher
 - per deck: a short summary (the plan, how it wins, key cards, strengths, weaknesses, how to play it, a tournament note at bracket 5), the mana curve, card types, colors needed vs. color sources, role counts, and the decklist with prices and a copy-for-Moxfield button
-- one shared "cards to consider" list per tab: each card shows which decks it fits and what it would replace
+- "What the community says": takes from Reddit, articles and creators, each linked, disagreements included, plus a Watch list of videos
+- one shared "cards to consider" list per tab: each card shows which decks it fits, what it would replace and why (with its evidence); the decklist marks replaceable cards with ⇄ and the card viewer lists the options
+- links on every card to Scryfall, EDHREC, TCGplayer and Cardmarket; the price buys that exact printing
 - card rankings for the theme or colors, with how many decks each number comes from
 - a card viewer: click to enlarge, arrow keys or swipe to browse, flip double-faced cards (or the 3D viewer, if you chose it)
-- a sources page with data dates, what was checked, and anything left unverified
+- a sources page with every source grouped by type (EDHREC, real decklists, combos, videos, community, articles, prices, Wizards) and what each was used for, plus data dates, what was checked, and anything left unverified
 
 The extras arrive as files next to the page when the page can't show them yet.
 
@@ -55,4 +57,4 @@ The extras arrive as files next to the page when the page can't show them yet.
 - research notes with sources
 - a short list of anything that couldn't be verified
 
-You don't need to ask for accuracy: every card is checked against current Scryfall data for legality, color identity and Game Changer limits; combos come from Commander Spellbook; opinions need two independent sources; and a separate reviewer re-checks the work before the page is built.
+You don't need to ask for accuracy or research: every commander gets a research pass (EDHREC numbers, real public decklists, combos, creator videos, Reddit, articles, prices and the current Wizards rules, each with a minimum and every source logged); every card is checked against current Scryfall data for legality, color identity and Game Changer limits; combos come from Commander Spellbook (a combo needing only the commander plus two cards counts as a two-card combo); opinions need two independent sources; and a separate reviewer re-checks the work before the page is built.

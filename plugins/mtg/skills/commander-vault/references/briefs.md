@@ -20,6 +20,9 @@ Finish with a short report: files written, check results, **tools used and tools
 ## §1 vault-researcher
 ```
 Objective: an evidence-backed profile of each commander that a deckbuilder can rely on.
+Follow mtg-research references/research-pass.md for every commander: its coverage minimums, its "Best tool first,
+then fall back" table, and its outputs. Start with mtg_research_plan; use mtg_edhrec and mtg_decklists; log every
+source with mtg_research_log (folder = the full path to vault/<slug>), dated, videos with mm:ss.
 For each commander:
 1. Data first: EDHREC staples + themes (note deck count n), Spellbook combos with the commander,
    EDHTop16 / cEDH DB presence (entries, top cuts, dates).
@@ -28,9 +31,12 @@ For each commander:
 2b. Commander-text search (mtg-research): cards that scale the commander's own ability. List each with a verdict.
 2c. Community pass: r/EDH, primers, comments. Log what they say is missing or overrated as `community` claims.
 2d. Every combo not in Spellbook: `rules` claim with rule numbers and the full piece list.
-3. Write vault/<slug>/research.md: Plan, Must-plays, Traps, Combos, cEDH evidence, Conflicts, Sources.
+3. Write vault/<slug>/research.md: Plan, Must-plays, Traps, Combos (every commander + 2 loop with its pieces), cEDH evidence,
+   Conflicts, Sources, Shortfalls; and vault/<slug>/takes.json: 8 to 15 takes worth showing [{text,source,url,date,kind}],
+   disagreements included.
 4. Log every opinion/external claim in vault/<slug>/claims.jsonl (mtg-research claims.md).
-5. Run: mtgdb.py audit-claims vault/<slug>/claims.jsonl --since <SINCE>. Fix every problem before reporting.
+5. Run: mtgdb.py audit-claims vault/<slug>/claims.jsonl --since <SINCE> and mtgdb.py research report vault/<slug>.
+   Fix every problem; report any shortfall.
 Don't build decks.
 ```
 
@@ -44,9 +50,12 @@ Then:
 - vault/<slug>/deck-notes.md: per bracket plan, intended win turn, combos (Spellbook ids), off-theme reasons,
   B5 cEDH realism with evidence.
 - vault/<slug>/off-theme.json (themed runs): {"Card": "one-line reason"} for every off-theme card.
-- vault/<slug>/b<N>.notes.json for the page: pitch, wins, key_cards, strengths, weaknesses, tips, youtube, checks (format: `site_data.py --help` in the vault skill's scripts folder).
+- vault/<slug>/b<N>.notes.json for the page: pitch, wins, key_cards (cards in that deck), strengths, weaknesses, tips, community
+  (the research's takes.json entries), youtube (the research's videos: title, url, channel, date), checks (format: `site_data.py --help`
+  in the vault skill's scripts folder). Plain, casual sentences a regular player understands.
 - vault/<slug>/consider.json: 10 to 15 per deck,
-  [{"card","why","bracket","swap_out","theme","claim_ids":[]}], every pairing passes swaptest.
+  [{"card","why","bracket","swap_out","theme","claim_ids":[]}], every pairing passes swaptest at that bracket with no
+  blocking combos_added; each "why" cites its evidence (EDHREC %, how many real lists, creator).
 - Append any new claims to vault/<slug>/claims.jsonl.
 Report per deck: validate pass, price, theme_counts, game_changers, Spellbook bracket estimate.
 ```
@@ -68,8 +77,8 @@ Objective: independently confirm or refute the work for <slugs>. You did not wri
    random 20% of the rest: re-open each source (video at the timestamp, EDHREC page, Spellbook combo,
    EDHTop16 query) and set status verified | refuted | unverifiable with a verifier_note saying what you saw.
    Verify the claim, not the source's existence.
-2. Decks: re-run validate (with --themes, --bracket, budget), stats, Spellbook combos + bracket estimate for every
-   b<N>.txt. Check every Must-play in research.md is in the matching decks or explained in deck-notes.md.
+2. Decks: re-run validate (with --themes, --bracket, budget), stats, Spellbook combos (two_card counts commander + 2) + bracket
+   estimate for every b<N>.txt. Re-run swaptest on every consider.json pairing. Check every Must-play in research.md is in the matching decks or explained in deck-notes.md.
 3. Printings: build a `contact-sheet` of every disputed printing plus 20 random themed ones per commander and
    check each tag against the art. Re-run validate's printing check (gold border, digital, oversized).
 3b. Simulate: re-run `simulate` per deck and compare with the deckbuilder's reported numbers.

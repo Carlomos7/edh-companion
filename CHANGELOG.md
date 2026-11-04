@@ -2,6 +2,12 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.3
+- **Every vault page comes out the same shape:** `build_site.py` prints an `incomplete:` warning for each missing part (deck summary parts, community takes, videos, cards to consider, 10+ grouped sources), and the vault fixes each one or explains it in `plan.md`. pages.md lists what every page has.
+- **The vault uses the research pass:** G1 follows research-pass.md (minimums, best tool first, logged sources, takes.json); a deck from the build skill brings its research along; notes carry community takes and videos; cards to consider cite their evidence.
+- **Vault checks:** commander + 2 combos count as two-card combos at brackets 1 to 3; bracket-estimate add-ons are a second opinion; the render check covers snap-back, ⇄ swap options, card links and the Sources tab.
+- **vault-request.md** describes the community section, swap marks, card links, grouped sources and the research pass.
+
 ## 5.5.2
 - **Edge cases fixed in the research tools:**
   - `mtg_edhrec` and `mtg_decklists` fall back to the last cached copy (flagged stale) when offline.

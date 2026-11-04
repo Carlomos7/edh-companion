@@ -66,7 +66,38 @@ def validate(D):
                 errs.append(f"tier {t['id']}: {c['name']} has no pct")
     if not D.get("data_dates"):
         warns.append("no data_dates: the accuracy tab will be empty")
+    warns += completeness(D)
     return errs, warns
+
+
+DECK_PARTS = ("pitch", "wins", "key_cards", "strengths", "weaknesses", "tips")
+
+
+def completeness(D):
+    """What every vault page is expected to carry (pages.md "Every page has"). Warnings, so a Basic page or a
+    deliberate gap still builds; the vault lead fixes each one or explains it in plan.md."""
+    out, show = [], dict({"swaps": True, "sources": True}, **((D.get("page") or {}).get("show") or {}))
+    decks = [(c, d) for g in D.get("groups", []) for c in g.get("commanders", []) for d in c.get("decks", [])]
+    for c, d in decks:
+        s = d.get("summary") or {}
+        miss = [k for k in DECK_PARTS if not s.get(k)]
+        if miss:
+            out.append(f"incomplete: {c['slug']}/b{d['bracket']} summary lacks {', '.join(miss)} (notes.json)")
+    if decks and not any((d.get("summary") or {}).get("community") for _, d in decks):
+        out.append("incomplete: no community takes on any deck (research takes.json -> notes.json community)")
+    if decks and not any(c.get("youtube") for g in D.get("groups", []) for c in g.get("commanders", [])):
+        out.append("incomplete: no videos in any Watch list (notes.json youtube)")
+    if show.get("swaps"):
+        for g in D.get("groups", []):
+            if g.get("commanders") and not g.get("swaps"):
+                out.append(f"incomplete: tab {g['title']} has no cards to consider (add-swaps)")
+    if show.get("sources"):
+        src = D.get("sources") or []
+        if len(src) < 10:
+            out.append(f"incomplete: {len(src)} sources; a researched deck has 20+ (add-claims --ledger research/claims.jsonl)")
+        if src and not any(x.get("kind") for x in src):
+            out.append("incomplete: sources have no kind, so the Sources tab can't group them (log with mtg_research_log)")
+    return out
 
 
 def main():

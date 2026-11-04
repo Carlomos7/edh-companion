@@ -50,14 +50,14 @@ Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimat
 - Data extras: `mtgdb.py sync prices` (once per run) for vendor prices on the price ladder; if the user has a collection, `collection show` and ask whether owned cards should be preferred.
 
 ## G1 Research (vault-researcher, parallel, 2 to 3 commanders each)
-Brief: [references/briefs.md](references/briefs.md) §1.
-Gate: for each commander, `mtgdb.py audit-claims vault/<slug>/claims.jsonl --since SINCE` passes; `research.md` has every section.
+Brief: [references/briefs.md](references/briefs.md) §1. Every commander gets the full research pass (mtg-research references/research-pass.md: coverage minimums, best tool first, every source logged with `mtg_research_log`). A deck brought in from the deckbuilding skill already has it in `research/`: copy it to `vault/<slug>/` instead of redoing it.
+Gate: for each commander, `mtgdb.py audit-claims vault/<slug>/claims.jsonl --since SINCE` passes; `mtgdb.py research report vault/<slug> --bracket <highest>` shows no shortfalls (or each is explained in `plan.md`); `research.md` has every section; `takes.json` has 8 to 15 linked takes.
 
 ## G2 Pilot, then decks (vault-deckbuilder)
 Build the default bracket for one commander first (§2). Run the G2 checks on it. Fix the brief if the agent misread anything. Then fan out.
 Gate, every deck, run by you (never trust the agent's report):
 - `mtgdb.py --themes vault/themed-printings.json validate <deck> --bracket N [--budget X]`
-- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: no 2-card combos) and, if an add-on offers one, a bracket estimate
+- `mtgdb.py combos <deck>` (local Spellbook data; B1 to B3: nothing in `two_card`, which counts the commander plus two cards as a two-card combo) and, if an add-on offers one, a bracket estimate (treat it as a second opinion: it has missed Game Changers and combos the local data finds)
 - `themed_printing_available` warnings fixed or justified
 - every `consider.json` pairing passes `swaptest`
 
@@ -69,8 +69,8 @@ Gate, every deck, run by you (never trust the agent's report):
 Gate: `mtgdb.py audit-claims vault/<slug>/claims.verified.jsonl --since SINCE --require-verified` passes, and every `refuted` / `unverifiable` item in `verification.md` is resolved by you: fixed, removed, or kept with a visible "unverified" label.
 
 ## G5 Page (you, following [references/pages.md](references/pages.md))
-1. `site_data.py init vault/site-data.json` with the page choice (`--style fancy|basic`, `--images cdn` for local-only, `--show`/`--hide`/`--viewer` for custom; `--themes` if themed), then for each deck `add-deck` (agents' `deck-notes.md` condensed into `notes.json` per deck), `add-tier` per tier tab (EDHREC numbers with `n`), `add-swaps` per tab, `add-claims` with every `claims.verified.jsonl`.
-2. `build_site.py vault/site-data.json --out vault/site`. Fix every error.
+1. `site_data.py init vault/site-data.json` with the page choice (`--style fancy|basic`, `--images cdn` for local-only, `--show`/`--hide`/`--viewer` for custom; `--themes` if themed), then for each deck `add-deck` with its `b<N>.notes.json` (plan, key cards, strengths, weaknesses, tips, plus `community` from `takes.json` and `youtube` from the research's videos), `add-tier` per tier tab (EDHREC numbers with `n`), `add-swaps` per tab, `add-claims` with every `claims.verified.jsonl`.
+2. `build_site.py vault/site-data.json --out vault/site`. Fix every error, and every `incomplete:` warning or explain it in `plan.md` (pages.md "Every page has"). This is what keeps every vault page the same shape.
 3. Follow pages.md steps 4 and 5: look at it at desktop and 390 px, spot-check 10 random cards against `mtgdb.py`, then publish (or, for a local-only page with Scryfall images, hand over the file).
 4. Reply in a few lines: what's in it, theme counts (themed vaults), accuracy summary (claims verified / labelled unverified, data dates), accepted exceptions.
 
@@ -101,3 +101,5 @@ Rough agent time: about 10 to 20 minutes per commander for research, about 10 pe
 - **YouTube blocks parallel transcript fetches.** One video at a time.
 - **Card images can fail to download** (network or certificates); `build_site.py` lists failures, so read its output before publishing.
 - **Agents report success optimistically.** Re-run every gate yourself; never trust an agent's summary.
+- **Commander + 2 combos slip through a two-card check.** Azula + Frantic Search + Narset's Reversal did, until `combos` counted the commander as always present. `mtg_deck_swap` now blocks swaps that complete one at B1 to B3.
+- **YouTube blocks the transcript tool on some networks**; a web fetch of the video URL often returns the transcript instead. If neither works, cite the video as "watch" and don't quote it.

@@ -93,6 +93,23 @@ class PagesTest(unittest.TestCase):
         self.assertNotIn("https://cards.scryfall.io", html)  # image urls never ship
         self.assertIn("<title>Sith Vault</title>", html)
 
+    def test_completeness_warnings(self):
+        """A page missing the parts every vault has (community, videos, sources...) builds, but says what's missing."""
+        sys.path.insert(0, PAGES)
+        import build_site
+        D = json.load(open(self.site, encoding="utf-8"))
+        warns = build_site.completeness(D)
+        self.assertTrue(any("community" in w for w in warns), warns)
+        self.assertTrue(any("sources" in w for w in warns), warns)
+        for g in D["groups"]:
+            for c in g["commanders"]:
+                c["youtube"] = [{"title": "t", "url": "https://youtu.be/x"}]
+                for d in c["decks"]:
+                    d["summary"] = {k: "x" for k in build_site.DECK_PARTS} | {"community": [{"text": "t", "url": "https://r"}]}
+            g["swaps"] = g.get("swaps") or [{"card": "x", "fits": []}]
+        D["sources"] = [{"url": f"https://s/{i}", "kind": "article"} for i in range(12)]
+        self.assertEqual(build_site.completeness(D), [])
+
     def test_build_rejects_bad_data(self):
         D = json.load(open(self.site))
         D["groups"][0]["commanders"][0]["decks"][0]["cards"][0]["qty"] = 2

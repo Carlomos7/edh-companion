@@ -20,15 +20,23 @@ Page design and its reasons: [page-spec.md](page-spec.md). Read it only when cha
 
 The page records the result as `page.style` ("custom" once anything is overridden).
 
+## Every page has (the build warns when one is missing)
+- per deck: pitch, how it wins, key cards, strengths, weaknesses, how to play it; Rule 0 facts (bracket, Game Changers, combos) in `checks`
+- per deck tab: "What the community says" (`community` in notes.json, from the research's `takes.json`: 8 to 15 linked takes, disagreements included) and a Watch list (`youtube`)
+- per tab: cards to consider (`add-swaps`), each tested with `mtg_deck_swap` at every deck's bracket, each "why" with its evidence; the decklist marks replaceable cards with ⇄ and the viewer lists the options
+- every card links to Scryfall, EDHREC, TCGplayer and Cardmarket (automatic; the price buys the exact printing)
+- Sources & accuracy: every source from `research/claims.jsonl` (`add-claims`), grouped by kind, with what it was used for; "researched from N sources" in each deck header
+`build_site.py` prints an `incomplete:` warning for each gap. Fix it, or write why it's missing into `plan.md` (for example "no videos exist for this commander yet").
+
 ## Steps
 1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json] [--viewer 3d]`. Use `--viewer 3d` only when the player chose the 3D card viewer. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.
 2. **Add content.** Each command runs mtgdb itself, so you never type card data:
-   - Decks: `add-deck site-data.json --group "<tab title>" --slug <commander-slug> --deck b3.txt --bracket 3 --notes notes.json [--reasons off-theme.json] [--budget X] [--commanders 2]`. Write `notes.json` yourself (pitch, how it wins, key cards, strengths, weaknesses, tips, YouTube picks, checks run); format is in the script's help.
+   - Decks: `add-deck site-data.json --group "<tab title>" --slug <commander-slug> --deck b3.txt --bracket 3 --notes notes.json [--reasons off-theme.json] [--budget X] [--commanders 2]`. `notes.json`: pitch, how it wins, key cards, strengths, weaknesses, tips, `community` (copy the research's `takes.json` entries: text, source, url, date), `youtube` (title, url, channel, date from the research's video sources), checks run; format is in the script's help.
    - Tier lists (optional): `add-tier ... --cards edhrec.json [--staples staples.json]`, from EDHREC numbers you pulled, with `n` per card.
-   - Swap lists (optional): `add-swaps ... --merged merged.json`.
-   - Claims (optional): `add-claims ... --ledger claims.verified.jsonl`. This fills the sources and accuracy tab.
+   - Swap lists: `add-swaps ... --merged merged.json` (one per tab).
+   - Claims: `add-claims ... --ledger claims.verified.jsonl` (or the research's `research/claims.jsonl` for a single deck). This fills the Sources tab, grouped by kind.
 3. **Build**: `uv run build_site.py site-data.json --out site/`. Fix every error it prints. It refuses 101-card decks, missing images, unknown theme labels, swaps pointing at missing decks, and base64 images.
-4. **Look at it**: open `site/index.html` in the browser (chrome-browser skill) at desktop and 390 px width. Click a card, flip it (F), switch brackets, check the console. Spot-check 5 random cards' prices and pills against `mtgdb.py printings`.
+4. **Look at it**: serve `site/` over http (`python -m http.server`; from disk the 3D viewer falls back) and open it in the browser (chrome-browser skill) at desktop and 390 px width. Click a card, flip it (F), drag and release (it snaps back), check a ⇄ card shows its swap options and the card links, switch brackets, open Sources, check the console. Spot-check 5 random cards' prices and pills against `mtgdb.py printings`.
 5. **Deliver**:
    - Artifact tool available (needs a claude.ai login on a paid plan; not available in `claude -p`): publish `site/index.html` with everything else in `site/` as supporting files (`img/atlas_*.webp`, and `site-data.json` if the build put data in a separate file). One sentence in reply.
    - Local-only pages (`--images cdn`): never publish; give the player the path to `site/index.html` to open in their browser.

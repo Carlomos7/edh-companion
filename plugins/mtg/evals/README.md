@@ -24,6 +24,8 @@ claude plugin eval . --judge-model sonnet    # steadier judging
 | budget-alternatives | cheaper mono-white options with dated prices from mtg_cheaper_alternatives |
 | export-exact | import-ready list with exact printings, commander first |
 | rules-current | trample + deathtouch answered from the current Comprehensive Rules with rule numbers and date |
+| route-collection | "I opened packs, track them" routes to the collection skill and adds the cards |
+| route-research | "Is Sol Ring banned?" routes to mtg-research, not deckbuilding (near-miss) |
 
 Notes:
 - `--mocks off` starts the plugin's real `mtgdb` MCP server (local, reads only the card cache). `--allow-tools` lets runs use it; eval runs deny MCP tools otherwise.

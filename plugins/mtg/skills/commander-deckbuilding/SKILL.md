@@ -1,6 +1,6 @@
 ---
 name: commander-deckbuilding
-description: Build, review, upgrade or price a Commander (EDH) deck together with the player, the way they want it. Asks what they enjoy, their table's bracket and how they like to spend before building, shows a skeleton for approval, offers choices where taste matters, checks every card with the mtgdb tools, and recommends next steps at every stage. Use for "build me a deck", "upgrade my precon", "what should I cut", "what bracket is this", "make it cheaper", "share my list", or a pasted or linked decklist.
+description: Build, review, upgrade or price a Commander (EDH) deck together with the player, the way they want it: quick recommended defaults, a plan to approve, choices where taste matters, every card checked with the mtgdb tools, and a page at the end. Use for "build me a deck", "make me a Krenko list", "upgrade my precon", "what should I cut", "what bracket is this", "make it cheaper", "drip it out", or any pasted or linked decklist. Not for one-off card, rules or meta questions (mtg-research) or managing the cards someone owns (collection).
 ---
 
 # Commander deckbuilding, together with the player
@@ -11,7 +11,7 @@ The player owns the deck. Your job is to find out what they want, bring options 
 Every decision has a recommended default the player can take in one click; deeper options only appear behind "Customize" or when they ask ("let me pick", "more options", "change X"). A default build should take about three clicks: use the defaults → approve the plan → pick a page. Before adding a question, ask yourself whether a good default would do; if it would, use it and say so in one line. Anything defaulted can be changed later just by saying so.
 
 ## Tools
-Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mtg_mtgdb__<tool>`, e.g. `mcp__plugin_mtg_mtgdb__mtg_card`) for every card fact. Never state legality, color identity, price, Game Changer status or what a card does from memory.
+Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mtg_mtgdb__<tool>`, e.g. `mcp__plugin_mtg_mtgdb__mtg_card`) for every card fact. Don't state legality, color identity, price, Game Changer status or what a card does from memory: bans, Game Changers and prices change, and remembered card text is often slightly wrong, which is exactly what players complain about with AI deckbuilders.
 
 | Need | Tool |
 |---|---|
@@ -86,7 +86,7 @@ Build in order: lands and ramp, card advantage, interaction, wipes, then the pla
 3. If an add-on offers a bracket estimate, compare with it. If it disagrees, fix it or explain why.
 4. Every suggested change goes through `mtg_deck_swap` first. Drop any that fail.
 
-If a tool is down, say which check didn't run. Never present an unchecked list as checked.
+If a tool is down, say which check didn't run. Don't present an unchecked list as checked: the player will sleeve it up trusting that it's legal.
 
 ## 7. Hand back
 - The list (commander first, saved to `<commander-slug>.txt`), and the plan in 3 to 5 lines.
@@ -112,3 +112,14 @@ Build it with the vault page scripts per the `commander-vault` skill's reference
 - **Make it cheaper:** `mtg_price_plan` (its cheapest total shows the floor), then `mtg_cheaper_alternatives` on the most expensive cards, tested with `mtg_deck_swap`. Report the new total and what the deck gives up.
 - **Theme or flavor decks:** only when the player asks. Follow [references/themes.md](references/themes.md); the theme is their goal, so build inside it and don't argue it.
 - **Import a deck:** pasted text in Moxfield, Archidekt, Arena or plain format works directly. For a deck link (Moxfield, Archidekt, ...), use an installed add-on that can read that site; if none can, ask the player to paste the site's export. Names that don't resolve go through `mtg_resolve_names`; ask about ambiguous ones.
+
+## Gotchas (from real sessions)
+- **Same name, two cards.** About 2,700 names belong to both a paper card and a digital-only Alchemy version. Resolve names through `mtg_card` / `mtg_resolve_names` (they pick the paper card); a name you recognise isn't proof.
+- **Odds by hand.** A test run worked out "commander by turn 5" with mental math. Use `mtg_simulate` for any how-often question.
+- **Arguing the theme.** Earlier versions kept naming stronger off-theme cards and players hated it. Follow themes.md: say the trade-off once at most.
+- **Money nagging.** Asking about saving money at every step annoyed players. One money question, price once at the end.
+- **Moxfield can't mark the commander from a paste.** Tell them to pick it in Moxfield's New Deck dialog (`mtg_export`'s `import_into` says so); Archidekt export marks it.
+- **Arena rejects paper-only printings** (The List, Secret Lair...). Arena export is names only on purpose.
+- **"Popular cards" without EDHREC data.** If no add-on provides it, say so; don't fill it in from memory.
+- **Combos with `also_requires`** need more than the two named cards; don't call them two-card combos.
+- **Local-only pages** (Scryfall images) can't be published, and the 3D viewer falls back to the simple one when a page is opened from disk.

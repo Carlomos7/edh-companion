@@ -1,7 +1,6 @@
 ---
 name: mtg-research
-description: Accurate Magic the Gathering research with cited, verified facts. Use for any MTG question about cards, rulings, prices, printings, bans, Game Changers, Commander staples, combos, cEDH results or what content creators recommend. Checks every card fact against a local Scryfall index and logs claims with sources.
-when_to_use: A question about cards, rules or the format where being wrong matters, e.g. "what does X do", "is X banned", "cheapest printing of X", "how do trample and deathtouch work", "what do people play with X", "is X a real cEDH commander". Building, checking, upgrading or pricing a whole deck belongs to commander-deckbuilding, which loads this skill when it needs research.
+description: Accurate Magic: The Gathering answers with checked facts and cited sources: what a card does, legality, bans, Game Changers, printings and prices, rulings and rules interactions, combos, what people play with a commander, what creators recommend, and whether a commander is real in cEDH. Use for questions like "is X banned", "how do trample and deathtouch work", "cheapest printing of X", "what do people run in Krenko", "is X good". Not for building, checking or changing a whole deck (commander-deckbuilding, which loads this skill when it needs research) or for a player's own collection (collection).
 ---
 
 # MTG research
@@ -55,3 +54,9 @@ For multi-step work (deck profiles, vault runs), log claims to `claims.jsonl` pe
 
 ## Answer format
 Lead with the answer. Cite inline (link + date, or timestamp for video). Close with confidence (high / medium / low) when the answer is a judgment call.
+
+## Gotchas
+- **Transcripts mangle card names** ("Rhystic Studdy"); every name goes through `mtg_resolve_names`.
+- **Popularity isn't power.** EDHREC inclusion says what people play, not what wins; cEDH questions need tournament data.
+- **New cards lag a day** in Scryfall's files: offer a sync, then say if it's still missing instead of guessing.
+- **A card name can match a digital-only Alchemy card;** the tools prefer the paper card, memory doesn't.

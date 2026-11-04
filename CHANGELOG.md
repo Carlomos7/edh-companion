@@ -3,6 +3,7 @@
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
 ## 5.1.0
+- **Skills reviewed against Anthropic's skill-authoring guidance** (docs/research/skill-authoring.md): descriptions say where each skill stops, trigger text moved out of Claude Code-only fields, gotchas sections from real failures, rules explain their reasons, no shell blocks that can abort a skill, and routing evals with near-misses.
 - **Add-ons are used by default when installed:** EDHREC staples and synergy shape the plan, the picks, reviews and upgrades (quoted with deck counts); bracket estimates and deck links too. Without them the build still works and says once what wasn't available.
 - **Quick by default, customizable whenever you want:** data refreshes without asking, the default path keeps picks to the 2 or 3 that matter, and the page choice (including images) is one question.
 - **Page styles:** Fancy (images, charts, rankings, cards to consider, 3D viewer) or Basic (deck and numbers, no images), or customize sections; Fancy pages can download images (shareable) or use Scryfall's image links (local, no download). Basic loads no libraries.

@@ -14,10 +14,7 @@ Load now: `mtg-research` and `commander-deckbuilding` (the knowledge), then read
 Invoked as `/mtg:commander-vault` when installed as the plugin. Paths for briefs: `MTGDB=${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py` (the same commands as the `mtgdb` MCP tools; subagents may use either). Page scripts: `PAGES=${CLAUDE_SKILL_DIR}/scripts` (see [references/pages.md](references/pages.md)). Run every script with `uv run`. Pass `--themes vault/themed-printings.json` (and `--reasons vault/<slug>/off-theme.json`) in vault runs that have a theme.
 
 ## Current state
-```!
-test -f vault/plan.md && { echo "RESUMING. plan.md:"; cat vault/plan.md; } || echo "Fresh run, no vault/ here."
-test -f deck-brief.md && { echo "DECK IN PROGRESS. deck-brief.md:"; cat deck-brief.md; ls *.txt 2>/dev/null; } || echo "No deck in progress here."
-```
+Before anything else, check this folder: if `vault/plan.md` exists, read it (a run to resume); if `deck-brief.md` exists, read it and note the deck `.txt` next to it (a deck in progress).
 Resuming: continue from the first unchecked gate. Don't redo a passed gate unless asked.
 
 **Starting from the deck you're working on.** If the request is empty or says "this deck" (or names a deck file), and there is a deck in progress (a `deck-brief.md` and its `<commander-slug>.txt` from the deckbuilding skill, in this folder or earlier in this conversation), build the vault around it instead of asking for a paste:
@@ -97,3 +94,10 @@ Rough agent time: about 10 to 20 minutes per commander for research, about 10 pe
 - Agents write files and return short reports. Read their files only at gates.
 - No live per-card Scryfall calls; the index covers it.
 - Log every fix you make in `plan.md` so a resumed run knows.
+
+## Gotchas (from real runs)
+- **Theme maps are wrong both ways at first:** searches pull in unrelated Secret Lair drops and miss real ones. Always run both G0 checks (contact sheet and gap search).
+- **Merged "cards to consider" lists leak** cards no deck suggested. The G3 gate (every merged card appears in a `consider.json`) exists because of that.
+- **YouTube blocks parallel transcript fetches.** One video at a time.
+- **Card images can fail to download** (network or certificates); `build_site.py` lists failures, so read its output before publishing.
+- **Agents report success optimistically.** Re-run every gate yourself; never trust an agent's summary.

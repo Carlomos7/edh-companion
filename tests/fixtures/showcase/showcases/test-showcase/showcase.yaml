@@ -1,0 +1,13 @@
+# Test fixture: a small multi-project showcase. Project paths are relative to ../../projects.
+# talrand and spider-gwen are short lists padded with basic lands; they test navigation and theming, not deck quality.
+title: Test Showcase
+mode: showcase
+projects:
+  - project: ../../krenko          # reuses tests/fixtures/krenko (b3 and b4 builds)
+    group: Villains
+    theme: {accent: "#2e7d32", style: gothic, label: Goblin cave}
+  - project: ../../spider-gwen     # reuses tests/fixtures/spider-gwen
+    group: Heroes
+  - project: talrand
+    group: Heroes
+  - project: spider-research       # research only: commanders, rankings

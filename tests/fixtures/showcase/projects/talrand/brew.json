@@ -1,0 +1,8 @@
+{"schema_version":"1.0","project":"talrand","version":1,"deck_hash":"9b9af7d39f76","variant":null,"updated":"2026-11-04","group":null,
+ "commander":{"cards":[{"name":"Talrand, Sky Summoner"}],"rationale":"Test fixture: a short mono-blue spells list padded with Islands to 100 cards; not a real build."},
+ "theme_policy":null,
+ "target_bracket":{"bracket":2,"restrictions":["no Game Changers"]},
+ "strategy":{"archetype":"mono-blue spells","game_plan":"Cast cheap instants and sorceries to make Drakes."},
+ "deck":[{"name":"Ponder","qty":1,"role":"draw"},{"name":"Preordain","qty":1,"role":"draw"},{"name":"Counterspell","qty":1,"role":"removal"},{"name":"Sol Ring","qty":1,"role":"ramp"},{"name":"Arcane Signet","qty":1,"role":"ramp"},{"name":"Mind Stone","qty":1,"role":"synergy"},{"name":"Island","qty":93,"role":"land"}],
+ "recommendations":[],
+ "future":{"waits_for":[{"card":"A card from the next set","releases":"2027-01-15"}],"note":"Test fixture: a planned version once the next set releases."}}

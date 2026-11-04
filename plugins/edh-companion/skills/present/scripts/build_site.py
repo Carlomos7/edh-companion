@@ -16,6 +16,7 @@ import argparse, json, os, re, sys
 HERE = os.path.dirname(os.path.abspath(__file__))
 TEMPLATE = os.path.join(HERE, "..", "assets", "template.html")
 LIMITS = {"page_mb": 16, "file_mb": 15, "files": 511, "total_mb": 256}
+THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
 SLOTS = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s5)", "var(--s6)", "var(--s7)", "var(--s8)"]  # s4 = off-theme
 
 
@@ -27,8 +28,8 @@ def validate(D):
         errs.append(f"page images must be atlas, cdn or none, not {D['page'].get('images')!r}")
     if D.get("viewer", "simple") not in ("simple", "three"):
         errs.append(f"viewer must be simple or three, not {D.get('viewer')!r}")
-    if not D.get("groups") and not D.get("tiers"):
-        errs.append("site has no decks and no tier lists")
+    if not any(D.get(k) for k in ("groups", "tiers", "rankings", "research")):
+        errs.append("site has no decks, rankings or research")
     imgs = D.get("images", {})
     labels = {l["label"] for l in (D.get("theme") or {}).get("labels", [])} | {"off-theme"}
     if json.dumps(D).find("data:image") >= 0:
@@ -67,6 +68,11 @@ def validate(D):
             for f in s.get("fits", []):
                 if f["deck"] not in decks:
                     errs.append(f"swap {s['card']} points at missing deck {f['deck']}")
+    for r in D.get("rankings", []):
+        req(r, ["id", "title", "method", "cards"], f"ranking {r.get('title')}")
+        for c in r.get("cards", []):
+            if c.get("img") and c["img"] not in imgs:
+                errs.append(f"ranking {r['id']}: image key {c['img']} not in images")
     for t in D.get("tiers", []):
         req(t, ["id", "title", "cards"], f"tier {t.get('id')}")
         for c in t.get("cards", []):
@@ -118,6 +124,8 @@ def main():
         print(json.dumps({"pass": False, "errors": [f"local path in page data: {leak.group(0)[:40]}... (remove it from the project files)"]}, indent=1))
         sys.exit(1)
     html = open(TEMPLATE, encoding="utf-8").read().replace("__TITLE__", re.sub(r"[<>&\"]", "", D["title"]))
+    if D.get("viewer") != "three" or not (D.get("page") or {}).get("show", {}).get("viewer", True):
+        html = html.replace(THREE_URL, "")  # interactive/basic pages never load three.js
     separate = a.separate_data or len(data) > 3_000_000
     if separate:
         open(os.path.join(a.out, "site-data.json"), "w", encoding="utf-8").write(data)

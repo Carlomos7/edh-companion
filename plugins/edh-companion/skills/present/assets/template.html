@@ -12,7 +12,7 @@
    Controls are 40px tall, 44px on touch screens (WCAG 2.5.8 floor is 24px; Apple/Material ask 44-48). Colors are tokens with a dark mode. */
 :root{color-scheme:light;
  --bg:#eef1f6;--surface:#ffffff;--surface-2:#e3e8f1;--field:#f7f9fc;--line:#d5dbe6;--grid:#e6eaf1;
- --text:#131a2a;--text-2:#3f4a5e;--muted:#566074;--accent:#c8243a;--gold:#8a5f08;--gc:#5b49d0;--gc-ink:#fff;--link:#1b5bb5;
+ --text:#131a2a;--text-2:#3f4a5e;--muted:#566074;--accent:var(--th-l-a,#56657a);--accent-2:var(--th-l-a2,var(--accent));--gold:#8a5f08;--gc:#5b49d0;--gc-ink:#fff;--link:#1b5bb5;
  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
  --good:#2c7a4b;--warn:#8a5f08;--bad:#c0392b;
  --t-S:#184f95;--t-A:#256abf;--t-B:#3987e5;--t-C:#6da7ec;--t-D:#86b6ef;
@@ -24,15 +24,17 @@
  --ctl:40px;--gutter:clamp(16px,3vw,32px);--nav-h:52px;--maxw:1200px;
  --shadow-card:0 1px 2px rgba(10,15,25,.18),0 6px 16px rgba(10,15,25,.14)}
 @media (pointer:coarse){:root{--ctl:44px}}
+/* report look: --th-* are set per commander (color identity or a saved theme) by applyLook(); each is pre-checked for 4.5:1 */
+:root{--accent-soft:color-mix(in srgb,var(--accent) 12%,transparent)}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
  --bg:#0d111a;--surface:#161c29;--surface-2:#222a3b;--field:#10151f;--line:#2a3245;--grid:#222a3a;
- --text:#e7ebf3;--text-2:#c3cad8;--muted:#9aa4b8;--accent:#ff6b7a;--gold:#e3b04b;--gc:#9a8ff0;--gc-ink:#0d111a;--link:#8bbcf5;
+ --text:#e7ebf3;--text-2:#c3cad8;--muted:#9aa4b8;--accent:var(--th-d-a,#aab4c3);--accent-2:var(--th-d-a2,var(--accent));--gold:#e3b04b;--gc:#9a8ff0;--gc-ink:#0d111a;--link:#8bbcf5;
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --good:#5fcf8c;--warn:#e3b04b;--bad:#f0605a;--t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95;
  --shadow-card:0 1px 2px rgba(0,0,0,.5),0 8px 20px rgba(0,0,0,.45)}}
 :root[data-theme="dark"]{color-scheme:dark;
  --bg:#0d111a;--surface:#161c29;--surface-2:#222a3b;--field:#10151f;--line:#2a3245;--grid:#222a3a;
- --text:#e7ebf3;--text-2:#c3cad8;--muted:#9aa4b8;--accent:#ff6b7a;--gold:#e3b04b;--gc:#9a8ff0;--gc-ink:#0d111a;--link:#8bbcf5;
+ --text:#e7ebf3;--text-2:#c3cad8;--muted:#9aa4b8;--accent:var(--th-d-a,#aab4c3);--accent-2:var(--th-d-a2,var(--accent));--gold:#e3b04b;--gc:#9a8ff0;--gc-ink:#0d111a;--link:#8bbcf5;
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --good:#5fcf8c;--warn:#e3b04b;--bad:#f0605a;--t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95;
  --shadow-card:0 1px 2px rgba(0,0,0,.5),0 8px 20px rgba(0,0,0,.45)}
@@ -53,7 +55,15 @@ h4{font:600 var(--fs-xs)/1.3 var(--body);text-transform:uppercase;letter-spacing
 .two,.three,.charts{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-4)}
 
 /* masthead */
-header.mast{padding:var(--sp-5) 0 var(--sp-4);border-bottom:4px solid var(--text);overflow:hidden}
+header.mast{position:relative;padding:var(--sp-5) 0 var(--sp-4);border-bottom:4px solid var(--text);overflow:hidden;
+ background:linear-gradient(115deg,color-mix(in srgb,var(--accent) 9%,var(--bg)) 0%,var(--bg) 48%,color-mix(in srgb,var(--accent-2) 9%,var(--bg)) 100%)}
+header.mast::before{content:"";position:absolute;inset:0;pointer-events:none}
+/* optional saved-theme textures: decorative, behind the text, kept faint */
+body[data-look="comic"] header.mast::before{background:radial-gradient(color-mix(in srgb,var(--accent) 30%,transparent) 1.3px,transparent 1.8px) 0 0/9px 9px;
+ -webkit-mask-image:linear-gradient(90deg,transparent 30%,#000);mask-image:linear-gradient(90deg,transparent 30%,#000)}
+body[data-look="gothic"] header.mast::before{background:linear-gradient(160deg,rgba(24,72,48,.16),rgba(72,76,86,.12)),repeating-linear-gradient(90deg,rgba(90,96,108,.08) 0 2px,transparent 2px 24px)}
+body[data-look="flames"] header.mast::before{background:linear-gradient(0deg,rgba(40,110,255,.20),rgba(110,190,255,.08) 40%,transparent 70%);background-size:100% 180%;animation:flick 7s ease-in-out infinite alternate}
+@keyframes flick{from{background-position:0 0}to{background-position:0 35%}}
 header.mast .wrap{position:relative;display:grid;grid-template-columns:minmax(0,1fr);column-gap:var(--sp-5);align-items:center}
 header.mast h1{grid-column:1;grid-row:1;align-self:end;position:relative;z-index:1;margin:0;padding-right:52px;font:400 var(--fs-h1)/.95 var(--display);letter-spacing:.5px;text-transform:uppercase;text-wrap:balance}
 header.mast h1 span{color:var(--accent)}
@@ -73,6 +83,7 @@ nav.tabs{position:sticky;top:0;z-index:5;background:color-mix(in srgb,var(--bg) 
 nav .in{max-width:var(--maxw);margin:0 auto;padding:var(--sp-1) var(--gutter);display:flex;gap:var(--sp-1);overflow-x:auto;scrollbar-width:none;min-height:var(--nav-h);align-items:center}
 nav button{font:400 15px var(--display);letter-spacing:.8px;text-transform:uppercase;border:0;border-bottom:3px solid transparent;background:none;color:var(--muted);padding:0 var(--sp-3);min-height:var(--ctl);cursor:pointer;white-space:nowrap;flex:none}
 nav button:hover{color:var(--text)}nav button[aria-selected="true"]{color:var(--text);border-bottom-color:var(--accent)}
+nav.tabs{box-shadow:inset 0 -2px 0 var(--accent-soft)}
 
 /* layout */
 main{max-width:var(--maxw);margin:0 auto;padding:var(--sp-4) var(--gutter) var(--sp-7);display:grid;gap:var(--sp-4)}
@@ -100,6 +111,7 @@ select,input[type=search],input[type=number]{font:400 var(--fs-sm) var(--body);c
 .pill i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--c)}
 .pill.gc{background:var(--gc);color:var(--gc-ink)}
 .pill.vok,.pill.vwarn,.pill.vno{text-transform:none}.pill.vok{box-shadow:inset 0 0 0 2px var(--good)}.pill.vwarn{box-shadow:inset 0 0 0 2px var(--warn)}.pill.vno{box-shadow:inset 0 0 0 2px var(--bad)}
+.pill.lp{text-transform:none}.pill.lp-upcoming{box-shadow:inset 0 0 0 2px var(--warn)}.pill.lp-banned,.pill.lp-not_legal{box-shadow:inset 0 0 0 2px var(--bad)}
 .st-pass{color:var(--good)}.st-warning,.st-unverified{color:var(--warn)}.st-fail{color:var(--bad)}
 .tp{display:inline-block;font:600 10.5px/1 var(--mono);letter-spacing:.4px;text-transform:uppercase;padding:3px 5px;border-radius:3px;margin-left:var(--sp-1);vertical-align:1px;white-space:nowrap;background:var(--c);color:var(--ink,#fff)}
 .tp.off{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:2px 4px}
@@ -135,6 +147,14 @@ select,input[type=search],input[type=number]{font:400 var(--fs-sm) var(--body);c
 .tier{display:grid;grid-template-columns:40px minmax(0,1fr);gap:var(--sp-3);padding:var(--sp-4) 0;border-top:1px solid var(--line);content-visibility:auto;contain-intrinsic-size:auto 320px}
 .tier .lt{border-radius:var(--r-sm);display:grid;place-items:center;font:400 24px var(--display);color:#fff;height:40px;position:sticky;top:calc(var(--nav-h) + var(--sp-2))}.tier .lt.dk{color:#0d1a2e}
 @media (min-width:641px){.tier{grid-template-columns:48px minmax(0,1fr);gap:var(--sp-4)}.tier .lt{height:48px;font-size:28px}}
+
+/* rankings and research */
+.tile .rk{position:absolute;top:6px;left:6px;font:600 var(--fs-xs)/1 var(--mono);background:rgba(10,14,22,.85);color:#fff;padding:4px 6px;border-radius:var(--r-sm)}
+.rc{display:grid;grid-template-columns:72px minmax(0,1fr);gap:var(--sp-3);padding:var(--sp-3) 0;border-top:1px solid var(--line);font-size:var(--fs-sm)}
+.rc>button{all:unset;cursor:zoom-in;align-self:start;border-radius:var(--card-r)}.rc>button:focus-visible{outline:3px solid var(--s1);outline-offset:2px}
+.rc .nm{font-weight:600;font-size:var(--fs-base)}.rc ul{margin:0;padding-left:18px}.rc p{margin:var(--sp-1) 0}
+@media (min-width:821px){.rc{grid-template-columns:96px minmax(0,1fr)}.rc .two{gap:var(--sp-3)}}
+.why{font-size:var(--fs-xs);color:var(--text-2);line-height:1.4}
 
 /* deck header, commander picker, bracket switch */
 .cmdrs{display:flex;gap:var(--sp-2);overflow-x:auto;padding:2px 2px var(--sp-2);scroll-snap-type:x proximity}
@@ -241,7 +261,7 @@ a.ext{color:var(--muted);text-decoration:none;font-size:var(--fs-xs);opacity:0;t
 
 /* community, sources */
 .comm{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:var(--sp-3)}
-.comm figure{margin:0;padding:var(--sp-3) var(--sp-4);background:var(--field);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:var(--r-sm);display:flex;flex-direction:column;gap:var(--sp-2)}
+.comm figure{margin:0;padding:var(--sp-3) var(--sp-4);background:var(--field);border:1px solid var(--line);border-left:3px solid var(--accent-2);border-radius:var(--r-sm);display:flex;flex-direction:column;gap:var(--sp-2)}
 .comm blockquote{margin:0;font-size:var(--fs-sm);line-height:1.5}.comm figcaption{font-size:var(--fs-xs);margin-top:auto}
 .comm figcaption a{display:inline-block;padding:var(--sp-1) 0}
 .vids{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:var(--sp-2)}
@@ -291,8 +311,10 @@ dialog::backdrop{background:transparent;backdrop-filter:blur(4px)}
 body.noimg .decklist button.name{cursor:default}
 body.noprice .pr,body.noprice .stat.price{display:none}
 .vbtns .btn,#vFlip,.seg .btn,nav button{cursor:pointer}
-@media (prefers-reduced-motion:reduce){.card3d,.fan .art,.tile .art{transition:none}.tile:hover .art{transform:none}.sheen{display:none}}
+@media (prefers-reduced-motion:reduce){.card3d,.fan .art,.tile .art{transition:none}.tile:hover .art{transform:none}.sheen{display:none}header.mast::before{animation:none!important}}
 @media (prefers-reduced-motion:no-preference){main>*{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
+/* interactive mode: minimal animation */
+body.calm *,body.calm *::before{animation:none!important;transition:none!important}body.calm .tile:hover .art{transform:none}body.calm .sheen{display:none}
 
 /* print: the decklist as text on paper */
 @media print{
@@ -312,7 +334,7 @@ body.noprice .pr,body.noprice .stat.price{display:none}
 <main id="main"></main>
 <footer class="foot" id="foot"></footer>
 <dialog id="viewer" aria-label="Card viewer"><div class="vw">
- <div><div class="stage" id="stage"><div class="card3d" id="card3d"><div class="face front"><div class="art" id="vFront"></div><div class="sheen"></div></div>
+ <div><div class="stage" id="stage"><div class="card3d" id="card3d"><div class="face front"><div class="art" id="vFront" role="img"></div><div class="sheen"></div></div>
  <div class="face back"><div class="art" id="vBack"></div><div class="sheen"></div></div></div></div>
  <div class="vbtns"><button class="btn" id="vPrev" aria-label="Previous card">←</button><button class="btn" id="vFlip">Flip (F)</button>
  <button class="btn" id="vNext" aria-label="Next card">→</button><button class="btn" id="vClose">Close</button></div></div>
@@ -341,17 +363,29 @@ function pill(label){if(!D.theme||!label)return null;return el("span",{class:"pi
 function themeLegend(){if(!D.theme)return null;return el("div",{class:"legend"},...D.theme.labels.map(l=>pill(l.label)),pill("off-theme"))}
 
 /* ---------- tabs and routing ---------- */
-function tabsList(){const t=[];if(SHOW.tiers)(D.tiers||[]).forEach(x=>t.push({id:"tier-"+x.id,title:x.title,render:()=>renderTier(x)}));
+function tabsList(){const t=[];if((D.overview||[]).length)t.push({id:"overview",title:"Overview",render:renderOverview});if(SHOW.tiers)(D.tiers||[]).forEach(x=>t.push({id:"tier-"+x.id,title:x.title,render:()=>renderTier(x)}));
  (D.groups||[]).forEach(g=>t.push({id:"decks-"+g.id,title:g.title,render:()=>renderGroup(g)}));
+ (D.research||[]).forEach(r=>t.push({id:r.id,title:r.title,render:()=>renderResearch(r)}));
+ (D.rankings||[]).forEach(r=>t.push({id:"rank-"+r.id,title:r.title,render:()=>renderRanking(r)}));
  if(SHOW.sources)t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
 let TABS=[];
 function go(id,push=true){hideTip();const tab=TABS.find(t=>t.id===id)||TABS.find(t=>(D.aliases||{})[id]===t.id)||TABS[0];
  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===tab.id));
- charts.forEach(c=>c.destroy());charts=[];const m=$("#main");m.replaceChildren();tab.render(m);store.set("tab",tab.id);
+ charts.forEach(c=>c.destroy());charts=[];const m=$("#main");m.replaceChildren();applyLook(D.look);tab.render(m);store.set("tab",tab.id);
  if(push)history.replaceState(null,"","#"+tab.id)}
 function buildTabs(){TABS=tabsList();const bar=$("#tabs");bar.replaceChildren(...TABS.map(t=>el("button",{role:"tab","data-id":t.id,onclick:()=>go(t.id)},t.title)));
  bar.addEventListener("keydown",e=>{if(!["ArrowLeft","ArrowRight"].includes(e.key))return;const b=[...bar.children],i=b.indexOf(document.activeElement);if(i<0)return;
   const n=b[(i+(e.key==="ArrowRight"?1:-1)+b.length)%b.length];n.focus();n.click()})}
+
+/* ---------- report look: accent colors per commander (or a saved theme), neutral where several commanders show ---------- */
+function applyLook(L){L=L||D.look;if(!L)return;const r=document.documentElement.style;
+ r.setProperty("--th-l-a",L.l.a);r.setProperty("--th-l-a2",L.l.a2);r.setProperty("--th-d-a",L.d.a);r.setProperty("--th-d-a2",L.d.a2);
+ document.body.dataset.look=L.style||"";document.body.dataset.lookSource=L.source||""}
+/* ---------- legality status: upcoming (with release date), banned, not legal ---------- */
+const ST_LABEL={upcoming:"Upcoming",banned:"Banned",not_legal:"Not legal"};
+function statusPill(c){if(!c||!ST_LABEL[c.status])return null;return el("span",{class:"pill lp lp-"+c.status},ST_LABEL[c.status]+(c.status==="upcoming"&&c.releases?" · releases "+c.releases:""))}
+function roleText(c){const e=Object.entries(c.roles||{});return e.length?e.map(([r,why])=>`${r} (${why.join(", ")})`).join("; "):"no role rule matched"}
+function evidenceLinks(ev){return ev&&ev.length?el("div",{class:"note"},"Evidence: ",...ev.flatMap((x,i)=>[i?" · ":"",ext(x.url,`Open ${x.title}`,"",x.title," ↗")])):null}
 
 /* ---------- charts (Chart.js, one question each) ---------- */
 function baseOpts(extra={}){const tx=cssv("--text-2"),gr=cssv("--line");return Object.assign({responsive:true,maintainAspectRatio:false,animation:matchMedia("(prefers-reduced-motion:reduce)").matches?false:{duration:300},
@@ -394,10 +428,61 @@ function renderTier(T,host=$("#main")){const key="tier:"+T.id,st=store.get(key,{
    return el("div",{class:"tier"},el("div",{class:"lt"+(t==="C"||t==="D"?" dk":""),style:`background:var(--t-${t})`,"aria-label":"Tier "+t},t),el("div",{class:"grid"},...inT.map(c=>cardTile(c,inT))))}).filter(Boolean));
   if(!cs.length)list.append(el("p",{class:"note"},"No cards match. ",el("button",{type:"button",class:"chipclr",onclick:()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}},"Clear search and filters")))}
  draw()}
-function cardTile(c,ctx,badges){const a=art(c.img,"");if(a){a.removeAttribute("role");a.removeAttribute("aria-label")}
- return el("button",{class:"tile",type:"button",onclick:e=>openViewer(c,ctx,e.currentTarget),"aria-label":`${c.qty>1?c.qty+" ":""}${c.name}, open card`},a,
-  c.qty>1?el("span",{class:"qty","aria-hidden":"true"},"×"+c.qty):null,badges&&badges.length?el("span",{class:"badges","aria-hidden":"true"},...badges):null,
-  el("div",{class:"nm"},c.name),el("div",{class:"meta"},c.pct!=null?el("span",{class:"num"},`${c.pct}%${c.n?` of ${c.n.toLocaleString()}`:""}`):null,SHOW.prices&&c.price!=null?el("span",{class:"num"},money(c.price)):null,tag(c.theme)))}
+function cardTile(c,ctx,badges,corner){const a=art(c.img,"");if(a){a.removeAttribute("role");a.removeAttribute("aria-label")}
+ return el(VIEW()?"button":"div",{class:"tile",...(VIEW()?{type:"button",onclick:e=>openViewer(c,ctx,e.currentTarget),"aria-label":`${c.rank?"Rank "+c.rank+", ":""}${c.qty>1?c.qty+" ":""}${c.name}, open card`}:{})},a,
+  corner||(c.qty>1?el("span",{class:"qty","aria-hidden":"true"},"×"+c.qty):null),badges&&badges.length?el("span",{class:"badges","aria-hidden":"true"},...badges):null,
+  el("div",{class:"nm"},(c.rank&&!VIEW()?"#"+c.rank+" ":"")+c.name),el("div",{class:"meta"},c.pct!=null?el("span",{class:"num"},popText(c)):null,SHOW.prices&&c.price!=null?el("span",{class:"num"},money(c.price)):null,tag(c.theme),statusPill(c)),
+  c.why&&c.rank?el("div",{class:"why"},c.why):null)}
+function popText(c){return `${c.pct}% of decks`+(c.decks!=null&&c.n?` (${c.decks.toLocaleString()} of ${c.n.toLocaleString()})`:c.n?` (n=${c.n.toLocaleString()})`:"")}
+
+/* ---------- rankings (research.json rankings): order, tiers and numbers only from the data ---------- */
+function renderRanking(R,host=$("#main")){const key="rank:"+R.id,st=store.get(key,{sort:"rank",q:""}),sel=st.f&&typeof st.f==="object"?st.f:{};
+ const hasPct=R.cards.some(c=>c.pct!=null),tiers=[...new Set(R.cards.map(c=>c.tier).filter(Boolean))];
+ host.append(el("section",{class:"panel"},el("h2",{},R.title),R.project?el("p",{class:"note"},"Project: "+R.project):null,R.scope?el("p",{class:"t2"},R.scope):null,
+  el("p",{class:"t2"},el("b",{},"How it was ranked: "),R.method,R.as_of?` · as of ${R.as_of}`:""),
+  el("p",{class:"note"},hasPct?"Inclusion % is popularity: the share of decks that play the card, with the number of decks behind it. It is not a strength rating.":"Ranked by the method above; no usage numbers were recorded.",
+   tiers.length?" Tiers come from the research file's method, not from this page.":"")));
+ const q=el("input",{type:"search",placeholder:"Search cards",value:st.q||"","aria-label":"Search"});
+ const sortSel=el("select",{"aria-label":"Sort"},...[["rank","Rank"],hasPct?["pct","Inclusion (high first)"]:null,["name","Name"]].filter(Boolean).map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
+ const groups=[tiers.length?{id:"tier",label:"Tier",get:c=>c.tier,opts:tiers.map(t=>({v:t,label:t}))}:null,
+  {id:"status",label:"Status",min:1,get:c=>c.status,opts:Object.keys(ST_LABEL).map(k=>({v:k,label:ST_LABEL[k]}))}].filter(Boolean);
+ const chips=chipBar(groups,R.cards,sel,draw),list=el("div");[sortSel,q].forEach(i=>i.addEventListener("input",draw));
+ host.append(el("section",{class:"panel"},el("div",{class:"ctrl"},q,sortSel),chips,list));
+ const tile=(c,ctx)=>cardTile(c,ctx,null,el("span",{class:"rk","aria-hidden":"true"},"#"+c.rank));
+ function draw(){const s={sort:sortSel.value,q:q.value,f:sel};store.set(key,s);const base=c=>textHit(c,s.q);chips.sync(base);
+  let cs=R.cards.filter(c=>base(c)&&chipMatch(chips.groups,sel,c));
+  cs.sort(s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):s.sort==="pct"?(a,b)=>(b.pct??-1)-(a.pct??-1):(a,b)=>a.rank-b.rank);
+  if(!cs.length){list.replaceChildren(el("p",{class:"note"},"No cards match. ",el("button",{type:"button",class:"chipclr",onclick:()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}},"Clear search and filters")));return}
+  if(!tiers.length||s.sort!=="rank"){list.replaceChildren(el("div",{class:"grid"},...cs.map(c=>tile(c,cs))));return}
+  const rows=[...tiers,null].map(t=>{const inT=cs.filter(c=>(c.tier||null)===t);if(!inT.length)return null;const std=TIERS.includes(t);
+   return el("div",{class:"tier"},el("div",{class:"lt"+(t==="C"||t==="D"?" dk":""),style:`background:var(--t-${std?t:"B"})`,role:"img","aria-label":t?"Tier "+t:"No tier"},t||"–"),el("div",{class:"grid"},...inT.map(c=>tile(c,cs))))});
+  list.replaceChildren(...rows.filter(Boolean))}
+ draw()}
+function commanderRows(rows){const box=el("div");rows.forEach(c=>box.append(el("div",{class:"rc"},
+  IMG!=="none"&&c.img&&VIEW()?el("button",{type:"button","aria-label":`${c.name}, open card`,"data-img":c.img,onclick:e=>openViewer(c,rows.filter(x=>x.img),e.currentTarget)},(a=>{a.removeAttribute("role");a.removeAttribute("aria-label");return a})(art(c.img,""))):(IMG!=="none"&&c.img?art(c.img,c.name):el("span")),
+  el("div",{},el("div",{class:"row"},el("span",{class:"nm"},c.name),c.built?el("span",{class:"pill"},"Built in this report"):null,c.project&&D.multi?el("span",{class:"note"},c.project):null),
+   el("p",{},c.strategy),
+   el("div",{class:"two"},c.advantages.length?el("div",{},el("h4",{},"Advantages"),el("ul",{},...c.advantages.map(x=>el("li",{},x)))):null,
+    c.disadvantages.length?el("div",{},el("h4",{},"Disadvantages"),el("ul",{},...c.disadvantages.map(x=>el("li",{},x)))):null),
+   c.theme_fit?el("p",{class:"t2"},el("b",{},"Theme fit: "),c.theme_fit):null,
+   el("p",{class:"note"},c.legal_check?"Eligibility checked: "+c.legal_check:"Eligibility check not recorded in the research."),evidenceLinks(c.evidence)))));return box}
+function renderResearch(R,host=$("#main")){
+ host.append(el("section",{class:"panel"},el("h2",{},R.title),el("p",{class:"t2"},R.question),R.feasibility?el("p",{class:"note"},"Feasibility verdict: "+R.feasibility):null));
+ if(R.commanders.length)host.append(el("section",{class:"panel"},el("h2",{},"Commanders compared"),el("p",{class:"note"},"From the research file: each commander's strategy, advantages and disadvantages as recorded, with the sources behind them."),commanderRows(R.commanders)));
+ if(R.disagreements.length)host.append(el("section",{class:"panel"},el("h2",{},"Where sources disagree"),...R.disagreements.map(d=>el("div",{class:"rc",style:"grid-template-columns:minmax(0,1fr)"},el("div",{},el("span",{class:"nm"},d.topic),
+  el("ul",{},...d.positions.map(p=>el("li",{},p.position,p.sources.length?[" · ",...p.sources.flatMap((x,i)=>[i?", ":"",ext(x.url,`Open ${x.title}`,"",x.title," ↗")])]:""))),d.explanation?el("p",{class:"t2"},d.explanation):null)))));
+ const F=((D.accuracy||{}).findings||[]).filter(f=>(f.project||null)===(R.project||null));
+ if(F.length)host.append(el("section",{class:"panel"},el("h2",{},"Findings"),el("ul",{class:"srcs"},...F.map(f=>el("li",{},f.claim,el("div",{class:"note"},`${f.class} · ${f.confidence} confidence`,...f.sources.flatMap(x=>[" · ",ext(x.url,`Open ${x.title}`,"",x.title," ↗")])))))));
+ const n=(D.rankings||[]).filter(r=>(r.project||null)===(R.project||null));
+ if(n.length)host.append(el("section",{class:"panel"},el("h2",{},"Rankings"),el("div",{class:"row"},...n.map(r=>el("button",{class:"btn",type:"button",onclick:()=>{go("rank-"+r.id);scrollTo(0,0)}},r.title+" →")))))}
+function renderOverview(host=$("#main")){const O=D.overview||[];
+ host.append(el("section",{class:"panel"},el("h2",{},"Every build"),el("p",{class:"note"},"Each build keeps its own project files, decisions and audit; open a group to see it."),
+  el("div",{class:"strip",tabindex:0,role:"region","aria-label":"Builds table"},el("table",{},el("thead",{},el("tr",{},...["Group","Commander","Project","Build","Bracket",SHOW.prices?"Value":null,"Audit"].filter(Boolean).map(h=>el("th",{class:/Bracket|Value/.test(h)?"n":""},h)))),
+   el("tbody",{},...O.map(r=>el("tr",{},el("td",{},el("a",{href:"#"+r.tab,onclick:e=>{e.preventDefault();go(r.tab);scrollTo(0,0)}},r.group)),el("td",{},r.commander),el("td",{},r.project||""),el("td",{},r.build),
+    el("td",{class:"n num"},"B"+r.bracket),SHOW.prices?el("td",{class:"n num"},money(r.price)):null,el("td",{class:"mono"},r.audit))))))));
+ if((D.rankings||[]).length||(D.research||[]).length)host.append(el("section",{class:"panel"},el("h2",{},"Research and rankings"),el("div",{class:"row"},
+  ...(D.research||[]).map(r=>el("button",{class:"btn",type:"button",onclick:()=>{go(r.id);scrollTo(0,0)}},r.title+" →")),
+  ...(D.rankings||[]).map(r=>el("button",{class:"btn",type:"button",onclick:()=>{go("rank-"+r.id);scrollTo(0,0)}},r.title+" →")))))}
 
 /* ---------- deck tabs ---------- */
 const BR={1:"Exhibition",2:"Core",3:"Upgraded",4:"Optimized",5:"cEDH"};
@@ -419,21 +504,23 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
  const cmdrs=G.commanders;let cur=cmdrs.find(c=>c.slug===st.cmdr)||cmdrs[0];
  const defB=G.default_bracket||D.default_bracket;
  if(cmdrs.length>1){const rows=cmdrs.map(c=>{const d=c.decks.find(x=>x.bracket===defB)||c.decks[0];const s=d.stats||{};
-   return el("tr",{},el("td",{},c.name),el("td",{class:"n num"},"B"+d.bracket),el("td",{class:"n num"},money(s.price)),el("td",{class:"n num"},s.avg_mv??"–"),el("td",{class:"n num"},(s.game_changers||[]).length),el("td",{},(d.validation||{}).state||"–"))});
-  host.append(el("section",{class:"panel strip"},el("h2",{},"Compare"),el("table",{},el("thead",{},el("tr",{},el("th",{},"Commander"),el("th",{class:"n"},"Bracket"),el("th",{class:"n"},"Price"),el("th",{class:"n"},"Avg MV"),el("th",{class:"n"},"Game Changers"),el("th",{},"Audit"))),el("tbody",{},rows))))}
+   return el("tr",{},el("td",{},c.name+(c.project&&D.multi?` (${c.project})`:"")),el("td",{class:"n num"},"B"+d.bracket),el("td",{class:"n num"},money(s.price)),el("td",{class:"n num"},s.avg_mv??"–"),el("td",{class:"n num"},(s.game_changers||[]).length),el("td",{},(d.validation||{}).state||"–"))});
+  host.append(el("section",{class:"panel strip",tabindex:0,role:"region","aria-label":"Compare commanders"},el("h2",{},"Compare"),el("table",{},el("thead",{},el("tr",{},el("th",{},"Commander"),el("th",{class:"n"},"Bracket"),el("th",{class:"n"},"Price"),el("th",{class:"n"},"Avg MV"),el("th",{class:"n"},"Game Changers"),el("th",{},"Audit"))),el("tbody",{},rows))))}
  const pick=el("div");host.append(pick);const body=el("div",{style:"display:grid;gap:18px"});host.append(body);
- if(cmdrs.length>1)pick.append(el("h3",{},"Choose a commander"),el("div",{class:"cmdrs"},...cmdrs.map(c=>el("button",{class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));drawC()}},art(c.img,c.name),el("div",{class:"nm"},c.name)))));
+ if(cmdrs.length>1)pick.append(el("h3",{},"Choose a commander"),el("div",{class:"cmdrs"},...cmdrs.map(c=>el("button",{class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));drawC()}},art(c.img,c.name),el("div",{class:"nm"},c.name),c.project&&D.multi?el("div",{class:"meta"},c.project):null))));
  else pick.remove();
- function drawC(){charts.forEach(c=>c.destroy());charts=[];body.replaceChildren();const did=d=>d.id||"b"+d.bracket;  // a deck is a build variant (b3, b4-budget...)
+ function drawC(){charts.forEach(c=>c.destroy());charts=[];body.replaceChildren();applyLook(cur.look);const did=d=>d.id||"b"+d.bracket;  // a deck is a build variant (b3, b4-budget...)
   const b=store.get(key+":"+cur.slug,did(cur.decks.find(d=>d.bracket===defB)||cur.decks[0]));
   const deck=cur.decks.find(d=>did(d)===b)||cur.decks[0];
   const seg=el("div",{class:"seg",role:"group","aria-label":"Choose a build"},...cur.decks.map(d=>el("button",{class:"btn","aria-pressed":d===deck,onclick:()=>{store.set(key+":"+cur.slug,did(d));drawC()}},
    el("b",{},d.label||"B"+d.bracket),el("small",{},`${BR[d.bracket]||""}${SHOW.prices?" · "+money((d.stats||{}).price):""}`))));
   const flat=orderedCards(deck);CUR={G,slug:cur.slug,b:did(deck)};const VS=deck.validation;
   const copy=el("button",{class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
-  body.append(el("div",{class:"deckhead"},el("div",{},el("h2",{},cur.name),el("p",{class:"note",style:"margin:4px 0 0"},`Bracket ${deck.bracket} · ${BR[deck.bracket]||""} · ${deck.cards.reduce((a,c)=>a+c.qty,0)} cards`,
+  body.append(el("div",{class:"deckhead"},el("div",{},el("h2",{},cur.name),el("p",{class:"note",style:"margin:4px 0 0"},deck.project&&D.multi?`Project ${deck.project} · v${deck.version} · `:"",`Bracket ${deck.bracket} · ${BR[deck.bracket]||""} · ${deck.cards.reduce((a,c)=>a+c.qty,0)} cards`,
     (D.sources||[]).length&&SHOW.sources?[" · ",el("a",{href:"#sources",onclick:e=>{e.preventDefault();go("sources");scrollTo(0,0)}},`researched from ${D.sources.length} sources →`)]:""),
-    VS?el("p",{class:"note vstate",style:"margin:4px 0 0"},el("span",{class:"pill "+(VS.state==="pass"?"vok":/^(pass_with_warnings|incomplete)$/.test(VS.state)?"vwarn":"vno")},"Audit: "+VS.state),VS.note?" "+VS.note:""):null),
+    VS?el("p",{class:"note vstate",style:"margin:4px 0 0"},el("span",{class:"pill "+(VS.state==="pass"?"vok":/^(pass_with_warnings|incomplete)$/.test(VS.state)?"vwarn":"vno")},"Audit: "+VS.state),VS.note?" "+VS.note:""):null,
+    deck.rule0?el("p",{class:"note",style:"margin:4px 0 0"},el("b",{},"Rule 0: "),deck.rule0):null,
+    deck.future?el("p",{class:"note",style:"margin:4px 0 0"},el("b",{},"Planned for release: "),[deck.future.note,(deck.future.waits_for||[]).map(w=>`${w.card}${w.releases?" ("+w.releases+")":""}`).join(", ")].filter(Boolean).join(" · ")):null),
    el("div",{class:"row"},cur.decks.length>1?seg:null,copy)));
   body.append(el("div",{class:"overview"},el("section",{class:"panel"},deckSummary(deck,cur,flat)),deckNumbers(deck,cur)));
   body.append(deckList(deck));
@@ -441,7 +528,8 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
   const plan=deckPlan(deck,cur);if(plan)body.append(plan);
   const com=community(deck,cur);if(com)body.append(com);
   if(SHOW.charts)body.append(el("section",{class:"panel"},el("h2",{},"Mana and curve"),deckCharts(deck)));}
- drawC()}
+ drawC();
+ if((G.alts||[]).length)host.append(el("section",{class:"panel"},el("h2",{},"Commanders compared"),el("p",{class:"note"},"Alternatives from the research file, as recorded there; built ones are marked."),commanderRows(G.alts)))}
 let CUR={};
 function swapsFor(name){const k=`${CUR.slug}/${CUR.b}`;return (CUR.G&&CUR.G.swaps||[]).filter(s=>s.fits.some(f=>f.deck===k&&f.swap_out===name))}
 function fitsHere(s){const k=`${CUR.slug}/${CUR.b}`;return (s.fits||[]).filter(f=>f.deck===k)}
@@ -467,7 +555,7 @@ function community(d,c){const C=(d.summary||{}).community||[],Y=c.youtube||[];if
  if(Y.length)sec.append(el("h3",{},"Watch"),el("div",{class:"vids"},...Y.map(v=>ext(v.url,`Watch ${v.title} on YouTube`,"vid",el("b",{},v.title),el("span",{class:"muted"},[v.channel,v.date].filter(Boolean).join(" · "))," ↗"))));
  return sec}
 function deckPlan(d,c){const s=d.summary||{},V=d.validation||{};const list=(h,a)=>a&&a.length?el("div",{},el("h3",{style:"margin-top:0"},h),el("ul",{},...a.map(x=>el("li",{},x)))):null;
- const parts=[...(s.sections||[]).map(x=>list(x.title,x.items)),list("Strengths",s.strengths),list("Weaknesses",s.weaknesses),list("How to play it",s.tips)].filter(Boolean);
+ const parts=[...(s.sections||[]).map(x=>list(x.title,x.items)),list("Strengths",s.strengths),list("Disadvantages",s.disadvantages),list("How to play it",s.tips)].filter(Boolean);
  const sec=el("section",{class:"panel"},el("h2",{},"Game plan"));if(parts.length)sec.append(el("div",{class:"sumgrid three"},...parts));
  if(s.notes)sec.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
  sec.append(el("h3",{},"Checks"),el("p",{class:"note"},`Audit: ${V.state||"not audited"}`+(V.audited?` · audited ${V.audited}`:"")+(V.independent?" · independent auditor":"")+(V.note?` · ${V.note}`:"")));
@@ -478,6 +566,7 @@ function deckPlan(d,c){const s=d.summary||{},V=d.validation||{};const list=(h,a)
  else sec.append(el("p",{class:"note"},V.state==="not audited"?"This build has not been audited.":"No audit results are shown because the audit on file checked a different version of this list."));
  return sec}
 function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",style:"display:grid;gap:12px;align-content:start"});
+ const tile=(k,v,cls)=>el("div",{class:"stat"+(cls?" "+cls:"")},el("b",{class:"num"},v),el("span",{},k));
  const off=(d.theme&&d.theme.counts&&d.theme.counts["off-theme"]);
  sec.append(el("div",{class:"stats"},...[SHOW.prices?["Value",money(s.price)+(s.unpriced&&s.unpriced.length?" +":""),"price"]:null,["Avg mana value",s.avg_mv??"–"],["Lands",s.lands??"–"],
   d.theme?["Off-theme cards",off??0]:["Game Changers",(s.game_changers||[]).length],SHOW.prices&&s.cost_to_buy!=null?["To buy",money(s.cost_to_buy),"price"]:null].filter(Boolean).map(([k,v,cls])=>el("div",{class:"stat"+(cls?" "+cls:"")},el("b",{class:"num"},v),el("span",{},k)))));
@@ -487,15 +576,30 @@ function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",st
  if(s.template){sec.append(el("div",{},el("h3",{style:"margin-top:0"},"Template check"),...Object.entries(s.template).map(([role,[have,lo,hi]])=>{const mx=Math.max(hi*1.4,have,1),cls=have<lo?"short":have>hi?"over":"ok";
    return el("div",{class:"bullet"},el("span",{},role[0].toUpperCase()+role.slice(1)),el("div",{class:"bar",role:"img","aria-label":`${role}: ${have}, target ${lo} to ${hi}`},el("div",{class:"band",style:`left:${lo/mx*100}%;width:${(hi-lo)/mx*100}%`}),el("div",{class:"val",style:`width:${have/mx*100}%`})),el("span",{class:"num "+cls},`${have} · ${lo}-${hi} ${cls==="ok"?"✓":cls==="short"?"▼":"▲"}`))}),
   el("div",{class:"legend"},el("span",{},"Bar: this deck"),el("span",{},"Green band: typical range"),el("span",{class:"ok"},"✓ in range"),el("span",{class:"short"},"▼ low"),el("span",{class:"over"},"▲ above (fine: one card can fill several roles)")),
-  el("p",{class:"note"},(s.template_source||"Starting ranges, not laws.")+(s.roles_source?` Role counts: ${s.roles_source}.`:""))));
-  if(s.role_compare)sec.append(el("p",{class:"note"},"Where counts disagree: "+Object.entries(s.role_compare).map(([r,v])=>`${r} ${v.tagger} (Tagger) vs ${v.builder} (builder)`).join(" · ")))}
+  el("p",{class:"note"},s.template_source||"Starting ranges, not laws.")));}
+ const R=Object.entries(s.roles||{}).filter(([r])=>r!=="land");
+ if(R.length)sec.append(el("p",{class:"note",style:"margin:0"},el("b",{},"Roles from Oracle-text rules: "),R.sort((a,b)=>b[1]-a[1]).map(([r,n])=>`${r} ${n}`).join(" · "),". A card can count in several roles; open a card to see the rule that matched."));
+ if((s.label_diff||[]).length)sec.append(el("details",{},el("summary",{},`${s.label_diff.length} builder's label${s.label_diff.length>1?"s differ":" differs"} from the rule-based roles`),
+  el("ul",{class:"note"},...s.label_diff.map(x=>el("li",{},`${x.name}: builder's label "${x.label}"; rules: ${x.rules.length?x.rules.join(", "):"none matched"}`)))));
+ if(SHOW.prices){if(s.price_ladder){const L=s.price_ladder;sec.append(el("div",{},el("h3",{style:"margin-top:0"},"Price ladder"),
+   el("div",{class:"stats"},tile("Affordable (cheapest printings)",money(L.affordable_usd),"price"),tile("As listed",money(L.as_listed_usd),"price"),tile("Premium (priciest printings)",money(L.premium_usd),"price")),
+   el("p",{class:"note"},`${L.note}. As of ${L.as_of}. Open a card to see its cheapest and priciest printing.`)))}
+  else sec.append(el("p",{class:"note",style:"margin:0"},"Price ladder not available: no cheapest-printing data from deck_check."))}
  return sec}
-function deckCharts(d){const s=d.stats||{},ch=el("div",{class:"charts"});
+function deckCharts(d){const s=d.stats||{},ch=el("div",{class:"charts"});const M=s.mana||{};if(M.pips&&!s.pips){s.pips=M.pips;s.sources=M.sources}
  const box=t=>{const p=el("section",{class:"panel"});ch.append(p);return p};
  if(s.curve)chart(box(),bars(Object.keys(s.curve),[{label:"Cards",values:Object.values(s.curve)}],{plugins:{legend:{display:false}}}),"Mana curve · nonland cards");
  if(s.types)chart(box(),bars(Object.keys(s.types),[{label:"Cards",values:Object.values(s.types)}],{indexAxis:"y",plugins:{legend:{display:false}},scales:{x:{beginAtZero:true,ticks:{color:cssv("--muted"),precision:0},grid:{color:cssv("--grid")}},y:{ticks:{color:cssv("--muted")},grid:{display:false}}}}),"Card types");
  if(s.pips&&s.sources){const cols=Object.keys(s.pips).filter(k=>s.pips[k]);const MC={W:"#e9e5b8",U:"#6fa3d6",B:"#8c8079",R:"#d96b47",G:"#6f9a5e"};
-  if(cols.length)chart(box(),bars(cols,[{label:"Pips in costs",values:cols.map(k=>s.pips[k]),color:cols.map(k=>MC[k])},{label:"Mana sources",values:cols.map(k=>s.sources[k]||0),color:cssv("--muted")}]),"Colored pips vs sources")}
+  if(cols.length)chart(box(),bars(cols,[{label:"Pips in costs",values:cols.map(k=>s.pips[k]),color:cols.map(k=>MC[k])},{label:"Mana sources",values:cols.map(k=>s.sources[k]||0),color:cssv("--muted")}]),"Mana sources vs color requirements")}
+ const na=[];if(!(s.pips&&s.sources))na.push("mana sources vs color requirements");
+ const C=s.cast_by_turn;
+ if(C&&C.by_turn){const p=box(),t=Object.keys(C.by_turn);chart(p,bars(t.map(x=>"T"+x),[{label:"Chance to have cast the commander",values:t.map(x=>Math.round(C.by_turn[x]*1000)/10)}],
+   {plugins:{legend:{display:false},tooltip:{callbacks:{label:x=>`${x.raw}%`}}},scales:{x:{ticks:{color:cssv("--text-2")},grid:{display:false}},y:{beginAtZero:true,max:100,ticks:{color:cssv("--text-2"),callback:v=>v+"%"},grid:{color:cssv("--line")}}}}),
+   `Commander (mana value ${C.commander_mv}) cast by turn`);
+  p.append(el("p",{class:"note"},`${C.runs.toLocaleString()} simulated games, seed ${C.seed}, ${C.on_play?"on the play":"on the draw"}. Assumptions: ${C.assumptions}.`))}
+ else na.push("cast-by-turn simulation");
+ if(na.length)ch.append(el("p",{class:"note"},"Not available for this build (no data from deck_check, never estimated): "+na.join(", ")+"."));
  return ch}
 const TYPE_ORDER=["Creature","Planeswalker","Battle","Instant","Sorcery","Artifact","Enchantment","Land"];
 function mainType(t){t=t||"";return TYPE_ORDER.find(x=>t.includes(x))||"Other"}
@@ -517,17 +621,18 @@ function chipBar(groups,cards,sel,onchange){
  return bar}
 const cap=s=>s?s[0].toUpperCase()+s.slice(1):s;
 function themeChips(){return D.theme?{id:"theme",label:"Theme",min:1,get:c=>c.theme,opts:[...D.theme.labels.map(l=>({v:l.label,label:l.label,dot:themeColor(l.label)})),{v:"off-theme",label:"Off-theme",dot:"var(--muted)"}]}:null}
-function textHit(c,q){q=q.trim().toLowerCase();return !q||[c.name||c.card,c.type,c.role].some(x=>x&&x.toLowerCase().includes(q))}
+function textHit(c,q){q=q.trim().toLowerCase();return !q||[c.name||c.card,c.type,c.label,...Object.keys(c.roles||{})].some(x=>x&&x.toLowerCase().includes(q))}
 function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q:"",f:{}});const sel=st.f&&typeof st.f==="object"?st.f:{};
  const total=d.cards.reduce((a,c)=>a+c.qty,0),gcs=new Set(((d.stats||{}).game_changers||[]).map(x=>x.toLowerCase()));
  const sec=el("section",{class:"panel decklist"},el("h2",{},`Decklist · ${total} cards`));
- const grp=el("select",{"aria-label":"Group by"},...[["type","Group: card type"],["mv","Group: mana value"],["theme","Group: theme"],["role","Group: role"],["none","No groups"]].filter(([v])=>v!=="theme"||D.theme).map(([v,t])=>el("option",{value:v,selected:st.group===v},t)));
+ const grp=el("select",{"aria-label":"Group by"},...[["type","Group: card type"],["mv","Group: mana value"],["theme","Group: theme"],["role","Group: role (rules)"],["none","No groups"]].filter(([v])=>v!=="theme"||D.theme).map(([v,t])=>el("option",{value:v,selected:st.group===v},t)));
  const srt=el("select",{"aria-label":"Sort"},...[["mv","Sort: mana value"],["name","Sort: name"],["price","Sort: price (high first)"]].filter(([v])=>v!=="price"||SHOW.prices).map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
  const isGC=c=>c.gc||gcs.has(c.name.toLowerCase());
  const MVS=["0","1","2","3","4","5","6+"];
  const groups=[{id:"type",label:"Type",get:c=>mainType(c.type),opts:TYPE_ORDER.map(t=>({v:t,label:t}))},
   {id:"mv",label:"Mana value",get:c=>c.land?null:MVS[Math.min(c.mv||0,6)],opts:MVS.map(v=>({v,label:v}))},
-  {id:"role",label:"Role",get:c=>c.role,opts:[...new Set(d.cards.map(c=>c.role).filter(Boolean))].sort().map(r=>({v:r,label:cap(r)}))},
+  {id:"role",label:"Role (rules)",get:c=>Object.keys(c.roles||{}),opts:[...new Set(d.cards.flatMap(c=>Object.keys(c.roles||{})))].sort().map(r=>({v:r,label:cap(r)}))},
+  {id:"status",label:"Status",min:1,get:c=>c.status,opts:Object.keys(ST_LABEL).map(k=>({v:k,label:ST_LABEL[k]}))},
   themeChips(),
   {id:"tag",label:"Tags",min:1,get:c=>[isGC(c)&&"gc",swapsFor(c.name).length&&"swap",c.flags&&c.flags.length&&"flag"].filter(Boolean),
    opts:[{v:"gc",label:"Game Changers"},{v:"swap",label:"⇄ Swap options"},{v:"flag",label:"! Flagged"}]}].filter(Boolean);
@@ -545,7 +650,7 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   let cs=d.cards.filter(c=>base(c)&&chipMatch(chips.groups,sel,c));
   count.textContent=`Showing ${cs.reduce((a,c)=>a+c.qty,0)} of ${total}`;
   cs.sort(s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):s.sort==="price"?(a,b)=>(b.price??0)-(a.price??0):(a,b)=>(a.mv-b.mv)||a.name.localeCompare(b.name));
-  const gk=c=>c.commander?"Commander":s.group==="type"?mainType(c.type):s.group==="mv"?(c.land?"Lands":"Mana value "+Math.min(c.mv,7)+(c.mv>=7?"+":"")):s.group==="theme"?(c.theme==="off-theme"?"Off-theme":c.theme||"–"):s.group==="role"?(c.role||"Other"):"All cards";
+  const gk=c=>c.commander?"Commander":s.group==="type"?mainType(c.type):s.group==="mv"?(c.land?"Lands":"Mana value "+Math.min(c.mv,7)+(c.mv>=7?"+":"")):s.group==="theme"?(c.theme==="off-theme"?"Off-theme":c.theme||"–"):s.group==="role"?(Object.keys(c.roles||{}).sort().map(cap).join(" + ")||"No role rule matched"):"All cards";
   const groups={};cs.forEach(c=>(groups[gk(c)]=groups[gk(c)]||[]).push(c));
   const order=Object.keys(groups).sort((a,b)=>(a==="Commander"?-1:b==="Commander"?1:0)||(s.group==="type"?TYPE_ORDER.indexOf(a)-TYPE_ORDER.indexOf(b):a.localeCompare(b,undefined,{numeric:true})));
   const flat=order.flatMap(g=>groups[g]);  // the viewer browses the list in display order
@@ -555,9 +660,9 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   if(vis()){out.replaceChildren(...order.map(g=>el("div",{class:"grp vis"},head(g),el("div",{class:"cardgrid"},...groups[g].map(c=>cardTile(c,flat,[
    isGC(c)?el("span",{class:"gcb"},"GC"):null,swapsFor(c.name).length?el("span",{},"⇄"):null].filter(Boolean)))))));return}
   out.replaceChildren(...order.map(g=>el("div",{class:"grp"},head(g),...groups[g].map(c=>el("div",{class:"ln"},
-   el(VIEW()?"button":"a",{class:"name"+(c.theme==="off-theme"?" off":""),"data-img":c.img,...(VIEW()?{onclick:e=>openViewer(c,flat,e.currentTarget)}:{href:cardLinks(c).scryfall,target:"_blank",rel:"noopener"})},c.qty>1?c.qty+"× ":"",c.name,(c.gc||gcs.has(c.name.toLowerCase()))?[" ",el("span",{class:"pill gc"},"GC")]:"",rar(c.rarity),tag(c.theme),
+   el(VIEW()?"button":"a",{class:"name"+(c.theme==="off-theme"?" off":""),"data-img":c.img,title:"Roles from Oracle-text rules: "+roleText(c)+(c.label?` · builder's label: ${c.label}`:""),...(VIEW()?{onclick:e=>openViewer(c,flat,e.currentTarget)}:{href:cardLinks(c).scryfall,target:"_blank",rel:"noopener"})},c.qty>1?c.qty+"× ":"",c.name,(c.gc||gcs.has(c.name.toLowerCase()))?[" ",el("span",{class:"pill gc"},"GC")]:"",rar(c.rarity),tag(c.theme),
     swapsFor(c.name).length?el("span",{class:"swp",title:"Has recommended swaps"},"⇄"):"",
-    c.flags&&c.flags.length?el("span",{class:"flag",title:c.flags.join(", ")},"!"):""),
+    c.flags&&c.flags.length?el("span",{class:"flag",title:c.flags.join(", ")},"!"):"",statusPill(c)),
    pips(c.mana),c.price!=null?ext(cardLinks(c).tcgplayer,`Buy ${c.name} on TCGplayer`,"num pr buy",money(c.price)):el("span",{class:"num muted pr"},"–"),
    (()=>{const a=ext(cardLinks(c).scryfall,`${c.name} on Scryfall`,"ext","↗");if(VIEW())a.tabIndex=-1;return a})())))))}  // the viewer has the same links, so ↗ stays out of the Tab path
  draw();return sec}
@@ -604,8 +709,17 @@ function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);$("#viewer").setAttribute("aria-label",`${c.name}, card ${V.i+1} of ${V.list.length}`);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
  if(V3.on)V3.show(c.img,c.back||D.default_back);
- const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},pill(c.theme)," ",c.pct!=null?el("span",{class:"num"},`${c.pct}% inclusion${c.n?` (n=${c.n.toLocaleString()})`:""}`):""));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?" · tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
  if(c.why)side.append(el("p",{},c.why));
+ if(c.evidence&&c.evidence.length)side.append(el("p",{},"Evidence: ",...c.evidence.flatMap((x,i)=>[i?" · ":"",ext(x.url,`Open ${x.title}`,"",x.title," ↗")])));
+ if(c.strategy)side.append(el("p",{},c.strategy));
+ if(c.roles){const e=Object.entries(c.roles);side.append(el("h3",{},"Roles (from Oracle-text rules)"),e.length?el("ul",{},...e.map(([r,why])=>el("li",{},el("b",{},r),": "+why.join(", ")))):el("p",{class:"muted"},"No role rule matched."));
+  if(c.label&&!(c.label in c.roles))side.append(el("p",{class:"muted"},`Builder's label: ${c.label}`))}
+ if(SHOW.prices&&c.cheapest){const p=c.cheapest;side.append(el("h3",{},"Printings and prices"),el("table",{},el("tbody",{},
+   el("tr",{},el("td",{},"Cheapest"),el("td",{},`${(p.set||"").toUpperCase()} #${p.collector_number||""}`),el("td",{class:"n num"},money(p.usd))),
+   el("tr",{},el("td",{},"Priciest"),el("td",{},`${(p.max_set||"").toUpperCase()} #${p.max_collector_number||""}`),el("td",{class:"n num"},money(p.max_usd))),
+   c.price!=null?el("tr",{},el("td",{},"This list"),el("td",{},`${(c.set||"").toUpperCase()} #${c.cn||""}`),el("td",{class:"n num"},money(c.price))):null)),
+  el("p",{class:"muted"},"Scryfall daily prices"+(D.data_dates&&D.data_dates["card data and prices (Scryfall)"]?", as of "+D.data_dates["card data and prices (Scryfall)"]:"")+"."))}
  if(c.card){const f=fitsHere(V.list[V.i]);if(f.length)side.append(el("div",{class:"alt"},el("h4",{},"Swap in for"),...f.map(x=>el("p",{},el("b",{},x.swap_out),x.note?" · "+x.note:""))))}
  else{const sw=swapsFor(c.name);if(sw.length)side.append(el("div",{class:"alt"},el("h4",{},"Swap options"),el("p",{class:"muted"},"From the brew's recommendations."),
   ...sw.map(x=>el("button",{onclick:()=>{const orig=V.list[V.i];V.list=[orig,...sw];V.i=1+sw.indexOf(x);showCard()}},el("b",{},x.card),SHOW.prices&&x.price!=null?" · "+money(x.price):"",x.why?el("span",{}," · "+x.why):"",fitsHere(x).filter(f=>f.swap_out===c.name&&f.note).map(f=>el("span",{class:"muted"}," · "+f.note))))))}
@@ -723,7 +837,7 @@ async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-d
  const P=D.page||{};  // basic / fancy / custom: which sections exist and where images come from
  SHOW=Object.assign({tiers:true,charts:true,swaps:true,sources:true,fan:true,prices:true,viewer:true},P.show||{});
  IMG=P.images||(ATL?"atlas":D.image_urls?"cdn":"none");
- document.body.classList.toggle("noimg",IMG==="none");document.body.classList.toggle("noprice",!SHOW.prices);
+ document.body.classList.toggle("noimg",IMG==="none");document.body.classList.toggle("calm",!!P.calm);applyLook(D.look);document.body.classList.toggle("noprice",!SHOW.prices);
  if(SHOW.charts)await loadScript(CHART_URL).catch(()=>{});  // charts degrade to a note when offline
  document.title=D.title||document.title;mastTitle(D.title);$("#subtitle").textContent=D.subtitle||"";
  mastFan(SHOW.fan?fanKeys():[]);initTip();

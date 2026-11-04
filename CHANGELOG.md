@@ -2,6 +2,17 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.5.0
+Reports, built on the existing deck-browser template.
+- **Three modes:** Deck Summary (clean Markdown, export to Word/PDF with installed skills), Interactive Report (images, decklists, filters, comparisons, prices, essential charts; no 3D viewer or card fan) and Showcase (the full template). `--mode summary|interactive|showcase`.
+- **Theme rankings tabs** from research.json `rankings` (rank, tier, card image, inclusion % with deck counts labelled as popularity, why, sources, status pills), with each ranking's method and date shown.
+- **Research-only reports:** commanders compared, findings, disagreements, rankings and sources before any deck exists.
+- **Navigation:** builds grouped into tabs (brew `group`, e.g. Heroes / Villains), a commander picker inside a group, bracket/variant switches, alternative commanders compared.
+- **Multi-project Showcases:** `site_data.py from-showcase` combines projects listed in showcase.yaml into one report; each project keeps its own files, decisions and audits, and the grouping is saved for next time.
+- **Charts from deck_check data only:** rule-based role counts (builder labels shown separately where they differ), price ladder, mana sources vs color requirements, cast-by-turn with its assumptions; each hidden with a note when the data isn't there.
+- **Commander color theming:** accents from each commander's color identity (at most two hues, muted gold for 3+, neutral for colorless and multi-commander views), updated live when switching tabs, commanders or builds; saved custom themes (comic, gothic, flames or your own colors) in report-theme.yaml or showcase.yaml; precedence explicit > saved > commander colors > neutral; every accent kept at 4.5:1 contrast; reduced motion respected.
+- **Tests:** 75 unit tests; browser checks of showcase and interactive modes at 390 and 1440 px, light and dark, 0 axe-core violations.
+
 ## 7.4.0
 - **Reliable deck statistics:** `deck_check.py` counts roles (ramp, draw, removal, counters, wipes, tutors, protection, recursion) from fixed Oracle-text rules in `analytics.py`, cards can fill several roles, and each role names the rule that matched. Claude's own labels no longer drive the numbers.
 - **Analytics:** mana sources vs color requirements (Scryfall produced_mana, the deck's colors only); a seeded, reproducible cast-by-turn simulation with its assumptions stated; price ladders (affordable / as listed / premium printings) with dates.

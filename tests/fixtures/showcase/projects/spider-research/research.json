@@ -1,0 +1,34 @@
+{
+ "schema_version": "1.0", "project": "spider-research", "version": 1, "created": "2026-11-04",
+ "scope": {"question": "Which red Spider-Man commander fits an aggro deck, and which hero and villain cards matter most?", "theme": "Spider-Man", "depth": "quick"},
+ "methodology": {"approach": "Test fixture: invented inclusion numbers and links for page tests.", "coverage": {"stats": 1, "community": 1}},
+ "sources": [
+  {"id": "src-001", "title": "EDHREC: Spider-Gwen, Free Spirit", "url": "https://edhrec.com/commanders/spider-gwen-free-spirit", "type": "stats", "accessed": "2026-11-04", "sample_size": 412, "primary": false},
+  {"id": "src-002", "title": "Reddit thread on Spider-Man commanders", "url": "https://www.reddit.com/r/EDH/", "type": "community", "accessed": "2026-11-04", "primary": false}
+ ],
+ "findings": [
+  {"id": "fnd-001", "claim": "Spider-Gwen rewards cheap attackers.", "class": "community_opinion", "confidence": "medium", "evidence": ["src-002"]},
+  {"id": "fnd-002", "claim": "Electro's Bolt is the most played removal spell in these decks.", "class": "popularity_metric", "confidence": "medium", "evidence": ["src-001"]}
+ ],
+ "commanders": [
+  {"card": {"name": "Spider-Gwen, Free Spirit"}, "strategy": "Cheap aggro that keeps attacking.", "advantages": ["Low cost", "Fast starts"], "disadvantages": ["Little card advantage (consistency)", "Few ways to protect the board (resilience)"], "theme_fit": "Core Spider-Verse hero", "evidence": ["src-001", "fnd-001"], "legal_check": "deck_check.py --commander 2026-11-04"},
+  {"card": {"name": "Electro, Assaulting Battery"}, "strategy": "Spells-matter burn as a villain deck.", "advantages": ["Burn reach"], "disadvantages": ["Needs many instants and sorceries"], "theme_fit": "Classic Spider-Man villain", "evidence": ["src-002"], "legal_check": null}
+ ],
+ "disagreements": [
+  {"topic": "Is Spider-Gwen better than Electro for aggro?", "positions": [{"position": "Spider-Gwen: faster", "evidence": ["src-001"]}, {"position": "Electro: more reach", "evidence": ["src-002"]}], "explanation": "Depends on the table's interaction."}
+ ],
+ "gaps": ["No tournament data."],
+ "rankings": [
+  {"group": "Spider-Man heroes", "scope": "Red Spider-Man hero cards, Commander-legal", "method": "EDHREC inclusion % among Spider-Gwen decks (popularity, n decks), then community picks", "as_of": "2026-11-04",
+   "cards": [
+    {"card": {"name": "Spider-Gwen, Free Spirit"}, "rank": 1, "tier": "S", "inclusion_pct": 100, "decks": 412, "total_decks": 412, "why": "The commander itself.", "evidence": ["src-001"], "status": "legal"},
+    {"card": {"name": "Electro's Bolt"}, "rank": 2, "tier": "A", "inclusion_pct": 61.2, "decks": 252, "total_decks": 412, "why": "Cheap removal that fits the theme.", "evidence": ["src-001", "fnd-002"], "status": "upcoming", "releases": "2026-12-05"}
+   ]},
+  {"group": "Spider-Man villains", "scope": null, "method": "Community picks in the thread, ordered by how often they were named", "as_of": "2026-11-04",
+   "cards": [
+    {"card": {"name": "Electro, Assaulting Battery"}, "rank": 1, "why": "Named most often.", "evidence": ["src-002"]},
+    {"card": {"name": "Hobgoblin, Mantled Marauder"}, "rank": 2, "why": "Cheap and aggressive.", "evidence": ["src-002"], "status": "banned"},
+    {"card": {"name": "Shocker, Unshakable"}, "rank": 3, "why": "Hard to remove.", "evidence": ["src-002"]}
+   ]}
+ ]
+}

@@ -102,7 +102,14 @@ If a tool is down, say which check didn't run. Don't present an unchecked list a
 
 "Not now" is always available as the free-text answer; don't spend an option on it.
 
-Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, then `build_site.py`.
+In the same AskUserQuestion call, ask a second question: "Want swap options for some cards?" (they show in the page's "Cards to consider" list, as ⇄ marks in the decklist, and under each card in the viewer):
+- **"Yes, the best few (Recommended)":** 6 to 10 swaps, one per weakest or most replaceable slot. Candidates: with EDHREC data, popular or high-synergy cards for this commander the deck lacks; with a theme, prefer on-theme ones. Each "why" carries its evidence ("in 46% of Azula decks on EDHREC (18,514)").
+- **"Cheaper ones"**: `mtg_cheaper_alternatives` for the priciest cards.
+- **"No thanks"**
+
+Every swap passes `mtg_deck_swap` at the deck's bracket and every card is read with `mtg_card` before its "why" is written. Write them as `swaps.json` (`[{"card","why","fits":[{"deck":"<slug>/b<bracket>","swap_out","note"}]}]`) and add them with `site_data.py add-swaps`. No page wanted? Give the same swaps as a short list in the reply.
+
+Build it with the vault page scripts per the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` (the commander's name as title, this bracket, the style flags), `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, `add-swaps` if they wanted swaps, then `build_site.py`.
 
 **Finally, recommend next steps** (pick the 2 or 3 that fit): a full vault with more brackets or commanders (`/mtg:commander-vault` in this folder starts from this deck), export it for Moxfield or Archidekt (`mtg_export`; Moxfield keeps exact printings), check what they still need from their collection (`mtg_collection` `have`), build another bracket of the same commander, or start a new deck.
 

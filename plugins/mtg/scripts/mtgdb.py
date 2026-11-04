@@ -98,7 +98,7 @@ CREATE TABLE printings(id TEXT PRIMARY KEY, oracle_id TEXT, set_code TEXT, cn TE
   border TEXT, digital INTEGER, usd REAL, usd_foil REAL, released TEXT, layout TEXT, back_id TEXT,
   img_front TEXT, img_back TEXT, img_small TEXT, promo_types TEXT, frame_effects TEXT, artist TEXT,
   oversized INTEGER, set_type TEXT, security_stamp TEXT, usd_etched REAL, finishes TEXT, full_art INTEGER,
-  tcg_url TEXT, cm_url TEXT);
+  tcg_url TEXT, cm_url TEXT, rarity TEXT);
 CREATE TABLE alias(name_lc TEXT, oracle_id TEXT);
 CREATE TABLE meta(k TEXT PRIMARY KEY, v TEXT);
 CREATE INDEX ix_p_or ON printings(oracle_id);
@@ -225,14 +225,14 @@ def index_cards(db, bulk_file):
                 "".join(card.get("produced_mana", [])), card.get("edhrec_rank"), ",".join(card.get("keywords", []))))
             iu = card.get("image_uris") or (faces[0].get("image_uris") if faces else None) or {}
             back = (faces[1].get("image_uris") or {}).get("normal") if len(faces) > 1 else None
-            c.execute("INSERT OR REPLACE INTO printings VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
+            c.execute("INSERT OR REPLACE INTO printings VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)", (
                 card["id"], oid, card["set"], card["collector_number"], card.get("set_name"), card.get("border_color"),
                 int(bool(card.get("digital"))), price(card, "usd"), price(card, "usd_foil"), card.get("released_at"),
                 card.get("layout"), card.get("card_back_id"), iu.get("normal"), back, iu.get("small"),
                 ",".join(card.get("promo_types", [])), ",".join(card.get("frame_effects", [])), card.get("artist"),
                 int(bool(card.get("oversized"))), card.get("set_type"), card.get("security_stamp"), price(card, "usd_etched"),
                 ",".join(card.get("finishes", [])) or None, int(bool(card.get("full_art"))),
-                (card.get("purchase_uris") or {}).get("tcgplayer"), (card.get("purchase_uris") or {}).get("cardmarket")))
+                (card.get("purchase_uris") or {}).get("tcgplayer"), (card.get("purchase_uris") or {}).get("cardmarket"), card.get("rarity")))
             for nm in {card["name"].lower()} | {f["name"].lower() for f in faces if f.get("name")}:
                 c.execute("INSERT INTO alias VALUES(?,?)", (nm, oid))
             n += 1

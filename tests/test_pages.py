@@ -129,7 +129,7 @@ class PagesTest(unittest.TestCase):
                 pg.route("https://fonts.*/**", lambda r: r.fulfill(body="", content_type="text/css"))
                 pg.goto(url)
                 pg.wait_for_selector("#tabs button")
-                tabs = pg.locator("#tabs button").all_inner_texts()
+                tabs = pg.locator("#tabs button").all_text_contents()  # text, not the uppercase CSS rendering
                 self.assertEqual(tabs, ["Sith cards", "Sith decks", "Sources & accuracy"])
                 # tier tab: S tier holds Sol Ring (88%), C holds Demonic Tutor (12%)
                 self.assertIn("Sol Ring", pg.locator(".tier").first.inner_text())
@@ -222,7 +222,7 @@ class PagesTest(unittest.TestCase):
             pg.route("https://fonts.*/**", lambda r: r.fulfill(body="", content_type="text/css"))
             pg.goto(pathlib.Path(out, "index.html").resolve().as_uri())
             pg.wait_for_selector("#tabs button")
-            self.assertEqual(pg.locator("#tabs button").all_inner_texts(), ["Sith decks", "Sources & accuracy"])
+            self.assertEqual(pg.locator("#tabs button").all_text_contents(), ["Sith decks", "Sources & accuracy"])
             pg.wait_for_selector(".decklist .ln")
             self.assertEqual(pg.locator(".decklist .art").count(), 0)
             self.assertEqual(pg.locator("canvas").count(), 0)

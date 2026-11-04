@@ -2,6 +2,11 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.2.0
+- **New page design for Fancy (and Basic):** bold display type, a 3D card fan in the header (filled from the deck's key cards on one-deck pages), big-number stat tiles, a 3-column decklist with mana symbols, rarity dots and Game Changer marks, card previews on hover and a darker card viewer.
+- **Swap options:** after a build you're asked if you want them (best few, or cheaper ones). Each swap is tested at the deck's bracket and shows in Cards to consider, as a ⇄ mark in the decklist, and under the card in the viewer.
+- Readable price dates, one three.js load per page. Card data now includes rarity: run `/mtg:update-data` (or it refreshes on your next build) to get rarity dots.
+
 ## 5.1.0
 - **Skills reviewed against Anthropic's skill-authoring guidance** (docs/research/skill-authoring.md): descriptions say where each skill stops, trigger text moved out of Claude Code-only fields, gotchas sections from real failures, rules explain their reasons, no shell blocks that can abort a skill, and routing evals with near-misses.
 - **Add-ons are used by default when installed:** EDHREC staples and synergy shape the plan, the picks, reviews and upgrades (quoted with deck counts); bracket estimates and deck links too. Without them the build still works and says once what wasn't available.

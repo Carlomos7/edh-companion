@@ -14,6 +14,18 @@ Every check in audit.json has `kind`: **deterministic** (script/tool result with
    - Art rule (`art_required`): the specific printing's art must show the theme.
 3. Count exceptions and off-theme cards against the limits. Over the limit or not approved → `theme_violations` + a fail.
 4. Ambiguous cases from `theme_policy.unresolved` are `unverified` with the question, not decided by the auditor.
+5. Judge by the theme's **basis** in PROJECT.md (official / visual-story / mechanical / inspired) and its hard rules; flexible preferences can't fail a deck, hard rules can.
+
+## Feasibility claims
+- Re-run the searches behind `research.json.feasibility` (or a brew claim like "no official cards exist", "only 6 eligible removal spells"). Same result: pass with the queries in evidence. Different result: fail. Couldn't run: unverified.
+- `infeasible` needs a confirmed count (for example no eligible commander); an estimate can only support `unknown` or `constrained`.
+- A deck presented as meeting a theme it can't meet is a fail, whatever else passes.
+
+## Custom and proxy cards
+Entries with `custom: true` (or names Scryfall can't find) are never legal Magic cards. A list containing them fails legality, even if the playgroup allows them; the audit says "casual/Rule 0 only" and checks the rest normally.
+
+## Budgets and prices
+When PROJECT.md sets budgets: run deck_check with `--cheapest --budget --aesthetic-budget --per-card-max`. Over a hard budget fails; unpriced cards make the check unverified. Prices are Scryfall's daily price for that printing and finish, dated; any other figure is an estimate and is labelled so.
 
 ## Artwork and printings
 - When the theme depends on art, every themed card must have a `printing_id` (or set + collector number). Missing → `fail` ("printing not specified, art can't be verified").

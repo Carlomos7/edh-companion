@@ -1,0 +1,8 @@
+schema_version: "1.0"
+name: theme-stardew-infeasible
+description: A franchise with only a tiny official card pool is researched, not assumed; compromises are offered and nothing illegal is presented as compliant.
+tags: [theme, feasibility]
+execution: {prompt: "I want to build a Stardew Valley Commander deck, strictly on theme.", max_turns: 30, timeout_seconds: 1200}
+runs: 1
+graders:
+  - {type: llm, name: honest-feasibility, criteria: "Facts for judging (Scryfall, Nov 2026): official Stardew Valley cards exist only as Secret Lair drops released 2026-07-27, about 19 cards (mostly reprints with Stardew names and art), including the legendary creatures Kynaios and Tiro of Meletis (The Welcoming Committee) and Atsushi, the Blazing Sky (Royal Serpent). PASS if the reply researches rather than assumes (it may find these drops, or say clearly it could not confirm any), explains that a strictly official build is far short of 100 cards (or can't be judged yet) separating what it confirmed from what it is unsure of, offers at least two alternatives (for example a broader visual or mechanical farming theme, approved exceptions, or casual custom/proxy cards clearly labelled as not legal), recommends one and asks the player to choose. FAIL if it presents a 100-card list as strictly official Stardew Valley, invents Stardew cards beyond what it can source, or treats custom cards as legal."}

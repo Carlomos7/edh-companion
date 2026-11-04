@@ -2,6 +2,16 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.1.0
+Themes that might not work, money and looks, exports.
+- **Theme feasibility:** research checks whether a franchise really has Magic cards (no assuming either way), finds eligible commanders, counts the pool per color identity and role, and records a verdict (feasible, constrained, infeasible, unknown) with confirmed counts vs estimates. brew explains the compromises with numbers and offers real paths (a thematic commander, a broader visual/story or mechanical theme, approved exceptions, or casual custom/proxy cards clearly marked as not legal), recommends one, and never presents a deck as meeting rules it breaks. Themes now record their basis (official, visual/story, mechanical, inspired) and hard rules vs flexible preferences.
+- **Rule changes:** loosening or tightening a theme updates PROJECT.md and DECISIONS.md, re-checks affected cards, and makes earlier audits stale (`companion.py goals-hash`; audits record it).
+- **Two budgets:** gameplay (cheapest printings) and aesthetic (extra for foils, borderless, showcase, Secret Lair), plus a per-card max. `deck_check.py` reads `*F*`/`*E*` finishes, prices each printing and finish with a date, finds each card's cheapest printing (`--cheapest`), and checks `--budget`, `--aesthetic-budget` and `--per-card-max`. It fails finishes that don't exist and, when a set number points at another card, keeps checking the named card.
+- **Card vs printing:** schemas separate a card's game identity (name, oracle_id) from its printing (set, number, finish, illustration, treatment, price with source, date and verified flag). Custom cards are flagged and never legal.
+- **Exports:** `export_deck.py` writes Moxfield, Archidekt (commander tagged), plain text and CSV, keeping printings and finishes.
+- **Alternatives and preferences:** brew offers community-backed swaps with trade-offs; research honours preferred and excluded sources (PROJECT.md or the setup config); setup can save looks and source defaults.
+- **Tests:** 27 unit tests (finishes, budgets, exports, stale rules); evals for an official franchise, Stardew Valley, refusing exceptions, loosening midway, an honest weak-deck review, a drippy budget and an Archidekt export.
+
 ## 7.0.0
 **The plugin is now EDH Companion** (`edh-companion`): four skills that research, build, verify and present Commander decks, with projects saved outside the plugin.
 

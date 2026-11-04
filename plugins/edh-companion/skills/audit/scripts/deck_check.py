@@ -11,18 +11,23 @@ and drift. This file only reports facts with fixed rules. Judgment (theme fit, p
 
 Usage:
   deck_check.py DECK [--commander NAME ...] [--bracket N] [--theme-sets spm,spe,...] [--no-combos] [--json OUT]
+                [--budget USD] [--aesthetic-budget USD] [--per-card-max USD] [--cheapest]
 
 DECK is a Moxfield/Archidekt-style text list ("1 Sol Ring (C21) 263 *F*", sections Commander/Deck/Sideboard),
-or a brew.json. Commanders come from --commander, the "Commander" section, or brew.json.
+or a brew.json. Finish markers *F* (foil) and *E* (etched) are read, and Archidekt [Commander] tags.
+Commanders come from --commander, the "Commander" section/tag, or brew.json.
+Prices are Scryfall's daily prices for the listed printing and finish (verified source, dated); --cheapest also
+finds the cheapest paper printing of each card so gameplay cost and the aesthetic premium can be told apart.
 Exit: 0 every check passed, 1 a check failed, 2 a check could not run (network/unknown cards).
 """
-import argparse, hashlib, json, re, ssl, sys, time, urllib.error, urllib.request
+import argparse, hashlib, json, re, ssl, sys, time, urllib.error, urllib.parse, urllib.request
 import certifi
 
 UA = {"User-Agent": "mtg-skills-deck-check/1.0", "Accept": "application/json"}
 CTX = ssl.create_default_context(cafile=certifi.where())
 GC_LIMIT = {1: 0, 2: 0, 3: 3, 4: None, 5: None}
-LINE = re.compile(r"^\s*(\d+)\s*x?\s+(.+?)(?:\s+\(([A-Za-z0-9]{2,6})\)\s*([^\s*]+)?)?(?:\s+\*[A-Z]+\*)*\s*$")
+LINE = re.compile(r"^\s*(\d+)\s*x?\s+(.+?)(?:\s+\(([A-Za-z0-9]{2,6})\)\s*([^\s*\[]+)?)?((?:\s+\*[A-Z]+\*)*)(?:\s+\[([^\]]*)\])?\s*$")
+FINISH = {"F": "foil", "E": "etched"}
 SECTION = re.compile(r"^\s*(commanders?|deck|main(board)?|sideboard|maybeboard|companion|considering)\s*:?\s*$", re.I)
 
 
@@ -60,19 +65,22 @@ def parse_text(text):
             m = LINE.match("1 " + s)
         if not m:
             continue
-        e = {"qty": int(m.group(1)), "name": m.group(2).strip(), "set": (m.group(3) or "").lower() or None, "cn": m.group(4)}
-        (cmd if section == "commander" else cards).append(e)
+        marks = re.findall(r"\*([A-Z]+)\*", m.group(5) or "")
+        finish = next((FINISH[x] for x in marks if x in FINISH), "nonfoil")
+        e = {"qty": int(m.group(1)), "name": m.group(2).strip(), "set": (m.group(3) or "").lower() or None, "cn": m.group(4), "finish": finish}
+        is_cmd = section == "commander" or "commander" in (m.group(6) or "").lower()
+        (cmd if is_cmd else cards).append(e)
     return cards, cmd
 
 
 def parse_brew(doc):
-    cmd = [{"qty": 1, "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number")} for c in doc["commander"]["cards"]]
-    cards = [{"qty": c["qty"], "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number")} for c in doc["deck"]]
+    cmd = [{"qty": 1, "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number"), "finish": c.get("finish") or "nonfoil"} for c in doc["commander"]["cards"]]
+    cards = [{"qty": c["qty"], "name": c["name"], "set": c.get("set"), "cn": c.get("collector_number"), "finish": c.get("finish") or "nonfoil"} for c in doc["deck"]]
     return cards, cmd
 
 
 def deck_hash(entries, printings=False):
-    key = sorted(f"{e['qty']} {e['name'].lower()}" + (f" {e.get('set') or ''} {e.get('cn') or ''}" if printings else "") for e in entries)
+    key = sorted(f"{e['qty']} {e['name'].lower()}" + (f" {e.get('set') or ''} {e.get('cn') or ''} {e.get('finish') or 'nonfoil'}" if printings else "") for e in entries)
     return hashlib.sha1("\n".join(key).encode()).hexdigest()[:12]
 
 
@@ -96,6 +104,40 @@ def fetch(entries):
         if i not in found:
             missing.append(e["name"])
     return found, missing
+
+
+def price(card, finish):
+    """Scryfall price for one finish of this printing, or None."""
+    key = {"foil": "usd_foil", "etched": "usd_etched"}.get(finish, "usd")
+    v = (card.get("prices") or {}).get(key)
+    return float(v) if v else None
+
+
+def treatment(card):
+    """Plain-language printing treatment: what makes this printing look different."""
+    bits = [x for x in card.get("frame_effects") or [] if x in ("showcase", "extendedart", "etched", "inverted", "fullart")]
+    bits += ["borderless"] if card.get("border_color") == "borderless" else []
+    bits += ["full art"] if card.get("full_art") else []
+    bits += ["Secret Lair"] if card.get("set") == "sld" else []
+    bits += [p for p in card.get("promo_types") or [] if p in ("serialized", "galaxyfoil", "surgefoil", "textured", "halofoil")]
+    return ", ".join(dict.fromkeys(bits)) or "regular"
+
+
+def cheapest(names):
+    """Cheapest paper printing (any finish) per card name, via Scryfall search with unique=prints, 15 names per query."""
+    best = {}
+    for i in range(0, len(names), 15):
+        q = "(" + " or ".join('!"' + n.replace('"', '') + '"' for n in names[i:i + 15]) + ") game:paper"
+        url = "https://api.scryfall.com/cards/search?unique=prints&q=" + urllib.parse.quote(q)
+        while url:
+            res = http(url)
+            for c in res.get("data", []):
+                vals = [float(v) for k, v in (c.get("prices") or {}).items() if k in ("usd", "usd_foil", "usd_etched") and v]
+                if vals and (c["name"] not in best or min(vals) < best[c["name"]]["usd"]):
+                    best[c["name"]] = {"usd": min(vals), "set": c["set"], "collector_number": c["collector_number"]}
+            url = res.get("next_page") if res.get("has_more") else None
+            time.sleep(0.5)
+    return best
 
 
 def match_name(card, name):
@@ -123,6 +165,10 @@ def main():
     ap.add_argument("--bracket", type=int, choices=range(1, 6))
     ap.add_argument("--theme-sets", default="", help="comma-separated set codes counted as on theme (printing check)")
     ap.add_argument("--no-combos", action="store_true")
+    ap.add_argument("--budget", type=float, help="gameplay budget for the whole deck (USD): compared with the cheapest-printing total when --cheapest is on, else the listed total")
+    ap.add_argument("--aesthetic-budget", type=float, help="extra spend allowed for chosen printings over the cheapest ones (USD); needs --cheapest")
+    ap.add_argument("--per-card-max", type=float, help="most a single listed printing may cost (USD)")
+    ap.add_argument("--cheapest", action="store_true", help="also look up each card's cheapest paper printing (slower)")
     ap.add_argument("--json", metavar="OUT", help="write the full result (per-card data included) to this file; '-' for stdout")
     a = ap.parse_args()
 
@@ -151,7 +197,15 @@ def main():
     else:
         check("chk-cards-1", "other", "Every name is a real paper card", "pass")
     # A (SET) number that points at a different card is a wrong printing, not the named card.
-    wrong = [f"{e['name']} ({e['set'].upper()} {e['cn']} is {c['name']})" for i, e in enumerate(entries) if (c := found.get(i)) and e.get("set") and not match_name(c, e["name"])]
+    bad = [i for i, e in enumerate(entries) if (c := found.get(i)) and e.get("set") and not match_name(c, e["name"])]
+    wrong = [f"{entries[i]['name']} ({entries[i]['set'].upper()} {entries[i]['cn']} is {found[i]['name']})" for i in bad]
+    if bad:  # check the named card from here on, not the card the wrong number points at
+        byname, _ = fetch([{"name": entries[i]["name"]} for i in bad])
+        for k, i in enumerate(bad):
+            if k in byname:
+                found[i] = byname[k]
+            else:
+                found.pop(i)
     if wrong:
         check("chk-printing-2", "printing", "Each listed set and collector number is a printing of the named card", "fail", "; ".join(wrong), [w.split(" (")[0] for w in wrong])
     rows = []
@@ -166,7 +220,9 @@ def main():
             "mana_cost": c.get("mana_cost") or (c.get("card_faces") or [{}])[0].get("mana_cost"), "cmc": c.get("cmc"),
             "color_identity": c.get("color_identity", []), "legal": c["legalities"].get("commander"), "game_changer": bool(c.get("game_changer")),
             "digital": c.get("digital", False), "border": c.get("border_color"), "oversized": c.get("oversized", False),
-            "price_usd": (c.get("prices") or {}).get("usd"), "artist": c.get("artist"), "scryfall_uri": c.get("scryfall_uri"),
+            "finish": e.get("finish") or "nonfoil", "finishes_available": c.get("finishes", []), "price_usd": price(c, e.get("finish")),
+            "price_source": "Scryfall daily price", "illustration_id": c.get("illustration_id"), "treatment": treatment(c),
+            "artist": c.get("artist"), "scryfall_uri": c.get("scryfall_uri"),
             "image": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("normal"),
             "art_crop": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("art_crop"),
         })
@@ -209,6 +265,11 @@ def main():
     if any(e.get("set") for e, c in rows):
         check("chk-printing-1", "printing", "Listed printings are tournament-playable paper cards", "fail" if unplayable else "pass", "; ".join(unplayable))
 
+    nofinish = [f"{c['name']} ({c['set'].upper()} {c['collector_number']}): no {e['finish']} version" for e, c in rows
+                if e.get("finish", "nonfoil") != "nonfoil" and e["finish"] not in (c.get("finishes") or [])]
+    if nofinish:
+        check("chk-printing-3", "printing", "Each listed finish (foil, etched) exists for that printing", "fail", "; ".join(nofinish))
+
     gcs = sorted(c["name"] for e, c in rows if c.get("game_changer"))
     out["stats"]["game_changers"] = gcs
     if a.bracket:
@@ -243,10 +304,47 @@ def main():
         front = c.get("type_line", "").split("//")[0]
         t = next((x for x in ("Land", "Creature", "Planeswalker", "Battle", "Artifact", "Enchantment", "Instant", "Sorcery") if x in front), "Other")
         types[t] = types.get(t, 0) + e["qty"]
-    prices = [float(c["prices"]["usd"]) * e["qty"] for e, c in rows if (c.get("prices") or {}).get("usd")]
+    priced = [(e, c, price(c, e.get("finish"))) for e, c in rows]
+    prices = [p * e["qty"] for e, c, p in priced if p is not None]
+    unpriced = [c["name"] for e, c, p in priced if p is None and "Basic" not in c.get("type_line", "")]
     out["stats"].update({"cards": total, "lands": types.get("Land", 0), "curve": dict(sorted(curve.items())), "types": types,
                          "average_mv": round(sum((c.get("cmc") or 0) * e["qty"] for e, c in nonland) / max(1, sum(e["qty"] for e, c in nonland)), 2),
-                         "price_usd": round(sum(prices), 2), "price_note": f"{len(prices)} of {len(rows)} cards priced (Scryfall usd, listed or default printing)"})
+                         "price_usd": round(sum(prices), 2), "price_unpriced": unpriced, "price_as_of": out["checked"],
+                         "price_note": f"{len(prices)} of {len(rows)} lines priced: Scryfall daily price for the listed printing and finish (default printing when none listed)"})
+    listed = out["stats"]["price_usd"]
+    cheap_total = None
+    if a.cheapest or a.aesthetic_budget is not None:
+        try:
+            names = sorted({c["name"] for e, c in rows if "Basic" not in c.get("type_line", "")})
+            best = cheapest(names)
+            cheap_total = round(sum(best[c["name"]]["usd"] * e["qty"] for e, c in rows if c["name"] in best), 2)
+            both = [(e, c, p) for e, c, p in priced if p is not None and c["name"] in best]
+            premium = round(sum((p - best[c["name"]]["usd"]) * e["qty"] for e, c, p in both), 2)
+            out["stats"].update({"price_cheapest_usd": cheap_total, "aesthetic_premium_usd": premium,
+                                 "premium_note": f"over {len(both)} cards priced both ways",
+                                 "cheapest_missing": [n for n in names if n not in best]})
+            for card in out["cards"]:
+                if card["name"] in best:
+                    card["cheapest"] = best[card["name"]]
+        except Exception as ex:
+            out["unavailable"].append(f"Scryfall printings search: {ex}")
+    if a.budget is not None:
+        basis, total = ("cheapest printings", cheap_total) if cheap_total is not None else ("listed printings", listed)
+        missing = out["stats"].get("cheapest_missing", []) if cheap_total is not None else unpriced
+        st = "fail" if total > a.budget else ("unverified" if missing else "pass")
+        check("chk-budget-1", "other", f"Gameplay cost within ${a.budget:g} ({basis})", st,
+              f"${total} for {basis}" + (f"; no price for: {', '.join(missing)}" if missing else ""))
+    if a.aesthetic_budget is not None:
+        if cheap_total is None:
+            check("chk-budget-2", "other", f"Aesthetic premium within ${a.aesthetic_budget:g}", "unverified", "cheapest printings couldn't be looked up")
+        else:
+            prem = out["stats"]["aesthetic_premium_usd"]
+            st = "fail" if prem > a.aesthetic_budget else ("unverified" if unpriced else "pass")
+            check("chk-budget-2", "other", f"Aesthetic premium (chosen printings over their cheapest) within ${a.aesthetic_budget:g}", st,
+                  f"premium ${prem} ({out['stats']['premium_note']})" + (f"; no price for the chosen printing of: {', '.join(unpriced)}" if unpriced else ""))
+    if a.per_card_max is not None:
+        over = [f"{c['name']} ${p}" for e, c, p in priced if p is not None and p > a.per_card_max]
+        check("chk-budget-3", "other", f"No listed printing over ${a.per_card_max:g} each", "fail" if over else "pass", "; ".join(over))
 
     if not a.no_combos and cmd:
         try:

@@ -5,4 +5,4 @@ tags: [research, disagreement]
 execution: {prompt: "Is Gwenom, Remorseless a bracket 3 or a bracket 4 commander? I've seen people argue both ways.", max_turns: 30, timeout_seconds: 1200}
 runs: 1
 graders:
-  - {type: llm, name: both-sides, criteria: "PASS if the reply presents both positions with at least one linked source each, explains why they differ (for example deck construction vs the commander itself), and labels its own conclusion as an assessment rather than a fact. FAIL if it gives one confident answer without sources or ignores the disagreement."}
+  - {type: llm, name: both-sides, criteria: "PASS if the reply presents both positions with linked sources supporting each (inline or in a source list), explains why they differ (for example deck construction vs the commander itself), and labels its own conclusion as an assessment rather than a fact. FAIL if it gives one confident answer without sources or ignores the disagreement."}

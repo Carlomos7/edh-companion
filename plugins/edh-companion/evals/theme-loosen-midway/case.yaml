@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: theme-loosen-midway
+description: Changing from strict to flexible theming is recorded, re-checked, and keeps earlier decisions.
+tags: [theme, persistence]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Actually, let's loosen the theme on my Spider-Gwen deck: any Marvel card is fine now, plus up to 5 off-theme staples. What would you change?", max_turns: 40, timeout_seconds: 1500}
+runs: 1
+graders:
+  - {type: regex, name: no-rejected-cards, pattern: "(Blasphemous Act|Jeska's Will)", match: not_contains}
+  - {type: llm, name: recorded-and-rechecked, criteria: "PASS if the reply acknowledges the new theme rule (any Marvel, up to 5 off-theme staples), says it recorded the change (PROJECT.md and/or DECISIONS.md) or that earlier checks no longer apply, proposes changes as proposals that fit the new rule and the bracket 2 / $100 limits, and keeps the previously rejected cards out. FAIL if it ignores the rule change, applies changes without asking, or suggests board wipes or Game Changers."}

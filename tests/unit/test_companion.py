@@ -53,6 +53,16 @@ class Companion(unittest.TestCase):
         code, out = sh("validate", self.p)
         self.assertIn("STALE", out)
 
+    def test_rule_change_makes_audit_stale(self):
+        code, gh = sh("goals-hash", self.p)
+        a = self.audit(3, "31e00e29a1f3")
+        a["subject"]["goals_hash"] = gh.strip()
+        json.dump(a, open(os.path.join(self.p, "audit.json"), "w"))
+        self.assertIn("current", sh("validate", self.p)[1])
+        with open(os.path.join(self.p, "PROJECT.md"), "a", encoding="utf-8") as h:
+            h.write("\n## Theme\n- Mode: strict\n")
+        self.assertIn("PROJECT.md rules changed", sh("validate", self.p)[1])
+
     def test_pass_with_unverified_check_is_an_error(self):
         json.dump(self.audit(3, "31e00e29a1f3", status="unverified"), open(os.path.join(self.p, "audit.json"), "w"))
         code, out = sh("validate", self.p)

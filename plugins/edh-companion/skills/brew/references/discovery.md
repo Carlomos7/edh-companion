@@ -23,11 +23,7 @@ Ask at natural decision points, only when the answer changes the deck. Typical o
 Multiple choice, recommended first with its reason. For low-impact gaps, state a provisional assumption ("assuming medium interaction; say if not") and move on. Record answers in PROJECT.md.
 
 ## 4. Check feasibility before committing
-For the chosen direction and restrictions, check whether a legal, functional 100-card deck exists:
-- **Count the pool** with Scryfall searches inside the commander's color identity and the theme rule, e.g. `e:tla id<=ur f:commander -t:basic` for an Avatar set pool, then count by role (lands/fixing, ramp, draw, removal, wipes, threats) using `o:`/type searches and reading the hits.
-- Compare with the role targets in construction.md. Thin roles are where off-theme exceptions would be needed.
-- Art-based themes: estimate how many cards have a themed printing (`unique:prints` with set codes), and say that each still needs its art checked.
-- Label what's **confirmed** (counted from Scryfall) vs **estimated** (judgment, partial counts). Don't call a strict theme impossible without counting, and don't promise a bracket without evidence.
+Before committing to a direction, check that the restrictions allow a legal, functional deck: eligible commanders, the eligible pool per color identity and role, and what's confirmed vs estimated. research gathers the evidence (`research.json.feasibility`); the method and what to do when it's constrained or infeasible are in [themes.md](themes.md). Don't call a strict theme impossible without counting, and don't promise a bracket without evidence.
 
 ## 5. Explain trade-offs and offer informed choices
 If a restriction costs power, consistency, interaction or card access, say what it costs in concrete terms ("strict Avatar has 6 removal spells in these colors; a typical deck runs 8 to 12"). Offer practical paths, recommended first, e.g.:

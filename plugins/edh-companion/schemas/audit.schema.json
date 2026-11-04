@@ -59,6 +59,14 @@
             "null"
           ],
           "description": "brew.json or brew-<variant>.json that was audited."
+        },
+        "goals_hash": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "pattern": "^[0-9a-f]{12}$",
+          "description": "companion.py goals-hash of PROJECT.md at audit time. If PROJECT.md's rules change, the audit is out of date."
         }
       }
     },

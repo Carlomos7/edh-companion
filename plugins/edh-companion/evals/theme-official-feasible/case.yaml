@@ -1,0 +1,8 @@
+schema_version: "1.0"
+name: theme-official-feasible
+description: A franchise with real Magic support is checked and found feasible, without dumping a deck or a questionnaire.
+tags: [theme, feasibility]
+execution: {prompt: "I want a Commander deck that's strictly Avatar: The Last Airbender. Is that doable?", max_turns: 30, timeout_seconds: 1200}
+runs: 1
+graders:
+  - {type: llm, name: feasible-with-evidence, criteria: "PASS if the reply establishes from evidence that official Avatar: The Last Airbender Magic cards exist (names the product or set and at least one real legendary creature from it that can be a commander), says a strict deck looks feasible or constrained with concrete reasons (pool size, colors or thin roles), and recommends a direction or asks one focused question. FAIL if it claims no such cards exist, invents card names, gives a full 100-card list immediately, or asks a long list of questions before any research."}

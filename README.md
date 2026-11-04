@@ -10,6 +10,9 @@ By [Carlomos7](https://github.com/Carlomos7). Not a card database or a deckbuild
 - **Researches like a person would.** EDHREC numbers (with sample sizes), real decklists and primers, Reddit threads, articles and YouTube deck techs (quoted with timestamps), tournament results when power matters. Every claim is cited and labelled: fact, statistic, community opinion, Claude's judgment, or unresolved.
 - **Guides, then builds.** For a broad idea it shows a few directions with a recommendation, asks one question at a time when the answer matters, checks whether your restrictions allow a working deck, and explains the trade-offs before you commit.
 - **Keeps your rules.** Strict themes, specific artwork, approved exceptions, budget, bracket, pet cards and cards you refuse stay in force across sessions. Suggestions are proposals until you say yes.
+- **Knows when a theme won't work.** "Strictly Stardew Valley" gets researched, not assumed: if there's no legal way to do it, you hear why and get real options, never a fake-compliant list.
+- **Money and looks.** A gameplay budget and a separate budget for foils, borderless and Secret Lair printings, with dated prices.
+- **Exports.** Moxfield, Archidekt, plain text and CSV, with exact printings and foils.
 - **Checks honestly.** A separate audit verifies legality, color identity, Game Changers and bracket limits, combos, printings and art, and whether recommendations are supported. Anything it couldn't check says "unverified".
 - **Shows it.** On request, an interactive deck browser: card images and viewer, variants side by side, charts, filters, swaps, theme and audit status, and every source linked.
 

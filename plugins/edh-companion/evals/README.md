@@ -17,4 +17,6 @@ claude plugin eval . --scaffold --mocks off --ablation none --runs 1 --allow-too
 | routing / negative | act-lookup-banned, not-mtg |
 | persistence, theme, art | persist-rejected-decisions, theme-drift-removal, art-mismatch-audit |
 | accuracy, research | unsupported-claim, conflicting-sources, card-facts, cedh-realism, transcript-names, alchemy-name, rules-current |
+| theme, feasibility | theme-official-feasible, theme-stardew-infeasible, theme-refuses-exceptions, theme-loosen-midway, theme-weak-honest |
+| aesthetics, export | aesthetic-budget, export-archidekt |
 | deckbuilding | asks-before-building, b3-combo-trap, budget-alternatives, curve-check, export-exact, moxfield-sections, no-theme-default, review-planted-errors |

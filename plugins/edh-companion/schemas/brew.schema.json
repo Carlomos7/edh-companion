@@ -180,7 +180,7 @@
     },
     "deck": {
       "type": "array",
-      "description": "Accepted cards only, commanders excluded.",
+      "description": "Accepted cards only, commanders excluded. name/oracle_id are the card; printing_id/set/collector_number/finish/illustration_id/treatment/price are the chosen printing.",
       "items": {
         "type": "object",
         "required": [
@@ -238,6 +238,33 @@
               "string",
               "null"
             ]
+          },
+          "finish": {
+            "enum": [
+              "nonfoil",
+              "foil",
+              "etched",
+              null
+            ]
+          },
+          "illustration_id": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "treatment": {
+            "type": [
+              "string",
+              "null"
+            ]
+          },
+          "price": {
+            "$ref": "common.schema.json#/$defs/price"
+          },
+          "custom": {
+            "type": "boolean",
+            "description": "true for a custom or proxy card (not a real, legal Magic card). Only with the player's approval for casual play; never counted as legal."
           }
         }
       }
@@ -294,6 +321,29 @@
             "number",
             "null"
           ]
+        },
+        "price_cheapest_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Sum of the cheapest paper printing of every card (deck_check --cheapest)."
+        },
+        "aesthetic_premium_usd": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "Extra cost of the chosen printings over their cheapest ones."
+        },
+        "price_as_of": {
+          "$ref": "common.schema.json#/$defs/date"
+        },
+        "price_unpriced": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
         }
       }
     },
@@ -397,6 +447,13 @@
     },
     "follow_up_questions": {
       "$ref": "common.schema.json#/$defs/follow_up_questions"
+    },
+    "limitations": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      },
+      "description": "Known gameplay compromises of this build (often theme- or budget-driven): consistency, interaction, mana, win conditions, achievable bracket."
     }
   }
 }

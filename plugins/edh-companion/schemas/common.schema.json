@@ -85,8 +85,40 @@
             "string",
             "null"
           ]
+        },
+        "finish": {
+          "enum": [
+            "nonfoil",
+            "foil",
+            "etched",
+            null
+          ]
+        },
+        "illustration_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scryfall illustration id: the artwork itself (shared by reprints with the same art)."
+        },
+        "artist": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "treatment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Visual treatment: regular, showcase, borderless, extended art, full art, Secret Lair, serialized..."
+        },
+        "price": {
+          "$ref": "#/$defs/price"
         }
-      }
+      },
+      "description": "A card. Game identity: name + oracle_id (same for every printing; rules, legality, color identity). Printing identity: printing_id, set, collector_number, finish, illustration_id, treatment, price (art, exports, aesthetics, cost)."
     },
     "deck_ref": {
       "type": "object",
@@ -186,6 +218,104 @@
         }
       },
       "description": "Recommendations with their reasons. May be empty."
+    },
+    "price": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "required": [
+        "usd",
+        "as_of",
+        "verified"
+      ],
+      "properties": {
+        "usd": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "finish": {
+          "enum": [
+            "nonfoil",
+            "foil",
+            "etched",
+            null
+          ]
+        },
+        "source": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "e.g. 'Scryfall daily price', 'TCGplayer listing'."
+        },
+        "as_of": {
+          "$ref": "#/$defs/date"
+        },
+        "verified": {
+          "type": "boolean",
+          "description": "true only when read from a price source for this exact printing and finish; false for estimates."
+        }
+      },
+      "description": "Price of one copy of a specific printing and finish."
+    },
+    "printing": {
+      "type": "object",
+      "description": "Fields that describe one physical printing, not the card's game identity.",
+      "properties": {
+        "printing_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scryfall card id of the printing."
+        },
+        "set": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "collector_number": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "finish": {
+          "enum": [
+            "nonfoil",
+            "foil",
+            "etched",
+            null
+          ]
+        },
+        "illustration_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scryfall illustration id: the artwork itself (shared by reprints with the same art)."
+        },
+        "artist": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "treatment": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Visual treatment: regular, showcase, borderless, extended art, full art, Secret Lair, serialized..."
+        },
+        "price": {
+          "$ref": "#/$defs/price"
+        }
+      }
     }
   }
 }

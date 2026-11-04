@@ -22,8 +22,9 @@ For missing capabilities that would clearly help, suggest options in one line ea
 
 ## 2. Ask, one question at a time, only what they want to set
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
-2. Defaults for new projects (optional): bracket, budget style (no limit / cheap / budget / drippy), playstyle note.
-3. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
+2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget / drippy), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
+3. Research sources (optional): any to prefer (e.g. EDHREC, Reddit, a favourite creator) or to never use. Skip it and research uses everything available.
+4. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
 
 ## 3. Save
 Config file: `~/.config/edh-companion/config.yaml`. Read it first if it exists; show the changes and get a yes before overwriting any existing value. Write only what was answered:
@@ -32,8 +33,13 @@ platform: Moxfield
 workspace: ~/Documents/EDHCompanion
 defaults:
   bracket: 3
-  budget: no_limit
-  playstyle: null
+  budget: no_limit          # no_limit | cheap | budget | drippy
+  aesthetic:
+    treatments: [foil, borderless]
+    per_card_max_usd: 30
+research:
+  prefer: [EDHREC, Reddit]
+  exclude: []
 ```
 Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back). Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
 

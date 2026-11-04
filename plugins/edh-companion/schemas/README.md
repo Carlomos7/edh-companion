@@ -44,17 +44,29 @@ Undecided (candidates in RESEARCH.md)
 ## Table and power
 Bracket 3. Hard lines: no infinite combos, no extra turns.
 ## Budget
-No limit; show the price at the end.
+- Gameplay: no limit; show the price at the end
+- Aesthetics: up to $150 extra for premium printings; foils and borderless welcome, cohesive comic-art look
 ## Theme
 - Mode: prefer (on theme unless an exception is approved)
+- Basis: official franchise cards and art
 - Counts as on theme: Spider-Man characters and cards from Spider-Man sets; other Marvel cards when clearly better
 - Artwork matters: yes (the printing must show Marvel art)
+- Hard rules: no non-Marvel creatures
+- Flexible: lands and mana rocks may be off theme if no Marvel version exists
 - Allowed exceptions: basic lands, Sol Ring; at most 5 off-theme cards
+## Feasibility
+Feasible: 140+ eligible nonland cards in Jeskai; removal is thin (6 eligible). Evidence: research.json feasibility.
+## Known limitations
+Light on board wipes because of the theme (accepted 2026-11-04).
+## Research preferences
+Prefer EDHREC and Reddit; skip MTGGoldfish.
 ## Must include / never include
 ## Platform
 Moxfield
 ```
 Theme modes: **none** (best deck) · **printings** (best cards, themed printings when they exist) · **prefer** (on theme unless an approved exception) · **strict** (nothing off theme).
+Theme basis (what "on theme" is judged by): **official** (cards or printings from the franchise's own Magic products) · **visual/story** (art and flavor that clearly depict the theme, any set) · **mechanical** (cards that play like the theme, e.g. farming = landfall, food, plants) · **inspired** (a mix, judged case by case with the player).
+Hard rules are never bent without the player changing them; flexible preferences can be traded off with a stated reason.
 
 ## DECISIONS.md
 Append-only, dated, in the player's words where possible:
@@ -67,7 +79,11 @@ A later request that conflicts with a decision is a question to the player, neve
 
 ## Versions and stale audits
 - `brew.json.version` goes up on every accepted change, with the new `deck_hash` from `deck_check.py` and a new file in `decklists/`.
-- `audit.json.subject.deck` records the version and hash it checked. If they differ from the current brew, or PROJECT.md's constraints changed after the audit date, the audit is **stale**: say so and don't call the deck verified. `companion.py validate` reports stale audits.
+- `audit.json.subject.deck` records the version and hash it checked, and `subject.goals_hash` (from `companion.py goals-hash <project>`) records PROJECT.md's rules at the time. If either differs now, the audit is **stale**: say so and don't call the deck verified. `companion.py validate` reports stale audits.
+- When the player changes a restriction, update PROJECT.md, add a dated DECISIONS.md line, re-check the cards the change affects, and treat earlier audits as stale.
+
+## Card vs printing
+A card's **game identity** (name, `oracle_id`) decides rules, legality and color identity. Its **printing** (`printing_id`, set, collector number, finish, `illustration_id`, treatment, price) decides art, theme-by-art, looks, exports and cost. Keep both: a strict art theme, a drippy budget and an exact Moxfield import all depend on the printing, not the card. Prices are per printing and finish, with a date and `verified: true` only when read for that exact printing; anything else is an estimate.
 
 ## IDs (citations and checks only)
 `src-001` sources and `fnd-001` findings (research.json), `rec-001` recommendations (brew.json), `chk-<area>-<n>` checks (audit.json). IDs are never reused; new items take the next number. Readable files cite them in brackets: "Gwenom wants cheap spells [fnd-004, src-012]".

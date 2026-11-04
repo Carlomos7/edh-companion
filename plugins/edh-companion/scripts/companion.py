@@ -8,10 +8,11 @@
   companion.py where                 print the config file and workspace paths (and whether they exist)
   companion.py validate <project>    check research.json / brew*.json / audit*.json against the schemas,
                                      resolve citation IDs, and report stale or contradictory audits
+  companion.py goals-hash <project>  fingerprint of PROJECT.md's rules; audits record it so a rule change makes them stale
 
 Exit 0 when everything present is valid, 1 otherwise. Missing files are fine (projects are partial by design).
 """
-import glob, json, os, sys
+import glob, hashlib, json, os, re, sys
 import yaml
 from jsonschema import Draft202012Validator
 from referencing import Registry, Resource
@@ -31,6 +32,16 @@ def workspace():
         if ws:
             return os.path.expanduser(ws), "config"
     return os.path.join(os.path.expanduser("~"), "Documents", "EDHCompanion"), "default"
+
+
+def goals_hash(d):
+    """Hash of PROJECT.md with whitespace normalised; None if there's no PROJECT.md."""
+    p = os.path.join(d, "PROJECT.md")
+    if not os.path.exists(p):
+        return None
+    with open(p, encoding="utf-8") as h:
+        text = re.sub(r"\s+", " ", h.read()).strip().lower()
+    return hashlib.sha1(text.encode()).hexdigest()[:12]
 
 
 def registry():
@@ -93,8 +104,11 @@ def validate(d):
         if not audit:
             continue
         seen = (audit.get("subject") or {}).get("deck") or {}
+        gh = (audit.get("subject") or {}).get("goals_hash")
         if seen.get("deck_hash") != brew.get("deck_hash") or seen.get("version") != brew.get("version"):
             notes.append(f"{os.path.basename(ap)}: STALE (audited v{seen.get('version')} {seen.get('deck_hash')}, current v{brew.get('version')} {brew.get('deck_hash')})")
+        elif gh and gh != goals_hash(d):
+            notes.append(f"{os.path.basename(ap)}: STALE (PROJECT.md rules changed since the audit)")
         else:
             notes.append(f"{os.path.basename(ap)}: current, verdict {audit['verdict']['status']}")
     for ap in sorted(glob.glob(os.path.join(d, "audit*.json"))):
@@ -115,7 +129,7 @@ def validate(d):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "validate"):
+    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "validate", "goals-hash"):
         sys.exit(__doc__)
     if sys.argv[1] == "where":
         ws, how = workspace()
@@ -124,7 +138,10 @@ def main():
         print(f"projects   {os.path.join(ws, 'projects')}")
         return
     if len(sys.argv) < 3:
-        sys.exit("usage: companion.py validate <project-dir>")
+        sys.exit(f"usage: companion.py {sys.argv[1]} <project-dir>")
+    if sys.argv[1] == "goals-hash":
+        print(goals_hash(sys.argv[2]) or "no PROJECT.md")
+        return
     errors, notes = validate(sys.argv[2])
     for e in errors:
         print("ERROR", e)

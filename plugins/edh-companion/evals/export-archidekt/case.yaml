@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: export-archidekt
+description: An Archidekt export keeps exact printings and marks the commander.
+tags: [export]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Export my Spider-Gwen deck for Archidekt with the exact printings.", max_turns: 15, timeout_seconds: 600}
+runs: 2
+graders:
+  - {type: regex, name: commander-line, pattern: "Spider-Gwen, Free Spirit \\(spm\\) 90.*\\[Commander", flags: "i", match: contains}
+  - {type: regex, name: printing-kept, pattern: "Sol Ring \\(c21\\) 263", flags: "i", match: contains}

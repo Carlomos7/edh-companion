@@ -394,6 +394,107 @@
     },
     "follow_up_questions": {
       "$ref": "common.schema.json#/$defs/follow_up_questions"
+    },
+    "feasibility": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "Can the theme/restrictions support a legal, functional deck? research owns the first assessment; audit re-checks it.",
+      "required": [
+        "question",
+        "verdict"
+      ],
+      "properties": {
+        "question": {
+          "type": "string",
+          "description": "e.g. 'Strict Stardew Valley, official cards only'."
+        },
+        "eligible_pool": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": [
+              "scope",
+              "count",
+              "how"
+            ],
+            "properties": {
+              "scope": {
+                "type": "string",
+                "description": "color identity or commander considered, e.g. 'mono-green', 'any'."
+              },
+              "count": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "description": "Eligible nonland cards found (null if not counted)."
+              },
+              "by_role": {
+                "type": "object",
+                "additionalProperties": {
+                  "type": "integer"
+                }
+              },
+              "how": {
+                "type": "string",
+                "description": "The searches run, e.g. Scryfall query strings."
+              },
+              "confirmed": {
+                "type": "boolean",
+                "description": "true when counted from Scryfall/official data; false for estimates."
+              }
+            }
+          }
+        },
+        "commanders": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "Eligible legal commanders found."
+        },
+        "verdict": {
+          "enum": [
+            "feasible",
+            "constrained",
+            "infeasible",
+            "unknown"
+          ],
+          "description": "feasible: legal, functional deck possible. constrained: legal but with real gameplay compromises. infeasible: no legal 100-card deck under these rules (confirmed). unknown: research incomplete."
+        },
+        "reasons": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "evidence": {
+          "$ref": "common.schema.json#/$defs/evidence_refs"
+        }
+      }
+    },
+    "source_preferences": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "properties": {
+        "preferred": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        },
+        "excluded": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          }
+        }
+      },
+      "description": "Sources the player asked to favour or avoid for this research, and therefore used or skipped."
     }
   }
 }

@@ -6,7 +6,7 @@ Find tools by capability. Names differ between installs (a claude.ai connector p
 Three separate choices, each asked once and saved in the config file (`~/.config/edh-companion/config.yaml`, `research:` section; a project's PROJECT.md "Research preferences" overrides it for that project):
 1. **Which tools are approved** (step 1).
 2. **How often to ask** before research (step 2).
-3. **How deep** to go (Comprehensive / Quick / Custom / Skip).
+3. **How deep** to go (Quick / Comprehensive / Deep / Custom / Skip).
 Claude Code's own tool permissions are separate: even approved tools may still show Claude Code's permission prompt, and nothing here can bypass it. To stop those prompts, the player allows the tools in Claude Code (`/permissions`). Trivial lookups (one card, one rule) never trigger this onboarding.
 
 ### Step 1: approve tools (before the first substantial research)
@@ -53,6 +53,7 @@ Use nothing external before this answer. After it, test each approved tool with 
 ### Depth (independent of approval)
 - **Comprehensive (Recommended):** every approved source: data, decklists, creator videos with timestamps, Reddit and forums, articles; about 5 to 15 minutes per commander.
 - **Quick:** card data, EDHREC, one or two community threads, a video only if central; about 1 to 3 minutes.
+- **Deep:** comprehensive plus tournament data, more decklists and smaller creators; for comparisons and contested questions; longer (often 15 to 30 minutes per subject).
 - **Custom:** chosen source categories.
 - **Skip:** no web research; card data and rules only, labelled as unresearched.
 
@@ -68,12 +69,26 @@ research:
     web_search: Parallel Search
   excluded: [MTGGoldfish]       # tools or sources never to use
   approval: on_change           # every_time | on_change | automatic
-  depth: comprehensive          # comprehensive | quick | custom | skip
+  depth: comprehensive          # quick | comprehensive | deep | custom | skip
   prefer: [EDHREC, Reddit]
   status: {card_data: verified, transcripts: failed}
   checked: 2026-11-04
 ```
 `companion.py research` prints the saved choices (and a project's overrides) so they can be reviewed; the player can change any of them by saying so or through setup.
+
+## Reliability (lessons from real runs)
+- **Card data in batches, once.** For cards you already know (from lists, transcripts, threads), look them up together: `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" names.txt --cards-only --json <project>/cards.json` (75 cards per request, bounded retries on 429 and 5xx). Reuse `cards.json` instead of looking the same card up again. Use Scryfall **search** only to discover new cards (theme pools, commander-text searches), with targeted queries.
+- **Respect rate limits.** Scryfall search/named/collection allow about 2 requests a second; a 429 means a 30-second lockout, so wait (the helper does) rather than retry immediately. Never hammer an endpoint in a loop.
+- **Check MCP results before trusting them.** Treat a result as unreliable when it contradicts itself or the authority: EDHREC numbers where a card's deck count exceeds the commander's total, `total_decks: 0` next to non-zero card counts, inclusion % that doesn't match count/total, generic staples returned for a specific commander, or card facts that differ from Scryfall. Cross-check with the source site (the EDHREC page itself, Scryfall) and record the conflict; never present the contradictory number as fact.
+- **Failing endpoints.** On a 502/503 or timeout, retry at most once, then mark that tool or endpoint as failing for the rest of the session (`methodology.tools_failed`), switch to an approved fallback, and don't call it again until the player asks or a later session starts. Say what the failure cost (e.g. "no EDHREC numbers for Azula; lists and threads only").
+- **No invented URLs.** Don't guess EDHREC (or any) page paths. Find the page through search, or build it only from a pattern you've just verified loads (e.g. the commander page `edhrec.com/commanders/<slug>` with the slug from that page or a search result), and record the URL actually opened.
+- **Gaps are findings.** Every failure, fallback and the evidence it left missing goes in `methodology.tools_failed` and `gaps`, and into the reply.
+
+## Parallel research (only when subjects are independent)
+- One **card-data worker** owns Scryfall: theme pools, printings and art, commander checks, and the batched `cards.json`. It runs first or alongside, and the others read its file.
+- The other workers own **YouTube deck techs, decklists, Reddit/forums and articles**, and add card names they find to the card-data list (or look them up in `cards.json`) instead of querying Scryfall themselves.
+- Each worker writes its part file in the research.json format with its own ID range and a status (`complete` / `partial: <what's missing>`), recorded in `methodology.workers`.
+- **Research isn't complete until every worker has finished and its part validates:** wait for all of them, merge, run `companion.py validate`, and resolve or list what failed. A worker that died or returned partial work is reported as a gap, not hidden.
 
 ## Which tool for which job
 Use the strongest tool for each job, not every tool for every job:

@@ -11,7 +11,7 @@ Pages show the project's data as it is: no number, citation or verification stat
 - **Use:** "show these decks in an interactive comparison", "make a page for my Spider-Man deck", "something I can share", "add the bracket 4 version to the page".
 - **Don't use:** a question, a decklist, a chat summary. After a build, *offer* a page in one line; build it on a yes.
 - **Depends on** project files from research, brew and audit; it never creates or upgrades them. A deck without a current audit shows "not audited" or "audit out of date"; offer an audit, never fake one.
-- **Needs approval:** publishing (the Artifact tool makes a private link; say so), and a large page nobody asked for (a simple request gets a simple page).
+- **Needs approval:** publishing or sharing (the Artifact tool makes a private link; say so, and never include private notes or data the player didn't mean to share), adding a deck to someone else's showcase, and a large page nobody asked for. A report the player asked for is built without further questions ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)).
 
 ## Three modes (offer when a report would help; recommend one)
 | Mode | What it is | Good for |

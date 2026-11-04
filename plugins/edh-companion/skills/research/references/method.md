@@ -1,5 +1,25 @@
 # Research method
 
+## Depth and when to stop
+Three modes. The source ranges are starting guidelines, not quotas.
+
+| Mode | Typical sources per subject | Use for |
+|---|---|---|
+| **Quick** | card data, EDHREC, 1 to 2 community threads, a video only if it's central (about 3 to 6 sources) | a first look, a narrow question |
+| **Comprehensive** (default) | card data, EDHREC, 3 to 6 decklists, 2 to 3 creator deck techs, 3 to 5 community threads or articles | a commander, a theme, a build |
+| **Deep** | comprehensive, plus tournament data where power matters, more decklists across brackets, smaller creators, older discussions for context | comparisons, unusual strategies, contested questions |
+
+Plan the **important questions** first (what the deck does, what real lists play, what creators and players recommend and warn about, what's contested, what's missing for this player's goals). Then research until they're answered well enough, judged by:
+- **Coverage:** each kind of evidence the question needs is present: authoritative card data, what's played (EDHREC with sample sizes, real decklists), why (creator deck techs, prioritized when transcripts are available), how it plays at tables (community threads).
+- **Corroboration:** key claims have independent support (different creators, creator + data, data + lists).
+- **Disagreements:** important conflicts are found and explained, not smoothed over.
+- **Gaps:** what's still unknown is named.
+- **Saturation:** the last few sources mostly repeated what was already found.
+
+**Stop** when the important questions are adequately answered or further searching is clearly giving diminishing returns. **Keep going** when a key claim has only one source, a major source type is missing, a disagreement is unexplained, or the latest sources are still turning up new cards or angles. Don't stop early just to save time, and don't keep going just to hit a number. Stay within the approved tools, the player's depth and preferences, and say if the time or token cost is getting large.
+
+Record in research.json `methodology`: sources actually reviewed (including ones not cited), coverage per type, why research stopped (`stopped_because`, e.g. "key questions answered; last 4 threads repeated earlier points"), and the limitations. Give an overall confidence in the reply.
+
 ## Evidence rules
 - **Opinion claims** (must-play, trap, best line) need two independent sources (different creators, or creator + data). One source: say "one source suggests" and set confidence low.
 - **Statistics** always carry the sample ("in 312 of 1,040 decks on EDHREC"). Under ~50 decks: low confidence.

@@ -59,8 +59,16 @@
           "enum": [
             "quick",
             "standard",
+            "comprehensive",
             "deep"
           ]
+        },
+        "questions": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "The important questions this research set out to answer."
         }
       }
     },
@@ -116,6 +124,46 @@
         "recency_cutoff": {
           "$ref": "common.schema.json#/$defs/date",
           "description": "Date of the latest bans / Game Changers update; power and legality evidence older than this is flagged."
+        },
+        "sources_reviewed": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Sources actually opened, including ones not cited."
+        },
+        "stopped_because": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Why research stopped: questions answered, saturation, a limit, or a tool failure."
+        },
+        "workers": {
+          "type": "array",
+          "description": "Parallel research workers and how each finished.",
+          "items": {
+            "type": "object",
+            "required": [
+              "role",
+              "status"
+            ],
+            "properties": {
+              "role": {
+                "type": "string"
+              },
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              "status": {
+                "type": "string",
+                "description": "complete, or partial: <what's missing>, or failed: <why>"
+              }
+            }
+          }
         }
       }
     },

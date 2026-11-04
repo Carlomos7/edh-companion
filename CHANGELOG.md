@@ -2,6 +2,12 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.8.0
+- **Approval gates, not prompts everywhere:** one shared "When to ask" rule set in the project contract. Ask before changing an accepted deck the player didn't ask for in so many words, relaxing hard rules, moving or deleting files, publishing or sharing, real-world actions, and unexpectedly expensive work (with purpose, cost and a cheaper alternative). Don't re-ask for what the request or saved preferences already cover (an explicit swap is the approval; comprehensive research includes its Scryfall searches). Announce big work and give progress updates without stopping. Research preferences, these gates and Claude Code's own permissions are kept apart. brew now also manages saved projects; deleting always asks first, with archiving offered.
+- **Adaptive research depth:** Quick, Comprehensive and Deep with source ranges as guidelines, not quotas; research continues until the important questions are covered and corroborated, disagreements explained and gaps named, or new sources stop adding anything, and research.json records sources reviewed and why it stopped.
+- **Research reliability (from the Azula run):** card data looked up in batches once (`deck_check.py --cards-only` → `cards.json`) and reused; bounded retries honouring Retry-After for 429 and 5xx; MCP numbers sanity-checked (contradictory EDHREC counts aren't trusted); a failing endpoint is dropped after one retry for the session with an approved fallback; no guessed URLs; in parallel research one worker owns Scryfall, the others videos, lists and community, and research isn't complete until every worker finished and validated.
+- **Tests:** 83 unit tests (retry and batching regressions added); evals for an explicit change applied without re-asking and a delete that asks first.
+
 ## 7.7.0
 Research approval, asked once.
 - **Step 1, approve tools:** before the first substantial research, research lists the tools it found by name (read from the tool list, nothing external called yet) with what each would be used for and its speed, token and API-cost trade-offs, and offers Recommended (all relevant tools, video transcripts first), Customize, Fast research, or No external research (with its limits explained). Approved tools are then tested and shown as detected, verified, failed or unavailable.

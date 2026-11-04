@@ -14,7 +14,7 @@ Config file: `~/.config/edh-companion/config.yaml` (optional; see the setup skil
 ## Starting a session
 - **Started inside a project?** If the current folder or one of its parents has a PROJECT.md (or sits directly under `<workspace>/projects/`), that's the project: read it and carry on, no questions.
 - **Creating and resuming is conversational.** "Start a Spider-Man project" creates `<workspace>/projects/<slug>/` (writing the first file creates the folder); "let's get back to my Doom deck" finds it by name. Players never need to make or open folders themselves.
-- Otherwise, when a request is about a deck, commander or report and no project is named, check what exists first: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" projects` (or list `<workspace>/projects/` and read each STATE.md first line). If something matches, offer to resume it in one line ("You have a Spider-Gwen project from Nov 4, last step: upgrade pass. Continue that?"). Unrelated projects stay separate unless the player asks to combine them.
+- Otherwise, when a request is about a deck, commander or report and no project is named, check what exists first: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" projects` (without a shell: list the folders in `<workspace>/projects/` directly, using the workspace order above, and read each STATE.md first line; don't search by guessed names). If something matches, offer to resume it in one line ("You have a Spider-Gwen project from Nov 4, last step: upgrade pass. Continue that?"). Unrelated projects stay separate unless the player asks to combine them.
 
 ## Showcases (several projects in one report)
 ```text
@@ -138,8 +138,29 @@ A card's **game identity** (name, `oracle_id`) decides rules, legality and color
 ## Recommendations, next steps, questions
 research.json, brew.json and audit.json may carry `recommendations`, `recommended_next_steps` and `follow_up_questions` (empty when there's nothing worth saying). STATE.md lists the current next steps and open questions for the player.
 
-## Approval
-Changing the accepted deck, relaxing any goal (theme, art, budget, bracket, ownership, hard lines), or starting big work nobody asked for (deep research, several builds, a page) needs the player's yes. Research and audits that serve the current request don't; they never change the deck.
+## When to ask (and when not to)
+Three different things; don't mix them up:
+1. **Research preferences**: which research tools are approved, how often to check in, how deep to go. Asked once, saved, reused (research's sources.md, "Research approval").
+2. **Consequential actions**: the gates below, asked in the moment.
+3. **Claude Code's tool permissions**: Claude Code's own prompts; separate, and never bypassed or worked around.
+
+**Ask first** (one short, conversational question with a recommended answer):
+- Changing the accepted deck (adding, cutting, swapping, changing printings), unless the player just asked for that exact change.
+- Relaxing or reinterpreting a hard rule (theme, art, budget limit, bracket, hard lines, ownership).
+- Moving, merging, renaming or deleting the player's files or projects.
+- Publishing or sharing anything outside their machine (an Artifact link, a post), or putting private project data in it.
+- Anything with real-world consequences (an account change on a deck site, a purchase-like action).
+- **Unexpectedly expensive work**: a very large download, substantial research beyond what's approved (much deeper than their default, many long videos), or a costly API operation. Say what it's for, what it gains, roughly how long and how many tokens or what cost, and a cheaper recommended alternative.
+
+**Don't ask** when the request or saved preferences already cover it:
+- What the player explicitly asked for ("swap Sol Ring for Mind Stone", "make a page", "audit it") is the approval: do it (still keeping the old version).
+- Approved research at the saved depth, including all the Scryfall searches that depth needs (exhaustive printing and theme searches count as part of comprehensive research).
+- Ordinary lookups, audits, routine research, validation, and reports the player asked for.
+- Using an approved equivalent tool when one fails (e.g. a second approved search tool). Ask before an unapproved or excluded one.
+
+**Show progress without stopping:** announce substantial work in a line or two before starting (what, which tools, roughly how long), give short progress updates at natural milestones ("3 of 5 commanders researched"), and finish with what was done. Don't pause for confirmation in the middle unless a gate above is hit.
+
+**Never**, approved or not: overwrite an accepted decklist version (add a new one), erase research or decisions, or publish private project data silently.
 
 ## Missing values
 Unknown is `null` or a listed gap, never a guess. A check that couldn't run is `unverified` with the reason.

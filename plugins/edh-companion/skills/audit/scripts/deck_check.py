@@ -35,21 +35,30 @@ FINISH = {"F": "foil", "E": "etched"}
 SECTION = re.compile(r"^\s*(commanders?|deck|main(board)?|sideboard|maybeboard|companion|considering)\s*:?\s*$", re.I)
 
 
-def http(url, body=None, tries=3):
+MAX_WAIT = 60  # seconds; the longest single backoff, whatever a server asks for
+
+
+def http(url, body=None, tries=3, sleep=time.sleep):
+    """GET (or POST JSON) with bounded retries: 429 waits for Retry-After (Scryfall locks out for 30 s), 5xx and network
+    errors back off 2 s, 4 s...; never more than `tries` attempts and MAX_WAIT per wait; other 4xx fail at once."""
     data = json.dumps(body).encode() if body is not None else None
     hdr = dict(UA, **({"Content-Type": "application/json"} if data else {}))
+    last = None
     for i in range(tries):
         try:
             with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=hdr), timeout=60, context=CTX) as r:
                 return json.load(r)
         except urllib.error.HTTPError as e:
-            if e.code == 429 or e.code >= 500:
-                time.sleep(2 * (i + 1) + (30 if e.code == 429 else 0))
-                continue
-            raise
-        except urllib.error.URLError:
-            time.sleep(2 * (i + 1))
-    raise RuntimeError(f"{url} unreachable after {tries} tries")
+            if e.code != 429 and e.code < 500:
+                raise
+            last = f"HTTP {e.code}"
+            ra = (e.headers or {}).get("Retry-After") if hasattr(e, "headers") else None
+            wait = int(ra) if ra and str(ra).isdigit() else (30 if e.code == 429 else 2 * (i + 1))
+        except urllib.error.URLError as e:
+            last, wait = f"network: {e.reason}", 2 * (i + 1)
+        if i < tries - 1:
+            sleep(min(wait, MAX_WAIT))
+    raise RuntimeError(f"{url} unreachable after {tries} tries ({last})")
 
 
 def parse_text(text):
@@ -247,6 +256,7 @@ def main():
     ap.add_argument("--per-card-max", type=float, help="most a single listed printing may cost (USD)")
     ap.add_argument("--cheapest", action="store_true", help="also look up each card's cheapest paper printing (slower)")
     ap.add_argument("--hard-budget", action="store_true", help="budgets are hard limits (over = fail); by default they're flexible targets (over = warning with the amount)")
+    ap.add_argument("--cards-only", action="store_true", help="just look the cards up (batched, 75 per request) and write their data; no deck checks. For research: write once to <project>/cards.json and reuse it")
     ap.add_argument("--json", metavar="OUT", help="write the full result (per-card data included) to this file; '-' for stdout")
     a = ap.parse_args()
 
@@ -309,6 +319,10 @@ def main():
             "image": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("normal"),
             "art_crop": (c.get("image_uris") or (c.get("card_faces") or [{}])[0].get("image_uris") or {}).get("art_crop"),
         })
+
+    if a.cards_only:
+        out["checks"] = [c for c in out["checks"] if c["id"] in ("chk-cards-1", "chk-printing-2")]
+        return finish(out, a)
 
     total = sum(e["qty"] for e in entries)
     check("chk-count-1", "count", "Exactly 100 cards including commanders", "pass" if total == 100 else "fail", f"{total} cards")

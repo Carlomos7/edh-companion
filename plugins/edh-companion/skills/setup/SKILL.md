@@ -46,7 +46,7 @@ research:
   approved: {card_data: MTG MCP (j4th), transcripts: YouTube Transcript, semantic_search: Exa, web_search: Parallel Search}
   excluded: []
   approval: on_change       # every_time | on_change | automatic
-  depth: comprehensive      # comprehensive | quick | custom | skip
+  depth: comprehensive      # quick | comprehensive | deep | custom | skip
   prefer: [EDHREC, Reddit]
 ```
 Step 1's check never calls an unapproved tool; once tools are approved, their test results go in `status` and `checked`. Format and meaning: research's sources.md, "Research approval".

@@ -12,7 +12,7 @@ An audit is worth something only if it can say "fail" and "couldn't check". Each
 - **Don't use:** one direct lookup ("does this card have Marvel art?" → open the printing and answer; offer a full audit only if they want the deck checked), brainstorming, anything that edits the deck.
 - **Independence:** deterministic checks come from `scripts/deck_check.py`. Judgment and source checks on work **produced in this conversation** run in the `auditor` agent, which starts fresh with only the files. A deck the player brought can be audited inline. Record which in `auditor`. Claude re-reading its own reasoning is not verification.
 - **Calls research** only when a completeness gap is material and the player wants it filled; otherwise the gap is reported.
-- **Needs approval:** nothing; it never edits the deck, research, goals or decisions.
+- **Needs approval:** nothing; it never edits the deck, research, goals or decisions. Just run it when asked ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)).
 
 ## Inputs
 The subject: a pasted list, a decklist file, a brew.json, research.json, or a set of recommendations. Optionally the project's PROJECT.md (bracket, theme, budget, hard lines) and DECISIONS.md (approved exceptions). Project files: [schemas/README.md](../../schemas/README.md).

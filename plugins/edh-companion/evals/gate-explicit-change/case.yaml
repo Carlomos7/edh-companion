@@ -1,0 +1,10 @@
+schema_version: "1.0"
+name: gate-explicit-change
+description: An explicit change (file_exists only sees files the run wrote, so the kept v3 is judged from the reply) is the approval; it's applied as a new version without asking again, and the old version is kept.
+tags: [gates, persistence]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Replace Sol Ring with Mind Stone in my Spider-Gwen deck.", max_turns: 30, timeout_seconds: 1200}
+runs: 1
+graders:
+  - {type: file_exists, name: new-version-written, path: EDHCompanion/projects/spider-gwen/decklists/main-v4.txt}
+  - {type: llm, name: no-reask, criteria: "PASS if the reply says the swap was made (a new deck version with Mind Stone instead of Sol Ring) without first asking the player to confirm the same swap. Mentioning a consequence (for example that the deck is now unaudited) is fine. It must also keep the previous version (v3) rather than overwrite it. FAIL if it only proposes the change, asks 'should I?' before doing it, or overwrites v3."}

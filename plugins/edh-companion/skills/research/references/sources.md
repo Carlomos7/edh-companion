@@ -2,9 +2,43 @@
 
 Find tools by capability. Names differ between installs (a claude.ai connector prefixes `mcp__claude_ai_…`, a local server doesn't), so read the tool list and pick by what a tool does. Confirm with one cheap call before depending on it. When a capability is missing or failing, use the fallback and record it.
 
-## First research: capabilities and depth
-Check each capability with one cheap call and judge the answer, not just that something came back (an empty, generic or wrong result is a failure):
+## Research approval (first use, then remembered)
+Three separate choices, each asked once and saved in the config file (`~/.config/edh-companion/config.yaml`, `research:` section; a project's PROJECT.md "Research preferences" overrides it for that project):
+1. **Which tools are approved** (step 1).
+2. **How often to ask** before research (step 2).
+3. **How deep** to go (Comprehensive / Quick / Custom / Skip).
+Claude Code's own tool permissions are separate: even approved tools may still show Claude Code's permission prompt, and nothing here can bypass it. To stop those prompts, the player allows the tools in Claude Code (`/permissions`). Trivial lookups (one card, one rule) never trigger this onboarding.
 
+### Step 1: approve tools (before the first substantial research)
+Detect without calling anything external: read the available tool list and group tools by capability. Show one table with the real tool or provider names:
+
+| Capability | Tool found | Used for | Speed / cost | Notes |
+|---|---|---|---|---|
+| Card data, combos | e.g. MTG MCP (j4th, claude.ai connector) | facts, legality, printings, prices, combos | fast, light | primary source of truth |
+| EDHREC stats | same MTG MCP | what decks play, with sample sizes | fast | some commanders return no data |
+| Video transcripts | e.g. YouTube Transcript | creator deck techs, quoted with mm:ss | slower, uses more tokens (long transcripts) | YouTube sometimes blocks; one video at a time |
+| Semantic discovery | e.g. Exa | finding deck techs, primers, articles | fast | may count against the provider's API quota/key |
+| Web search + fetch | e.g. Parallel Search, or Claude Code's built-in web search | Reddit, forums, reading pages | medium | Reddit is reached through search |
+| Scripts | uv | deck checks, exports, pages | fast, local | |
+
+Add a status column once known: **detected** (listed, not tried) · **verified** (approved and a cheap test call gave a sensible answer) · **failed** (approved but the test or a real call failed; say the error) · **unavailable** (not installed). Then offer:
+- **Recommended:** approve every relevant tool found, video transcripts first when available.
+- **Customize:** pick tools or source categories (e.g. no videos, no Reddit, only MTG data).
+- **Fast research:** MTG data and one search tool only; skip long transcripts and deep crawls.
+- **No external research:** only card data the player supplies or what local scripts can check; say plainly that recommendations then rest on card data and Claude's judgment, without community or creator evidence, and that legality and prices can't be verified without a card-data source.
+Use nothing external before this answer. After it, test each approved tool with one cheap call (the checks in the table below) and report detected → verified / failed. Save the approved tools (by capability, with the tool name) and anything excluded.
+
+### Step 2: how future research should work (ask once, right after step 1)
+- **Ask every time:** show the tools and a short plan before each substantial research task.
+- **Ask when something changes (Recommended):** reuse approved tools without asking; confirm before using a new provider, a big change in plan (much deeper than usual, many videos), or a fallback to an unapproved tool.
+- **Automatic:** use approved tools without a plan check; still never use an excluded or new provider without asking.
+
+### Every substantial research task
+- Announce it in one or two lines before starting: what you'll research, which tools you'll use (by name), how long it should take. With "ask every time", wait for a yes.
+- Use only approved tools. If one fails, report it as failed, use an approved fallback, or ask before using an unapproved one (never silently).
+- If a new research tool appears or an approved one disappears, mention it once and ask whether to approve it (any mode).
+
+### Checks for "verified"
 | Capability | Cheap check | Working means |
 |---|---|---|
 | Card data | look up Sol Ring | text and Commander legality come back |
@@ -16,22 +50,30 @@ Check each capability with one cheap call and judge the answer, not just that so
 | Video transcripts | transcript of one short MTG video | timestamped text |
 | Scripts (uv) | `companion.py where` | paths print |
 
-Show the result as one short table (working / not working / missing, and what each missing one costs), then offer:
-- **Comprehensive (Recommended)**: every working source: data, decklists, creator videos with timestamps, Reddit and forums, articles; about 5 to 15 minutes per commander. Best recommendations, best citations.
-- **Quick**: card data, EDHREC, one or two community threads, a video only if one is clearly central; about 1 to 3 minutes. Good for a first look.
-- **Custom**: the player picks sources to include or exclude (and can name preferred tools).
-- **Skip**: no web research; answers from verified card data and rules only, clearly labelled as unresearched.
-Save to the config file (`~/.config/edh-companion/config.yaml`), keeping everything else in it:
+### Depth (independent of approval)
+- **Comprehensive (Recommended):** every approved source: data, decklists, creator videos with timestamps, Reddit and forums, articles; about 5 to 15 minutes per commander.
+- **Quick:** card data, EDHREC, one or two community threads, a video only if central; about 1 to 3 minutes.
+- **Custom:** chosen source categories.
+- **Skip:** no web research; card data and rules only, labelled as unresearched.
+
+### Saved form
 ```yaml
 research:
-  depth: comprehensive        # comprehensive | quick | custom | skip
-  prefer: []                  # sources to favour, e.g. [EDHREC, Reddit, The Command Zone]
-  exclude: []                 # sources never to use
-  tools: {}                   # optional, e.g. {semantic_search: Exa, web_search: Parallel}
-  capabilities_seen: [card_data, edhrec, combos, web_search, semantic_search, transcripts, scripts]
+  approved:                     # capability: tool as named in Claude Code
+    card_data: MTG MCP (j4th)
+    edhrec: MTG MCP (j4th)
+    combos: MTG MCP (j4th)
+    transcripts: YouTube Transcript
+    semantic_search: Exa
+    web_search: Parallel Search
+  excluded: [MTGGoldfish]       # tools or sources never to use
+  approval: on_change           # every_time | on_change | automatic
+  depth: comprehensive          # comprehensive | quick | custom | skip
+  prefer: [EDHREC, Reddit]
+  status: {card_data: verified, transcripts: failed}
   checked: 2026-11-04
 ```
-Ask again only when a capability appears, disappears or starts failing compared with `capabilities_seen`, or when the player asks.
+`companion.py research` prints the saved choices (and a project's overrides) so they can be reviewed; the player can change any of them by saying so or through setup.
 
 ## Which tool for which job
 Use the strongest tool for each job, not every tool for every job:

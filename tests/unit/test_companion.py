@@ -44,6 +44,28 @@ class Companion(unittest.TestCase):
         code, out = sh("where", cwd=self.tmp)
         self.assertNotIn("Claude Code started inside it", out)
 
+    def test_research_prefs_and_project_override(self):
+        home = os.path.join(self.tmp, "home")
+        cfg = os.path.join(home, ".config", "edh-companion")
+        os.makedirs(cfg)
+        env = dict(os.environ, HOME=home, USERPROFILE=home)
+        run = lambda *a: subprocess.run([sys.executable, COMPANION, *a], capture_output=True, text=True, encoding="utf-8", env=env).stdout
+        out = run("research", self.p)
+        self.assertIn("not set up yet", out)
+        with open(os.path.join(cfg, "config.yaml"), "w", encoding="utf-8") as h:
+            h.write("research:\n  approved: {card_data: MTG MCP, transcripts: YouTube Transcript}\n  excluded: [MTGGoldfish]\n"
+                    "  approval: every_time\n  depth: quick\n  status: {transcripts: failed}\n")
+        with open(os.path.join(self.p, "PROJECT.md"), "a", encoding="utf-8") as h:
+            h.write("\n## Research preferences\nNo videos for this deck.\n")
+        out = run("research", self.p)
+        self.assertIn("card_data=MTG MCP", out)
+        self.assertIn("transcripts=YouTube Transcript [failed]", out)
+        self.assertIn("excluded:       MTGGoldfish", out)
+        self.assertIn("ask before research: every_time", out)
+        self.assertIn("depth:          quick", out)
+        self.assertIn("No videos for this deck.", out)
+        self.assertIn("permission prompts are separate", out)
+
     def test_projects_lists_for_resume(self):
         open(os.path.join(self.tmp, "EDHCompanion", "workspace.yaml"), "w").close()
         code, out = sh("projects", cwd=self.tmp)

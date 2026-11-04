@@ -7,6 +7,7 @@
 
   companion.py where                 print the config file and workspace paths (and whether they exist)
   companion.py projects             list saved projects and showcases (for resuming in a new session)
+  companion.py research [project]   show saved research approval, ask-mode, depth and exclusions (+ project override)
   companion.py validate <project>    check research.json / brew*.json / audit*.json against the schemas,
                                      resolve citation IDs, and report stale or contradictory audits
   companion.py goals-hash <project>  fingerprint of PROJECT.md's rules; audits record it so a rule change makes them stale
@@ -57,6 +58,24 @@ def current_project(start="."):
         if parent == d:
             return None
         d = parent
+
+
+def section(path, heading):
+    """Text under a '## heading' in a Markdown file, or ''."""
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8") as h:
+        m = re.search(r"^## " + re.escape(heading) + r"\s*\n(.*?)(?=^## |\Z)", h.read(), re.M | re.S)
+    return m.group(1).strip() if m else ""
+
+
+def research_prefs(project=None):
+    """Saved research choices from the config, plus a project's 'Research preferences' section (which wins)."""
+    r = config().get("research") or {}
+    proj = section(os.path.join(project, "PROJECT.md"), "Research preferences") if project else ""
+    return {"approved": r.get("approved") or {}, "excluded": r.get("excluded") or [], "approval": r.get("approval"),
+            "depth": r.get("depth"), "prefer": r.get("prefer") or [], "status": r.get("status") or {}, "checked": r.get("checked"),
+            "project_override": proj, "onboarded": bool(r.get("approved") or r.get("depth") == "skip")}
 
 
 def first_line(path, heading=None):
@@ -182,7 +201,7 @@ def validate(d):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "projects", "validate", "goals-hash"):
+    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "projects", "research", "validate", "goals-hash"):
         sys.exit(__doc__)
     if sys.argv[1] == "where":
         ws, how = workspace()
@@ -195,6 +214,24 @@ def main():
         here = os.path.abspath("EDHCompanion")
         if os.path.isdir(here) and here != ws:
             print(f"note       {here} exists here but isn't the workspace (no workspace.yaml); it is not used")
+        return
+    if sys.argv[1] == "research":
+        proj = sys.argv[2] if len(sys.argv) > 2 else current_project()
+        p = research_prefs(proj)
+        if not p["onboarded"]:
+            print("research approval: not set up yet (asked once, on the first substantial research request; trivial lookups don't ask)")
+        else:
+            print(f"approved tools: " + (", ".join(f"{k}={v}" + (f" [{p['status'][k]}]" if k in p["status"] else "") for k, v in p["approved"].items()) or "none (no external research)"))
+            print(f"excluded:       {', '.join(p['excluded']) or 'none'}")
+            print(f"ask before research: {p['approval'] or 'on_change (default)'}")
+            print(f"depth:          {p['depth'] or 'comprehensive (default)'}")
+            if p["prefer"]:
+                print(f"prefer:         {', '.join(p['prefer'])}")
+            if p["checked"]:
+                print(f"last verified:  {p['checked']}")
+        if p["project_override"]:
+            print(f"project override ({os.path.basename(proj)}): {p['project_override']}")
+        print("Claude Code's own tool permission prompts are separate (see /permissions).")
         return
     if sys.argv[1] == "projects":
         import time

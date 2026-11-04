@@ -24,7 +24,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
 2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget, as a hard limit or a flexible target / drippy / no expense spared), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
 3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
-4. Research (optional): default depth (Comprehensive (Recommended) · Quick · Custom · Skip, with the times from research's sources.md), sources to prefer (e.g. EDHREC, Reddit, a favourite creator) or never use, and optionally which installed tool to use for a job when several can (e.g. Exa for discovery). Skip it and research asks once, on the first big research request.
+4. Research (optional): run research's two-step approval (tools approved, then how often to ask) and pick the default depth; or review and change saved choices (`companion.py research` shows them). Skip it and research asks once, on the first big research request.
 5. Workspace folder: `~/Documents/EDHCompanion` (Recommended, used from any folder Claude Code starts in) · another path · this folder (creates `EDHCompanion/workspace.yaml` here so it's used when Claude Code starts here). Existing projects are never moved; if they live elsewhere, say where and let the player move them. Say plainly where the choice is saved (`workspace:` in the config file) and that every future session uses it, wherever Claude Code is started; a marked local folder (`workspace.yaml`) is the only thing that overrides it.
 
 ## 3. Save
@@ -43,14 +43,13 @@ shopping:
   currency: USD
   stores: [TCGplayer]
 research:
+  approved: {card_data: MTG MCP (j4th), transcripts: YouTube Transcript, semantic_search: Exa, web_search: Parallel Search}
+  excluded: []
+  approval: on_change       # every_time | on_change | automatic
   depth: comprehensive      # comprehensive | quick | custom | skip
   prefer: [EDHREC, Reddit]
-  exclude: []
-  tools: {semantic_search: Exa}
-  capabilities_seen: [card_data, edhrec, combos, web_search, semantic_search, transcripts, scripts]
-  checked: 2026-11-04
 ```
-The capability check in step 1 also fills `capabilities_seen` and `checked`, so research won't ask again unless something changes.
+Step 1's check never calls an unapproved tool; once tools are approved, their test results go in `status` and `checked`. Format and meaning: research's sources.md, "Research approval".
 Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back). Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
 
 Project defaults from this file are suggestions for new projects only; a project's PROJECT.md always wins.

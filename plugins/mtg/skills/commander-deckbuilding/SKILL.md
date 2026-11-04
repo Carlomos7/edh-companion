@@ -68,6 +68,7 @@ Work in the current folder so nothing is lost and other commands (like `/mtg:com
 ## 4. Research pass, then the skeleton
 **Research before proposing anything; this is what makes the deck good.** No question needed; tell the player in one line ("Researching <commander>: EDHREC, real decklists, combos, videos and Reddit, a few minutes").
 - **Start it as soon as the commander is known**, in parallel with intake: dispatch the `vault-researcher` agent in the background with the brief "research pass for <commander>, bracket <N>, theme <theme or none>, deck folder <path>, follow mtg-research references/research-pass.md". No agents available? Run the pass yourself.
+- Pick tools by research-pass.md's "Best tool first, then fall back" table: installed add-ons first (best results), then built-in web search, never memory.
 - `mtg_research_plan` lists every source type, the minimum for each and ready-made queries: EDHREC (`mtg_edhrec`), real decklists (`mtg_decklists`, plus Moxfield through an add-on), combos, 3+ creator videos, 4+ Reddit threads or primers, 3+ articles, a live price check, and the current Wizards bracket page (plus cEDH results at bracket 4 and 5).
 - Every source goes into `research/claims.jsonl` with `mtg_research_log` (kind, url, date, locator, what it was used for). `mtg_research_report` shows coverage; say any shortfall in one line ("no Command Zone video on her yet").
 - Card facts still only come from `mtg_card`. A combo the community mentions is a bracket check: `mtg_deck_swap` now blocks swaps that complete one.

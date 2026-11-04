@@ -22,6 +22,25 @@ Channel weight: The Command Zone, EDHRECast, Commander's Quarters, Tolarian Comm
 
 Cross-check: when two MTG servers are installed (e.g. `mtg-mcp` and `mtg-commander`), use the second for decklists and EDHREC numbers as a check, and note disagreements.
 
+## Best tool first, then fall back
+For each source type, use the first option that's installed and answers; drop to the next only when it's missing, errors or comes back empty. Tool names are examples: judge installed tools by what they do. Log which one answered (`kind: tool` in the ledger), and say in one line when a type only got the last resort.
+
+| Type | 1. Best | 2. Next | 3. Last resort |
+|---|---|---|---|
+| Card data | `mtgdb` (`mtg_card`, `mtg_resolve_names`) | `mtg_data_sync`, then retry | an add-on's live Scryfall lookup, labelled "not in the local index" |
+| Stats | `mtg_edhrec` | an EDHREC add-on (`edhrec_commander_staples`, `get_edhrec_recommendations`) | web fetch of the commander's edhrec.com page |
+| Combos | `mtg_deck_check` / `mtg_deck_swap` (local Spellbook) | a Spellbook add-on (`spellbook_find_decklist_combos`, `get_edhrec_combos`) | `mtgdb.py combos --live` (Spellbook API) |
+| Bracket estimate | a Spellbook add-on (`spellbook_estimate_bracket`) | `mtg_deck_check` against references/brackets.md | (none: say it didn't run) |
+| Real decklists | `mtg_decklists` (Archidekt) **and** a Moxfield add-on (`moxfield_search_decks`, `search_moxfield_decks`, `search_archidekt_decks`) together | whichever of those is installed | web search `site:moxfield.com <commander>` / `site:archidekt.com <commander>`, then fetch the lists |
+| Videos | web search to find them, then a transcript tool (`get_transcript`) | web fetch of the video URL (returns the transcript when the transcript tool is blocked) | `get_video_info` or the page description: cite as "watch", don't quote |
+| Community (Reddit, primers) | a search MCP (e.g. `parallel-search` `web_search` + `web_fetch`), whole threads | built-in WebSearch + WebFetch | (none: shortfall) |
+| Articles | a search MCP | built-in WebSearch + WebFetch | (none: shortfall) |
+| Prices | `mtg_price_plan` (Scryfall daily, plus MTGJSON vendors after `prices-sync`) | a live price add-on (`goldfish_deck_price`, `price_comparison`, `get_card_price`) to cross-check | web fetch of the TCGplayer product page |
+| Official | web fetch of the magic.wizards.com announcement | web search for it | the local Game Changers flag, with its date |
+| cEDH (B4, B5) | EDHTop16 GraphQL (`https://edhtop16.com/api/graphql`) | a tournament add-on (`spicerack_*`) or TopDeck.gg (with `TOPDECK_API_KEY`) | cedh-db or web search |
+
+Run independent rows in parallel (videos one at a time). Never fill a row from memory.
+
 ## Rules
 - Every card name goes through `mtg_resolve_names`. Card facts come from `mtgdb`, never from a video or thread.
 - A community "combo alert" is a hard check: run it against the bracket before any swap that completes it.

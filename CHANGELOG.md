@@ -2,6 +2,9 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.1
+- **Best tool first, then fall back:** the research pass now has an explicit order per source type (card data, stats, combos, bracket estimate, decklists, videos, community, articles, prices, official, cEDH): installed add-ons first for the best results, then the built-in tools, then web search or fetch, never memory. Which tool answered is logged, and a row that only got the last resort is said out loud. `mtg_research_plan` returns the order too.
+
 ## 5.5.0
 - **Research pass built into the MCP server:** `mtg_research_plan` (every source type, its minimum, the tool and ready-made queries), `mtg_edhrec` (EDHREC numbers built in, no add-on needed; with a deck, what it lacks), `mtg_decklists` (recent public Archidekt lists by bracket; cards most lists play that you don't, and your cards nobody plays), and `mtg_research_log` / `mtg_research_report` (a cited source ledger with coverage and shortfalls).
 - **Every new deck runs it**, usually as the background research agent while you answer the intake: EDHREC, 6+ real decklists, combos, 3+ creator videos, 4+ Reddit threads, 3+ articles, live prices, the Wizards bracket page, and cEDH results at bracket 4 and 5.

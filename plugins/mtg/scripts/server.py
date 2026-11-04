@@ -206,6 +206,8 @@ def mtg_research_plan(commander: str, bracket: int) -> dict:
                       "A combo the community mentions is a bracket check: test it with mtg_deck_swap",
                       "Show takes that disagree (with each other or the player's theme); don't act on them unless asked",
                       "Log each source with its kind, url, date, locator (mm:ss or section) and what you used it for"],
+            "tool_order": "Use installed add-ons first for each step (best results), then built-in web search/fetch; never memory. "
+                          "Full table: mtg-research references/research-pass.md, 'Best tool first, then fall back'.",
             "log_with": "mtg_research_log(folder='<deck folder>/research', entries=[...])"}
 
 

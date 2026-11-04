@@ -25,7 +25,7 @@ Rules:
 - **Card facts and deck checks always come from `mtgdb`** (legality, color identity, prices, printings, Game Changers, validation), even when an add-on has a similar tool (`scryfall_*`, `deck_validate`): add-ons are live, rate limited and can disagree with the index.
 - **One exception:** a card that isn't in the index yet (spoiled after the last sync). Offer `mtg_data_sync` first; if it's still missing, an add-on's Scryfall lookup may be used, labelled "live Scryfall, not in the local index".
 - **Checking what's there:** call one cheap tool per capability (any read-only lookup) rather than trusting names. Report which capabilities answered.
-- **Present add-on:** use it by default for what it's good at (no need to ask the player first).
+- **Present add-on:** use it by default for what it's good at (no need to ask the player first). The per-source order (best tool, next, last resort) is in research-pass.md.
 - **Missing add-on:** say which check didn't run and carry on with the rest. Never fill the gap from memory.
 - **No link reader for a site:** ask the player to paste the site's export instead.
 

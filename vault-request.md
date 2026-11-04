@@ -32,6 +32,7 @@ Never include: (cards or effects you refuse to play)
 
 WHAT GOES ON THE PAGE
 Extras: (any of: alternative commanders | collection planner | split a pile between players, e.g. "split this Secret Lair between Sam and me; Sam wants every Gandalf card")
+Card viewer: simple (or "3D": spin the cards freely with three.js; a heavier page, falls back to simple on devices without 3D)
 Card labels: neutral (Play, Good, Situational, Binder, Bracket 4+; never "weak")
 Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 lines")
 ```
@@ -41,7 +42,7 @@ Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 
 - per deck: a short summary (the plan, how it wins, key cards, strengths, weaknesses, how to play it, a tournament note at bracket 5), the mana curve, card types, colors needed vs. color sources, role counts, and the decklist with prices and a copy-for-Moxfield button
 - one shared "cards to consider" list per tab: each card shows which decks it fits and what it would replace
 - card rankings for the theme or colors, with how many decks each number comes from
-- a card viewer: click to enlarge, arrow keys or swipe to browse, flip double-faced cards
+- a card viewer: click to enlarge, arrow keys or swipe to browse, flip double-faced cards (or the 3D viewer, if you chose it)
 - a sources page with data dates, what was checked, and anything left unverified
 
 The extras arrive as files next to the page when the page can't show them yet.

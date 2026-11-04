@@ -115,6 +115,7 @@ Extras: alternative commanders
 | Hard lines | what you never want: infinite combos, extra turns, land destruction, stax | what the bracket allows |
 | Collection | paste a list, or a CSV path from Moxfield, Archidekt or ManaBox | none |
 | Extras | alternative commanders, collection planner, splitting a pile between players | none |
+| Card viewer | simple, or 3D (spin cards freely; heavier page) | simple |
 
 Claude asks about anything unclear, shows the plan and a cost estimate, then builds. Expect 30 minutes or more; if you stop, run the same thing again in the same folder and it resumes. The page is published privately to your claude.ai account when you're signed in, otherwise saved as files you open in a browser. Every option (theme strictness, must-include cards, card labels, look) is in the [full request template](vault-request.md).
 

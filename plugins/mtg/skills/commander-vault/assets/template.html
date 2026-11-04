@@ -85,6 +85,7 @@ dialog::backdrop{background:#000c}
 .sheen{position:absolute;inset:0;pointer-events:none;mix-blend-mode:screen;opacity:.0;transition:opacity .2s;
  background:radial-gradient(circle at var(--mx,50%) var(--my,30%),#fff5 0%,#fff0 40%),linear-gradient(115deg,#0000 30%,#7af3 45%,#f7a3 55%,#0000 70%)}
 .stage:hover .sheen{opacity:1}
+.stage.v3 .card3d{display:none}.stage canvas{display:block;margin:0 auto;width:min(420px,86vw);aspect-ratio:488/680;cursor:grab}
 .side{background:#1a1a19ee;border-radius:12px;padding:16px;max-height:80dvh;overflow:auto}
 .side h3{margin-top:0}.side table td,.side table th{color:#f0efec;border-color:#34332f}
 .vbtns{display:flex;gap:8px;justify-content:center;margin-top:12px}
@@ -261,11 +262,12 @@ function cardOf(x){return x.card?{...x,name:x.card}:x}
 function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=0;V.ry=0;apply();
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
+ if(V3.on)V3.show(c.img,c.back||D.default_back);
  const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),el("p",{},pill(c.theme)," ",c.pct!=null?el("span",{class:"num"},`${c.pct}% inclusion${c.n?` (n=${c.n.toLocaleString()})`:""}`):""));
  if(c.why)side.append(el("p",{},c.why));if(c.reason)side.append(el("p",{},el("b",{},"Off-theme because: "),c.reason));
  const lad=(D.printings||{})[c.name];if(lad&&lad.length)side.append(el("h3",{},"Printings, cheapest to rarest"),el("table",{},el("tbody",{},...lad.map(p=>el("tr",{style:p.theme?`box-shadow:inset 3px 0 0 ${themeColor(p.theme)}`:""},el("td",{},`${(p.set||"").toUpperCase()} #${p.cn||""}`),el("td",{},p.theme||""),el("td",{class:"n num"},money(p.price)),el("td",{class:"n num muted"},p.foil!=null?"foil "+money(p.foil):""))))),D.data_dates&&D.data_dates.prices?el("p",{class:"muted"},"Prices as of "+D.data_dates.prices):"");
  side.append(el("p",{class:"muted"},`${V.i+1} / ${V.list.length} · ← → to browse, F to flip, drag to tilt`))}
-function apply(){$("#card3d").style.transform=`rotateX(${V.rx}deg) rotateY(${V.ry+(V.flipped?180:0)}deg)`}
+function apply(){if(V3.on){V3.kick();return}$("#card3d").style.transform=`rotateX(${V.rx}deg) rotateY(${V.ry+(V.flipped?180:0)}deg)`}
 function flip(){V.flipped=!V.flipped;apply()}
 function step(n){V.i=(V.i+n+V.list.length)%V.list.length;showCard()}
 function closeViewer(){$("#viewer").close()}
@@ -277,11 +279,56 @@ function initViewer(){const dlg=$("#viewer"),stage=$("#stage"),card=$("#card3d")
  const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;let drag=null,moved=false;
  stage.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,rx:V.rx,ry:V.ry};moved=false;card.classList.add("dragging");stage.setPointerCapture(e.pointerId)});
  stage.addEventListener("pointermove",e=>{const r=stage.getBoundingClientRect();stage.querySelectorAll(".sheen").forEach(s=>{s.style.setProperty("--mx",(e.clientX-r.left)/r.width*100+"%");s.style.setProperty("--my",(e.clientY-r.top)/r.height*100+"%")});
+  if(V3.on)V3.pointer((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
   if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(reduced)return;
+  if(V3.on){V.ry=drag.ry+dx/2;V.rx=Math.max(-60,Math.min(60,drag.rx-dy/3));apply();return}  // 3D: spin freely
   V.ry=Math.max(-35,Math.min(35,drag.ry+dx/4));V.rx=Math.max(-25,Math.min(25,drag.rx-dy/4));apply()});
  const end=e=>{if(!drag)return;const dx=e.clientX-drag.x;card.classList.remove("dragging");
-  if(!moved)flip();else if(Math.abs(dx)>120&&e.pointerType==="touch")step(dx<0?1:-1);else{V.rx=0;V.ry=0;apply()}drag=null};
+  if(!moved)flip();else if(V3.on){}  // 3D: the card stays where it was spun; arrows or buttons change cards
+  else if(Math.abs(dx)>120&&e.pointerType==="touch")step(dx<0?1:-1);else{V.rx=0;V.ry=0;apply()}drag=null};
  stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end)}
+
+/* ---------- optional 3D viewer (three.js), only when the page data asks for it ---------- */
+const THREE_URL="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js";
+const V3={on:false,want:null,img:{},tex:{},
+ async init(){
+  if(D.viewer!=="three")return;
+  try{
+   await new Promise((ok,no)=>{const s=document.createElement("script");s.src=THREE_URL;s.onload=ok;s.onerror=no;document.head.append(s)});
+   const T=window.THREE,cv=document.createElement("canvas");
+   this.r=new T.WebGLRenderer({canvas:cv,alpha:true,antialias:true});  // throws without WebGL: we keep the simple viewer
+   this.r.outputEncoding=T.sRGBEncoding;this.r.setPixelRatio(Math.min(devicePixelRatio,2));
+   this.s=new T.Scene();this.cam=new T.PerspectiveCamera(32,488/680,.1,100);this.cam.position.z=7;
+   this.s.add(new T.AmbientLight(0xffffff,.8));this.light=new T.PointLight(0xffffff,.7);this.light.position.set(0,0,4);this.s.add(this.light);
+   const geo=new T.PlaneGeometry(2.44,3.4),mat=()=>new T.MeshStandardMaterial({transparent:true,roughness:.45,metalness:.15});
+   this.front=new T.Mesh(geo,mat());this.back=new T.Mesh(geo,mat());this.back.rotation.y=Math.PI;
+   this.g=new T.Group();this.g.add(this.front,this.back);this.s.add(this.g);
+   $("#stage").prepend(cv);$("#stage").classList.add("v3");this.cv=cv;this.on=true;
+   this.reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;
+  }catch(e){console.warn("3D viewer unavailable, using the simple viewer");this.on=false}},
+ loadImg(src){return this.img[src]||(this.img[src]=new Promise((ok,no)=>{const i=new Image();i.onload=()=>ok(i);i.onerror=no;i.src=src}))},
+ async texture(key){
+  if(this.tex[key])return this.tex[key];const a=ATL&&ATL.cards[key];if(!a)return null;
+  const[i,x,y]=a,[w,h]=ATL.cell,im=await this.loadImg(ATL.base+ATL.atlases[i]);
+  const c=document.createElement("canvas");c.width=w;c.height=h;const g=c.getContext("2d"),rad=w*.0475;
+  g.beginPath();g.moveTo(rad,0);g.arcTo(w,0,w,h,rad);g.arcTo(w,h,0,h,rad);g.arcTo(0,h,0,0,rad);g.arcTo(0,0,w,0,rad);g.closePath();g.clip();
+  g.drawImage(im,x,y,w,h,0,0,w,h);
+  try{g.getImageData(0,0,1,1)}catch(e){this.off("3D viewer needs the page served over http(s) (opened from disk, the browser blocks card textures); using the simple viewer");return null}
+  const t=new THREE.CanvasTexture(c);t.encoding=THREE.sRGBEncoding;return this.tex[key]=t},
+ off(why){if(!this.on)return;this.on=false;this.cv.remove();$("#stage").classList.remove("v3");console.warn(why);apply()},
+ async show(fk,bk){
+  this.want=fk;let f,b;try{[f,b]=await Promise.all([this.texture(fk),this.texture(bk)])}catch(e){this.off("3D viewer couldn't load card images; using the simple viewer");return}
+  if(this.want!==fk||!this.on)return;
+  this.front.material.map=f;this.back.material.map=b;this.front.material.needsUpdate=this.back.material.needsUpdate=true;
+  this.g.rotation.set(V.rx*Math.PI/180,(V.ry+(V.flipped?180:0))*Math.PI/180,0);  // a new card appears face-on, no spin
+  this.size();this.r.render(this.s,this.cam);this.kick()},
+ size(){const w=this.cv.clientWidth||420;this.r.setSize(w,w*680/488,false)},
+ pointer(px,py){this.light.position.set((px-.5)*6,(.5-py)*6,4);this.kick()},
+ kick(){if(!this.loop){this.loop=true;requestAnimationFrame(()=>this.frame())}},
+ frame(){const ty=(V.ry+(V.flipped?180:0))*Math.PI/180,tx=V.rx*Math.PI/180,k=this.reduced?1:.18;
+  this.g.rotation.y+=(ty-this.g.rotation.y)*k;this.g.rotation.x+=(tx-this.g.rotation.x)*k;this.r.render(this.s,this.cam);
+  const busy=Math.abs(ty-this.g.rotation.y)+Math.abs(tx-this.g.rotation.x)>.001;
+  if(busy&&$("#viewer").open)requestAnimationFrame(()=>this.frame());else this.loop=false}};
 
 /* ---------- boot ---------- */
 async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-data.json")).json()}catch(e){$("#main").textContent="Could not load site-data.json.";return}}
@@ -291,7 +338,7 @@ async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-d
  const t=store.get("theme",null);if(t)document.documentElement.dataset.theme=t;
  $("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;store.set("theme",n);go(store.get("tab"),false)};
  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>go(store.get("tab"),false));
- buildTabs();initViewer();go(location.hash.slice(1)||store.get("tab",""),true)}
+ buildTabs();initViewer();V3.init();go(location.hash.slice(1)||store.get("tab",""),true)}
 boot();
 </script>
 </body>

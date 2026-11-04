@@ -86,6 +86,7 @@ If a tool is down, say which check didn't run. Never present an unchecked list a
 
 **Then offer the page, when the deck is ready.** Ready means: `mtg_deck_check` passes with no errors at the target bracket, the commander is on curve per step 6, and every check ran. Ask once, with AskUserQuestion:
 - "See it as a commander vault page (Recommended, about 2 minutes)": render this one deck with the vault page scripts, following the `commander-vault` skill's references/pages.md (scripts in `${CLAUDE_PLUGIN_ROOT}/skills/commander-vault/scripts`): `site_data.py init` with the commander's name as title and this bracket, `add-deck` with `notes.json` written from the plan, key cards, strengths, weaknesses and Rule 0 summary, then `build_site.py`, then publish (or hand over the HTML folder).
+- "Same, with the 3D card viewer": as above with `init --viewer 3d` (spin cards freely; a heavier page that falls back to the normal viewer on devices without 3D support)
 - "Build a full vault around it": more brackets or more commanders; tell them to type `/mtg:commander-vault` in this folder and it will start from this deck (30 minutes or more).
 - "Not now"
 

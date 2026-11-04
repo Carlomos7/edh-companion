@@ -5,7 +5,7 @@
 # ///
 """Assemble site-data.json from mtgdb output, so no number on the page is typed by hand.
 
-  site_data.py init site-data.json --title "..." [--subtitle ...] [--bracket 3] [--themes map.json]
+  site_data.py init site-data.json --title "..." [--subtitle ...] [--bracket 3] [--themes map.json] [--viewer simple|3d]
   site_data.py add-deck site-data.json --group "Atraxa decks" --slug atraxa --deck b3.txt --bracket 3
                [--notes notes.json] [--commanders 2] [--budget 300] [--reasons off-theme.json]
   site_data.py add-tier site-data.json --id atraxa --title "Atraxa staples" --cards edhrec.json [--staples staples.json]
@@ -96,7 +96,8 @@ def ladder(D, name, themes):
 def cmd_init(a):
     D = {"schema": 1, "title": a.title, "subtitle": a.subtitle or "", "generated": time.strftime("%Y-%m-%d"),
          "default_bracket": a.bracket, "theme": None, "tiers": [], "groups": [], "printings": {}, "images": {},
-         "sources": [], "accuracy": {"checks": [], "unverified": []}, "data_dates": {}, "fan": []}
+         "sources": [], "accuracy": {"checks": [], "unverified": []}, "data_dates": {}, "fan": [],
+         "viewer": "three" if a.viewer == "3d" else "simple"}
     info = mtgdb("info")
     D["data_dates"] = {"card_index": info.get("bulk_updated") or info.get("built"), "prices": info.get("bulk_updated"),
                        "game_changers": f"{info.get('game_changers')} cards ({info.get('gc_source')})"}
@@ -273,7 +274,10 @@ def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sp = ap.add_subparsers(dest="cmd", required=True)
     s = sp.add_parser("init"); s.add_argument("site"); s.add_argument("--title", required=True); s.add_argument("--subtitle")
-    s.add_argument("--bracket", type=int, default=3); s.add_argument("--themes"); s.set_defaults(f=cmd_init)
+    s.add_argument("--bracket", type=int, default=3); s.add_argument("--themes")
+    s.add_argument("--viewer", choices=["simple", "3d"], default="simple",
+                   help="card viewer: simple (CSS, light, default) or 3d (three.js, spin freely; falls back to simple without WebGL)")
+    s.set_defaults(f=cmd_init)
     s = sp.add_parser("add-deck"); s.add_argument("site"); s.add_argument("--group", required=True); s.add_argument("--slug", required=True)
     s.add_argument("--deck", required=True); s.add_argument("--bracket", type=int, required=True); s.add_argument("--notes")
     s.add_argument("--commanders", type=int, default=1); s.add_argument("--budget", type=float); s.add_argument("--reasons")

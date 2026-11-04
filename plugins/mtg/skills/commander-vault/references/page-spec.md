@@ -37,13 +37,13 @@ Full notes behind a disclosure, price ladders in the viewer, big images in the v
 - A tooltip on every chart; a legend only for 2+ series.
 - Charts redraw on theme change.
 
-## Card viewer (CSS 3D, not three.js)
+## Card viewer (CSS 3D by default, three.js on request)
 - Front and back faces with `backface-visibility`.
 - Drag to tilt (clamped), click or F to flip, arrows or swipe to browse the whole list in display order.
 - A pointer-tracking sheen. Esc closes and focus returns to the opener.
 - `prefers-reduced-motion` turns off tilt, sheen and animation.
 - Backs: a double-faced card shows its real back (`<id>_b`); every other card shows its Scryfall card back (`back_<card_back_id>`).
-- Why not three.js: about 600 KB more, WebGL memory per card, a separate fallback path and corner-masking work, all for the same flip, tilt and sheen. Only revisit it if a feature truly needs real 3D (a physically lit foil, say).
+- Default is CSS 3D: no extra download, works everywhere. The player can choose the three.js viewer instead (`init --viewer 3d`): the page then loads three.js r128 from cdnjs (about 600 KB) only at that point, draws each card as two textured planes cut from the atlas with rounded corners, lights it from the pointer for the foil shine, and lets the player spin it freely. No WebGL or no script: it falls back to the CSS viewer with one console warning. Reduced motion: no easing.
 
 ## Images
 - WebP atlases only. Never base64 in JSON or HTML (that fails the sharing review), and never hotlinked (the viewer blocks outside images).

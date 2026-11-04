@@ -168,6 +168,83 @@ class PagesTest(unittest.TestCase):
             b.close()
         print("screenshots in", self.w, file=sys.stderr)
 
+    def test_three_viewer_option(self):
+        """--viewer 3d: the page loads three.js only then, spins the card, and falls back to the CSS viewer without it."""
+        D = json.load(open(self.site, encoding="utf-8"))
+        self.assertEqual(D["viewer"], "simple")  # default
+        D["viewer"] = "three"
+        site3 = os.path.join(self.w, "site3.json")
+        json.dump(D, open(site3, "w", encoding="utf-8"))
+        out3 = os.path.join(self.w, "site3")
+        b3 = subprocess.run([sys.executable, os.path.join(PAGES, "build_site.py"), site3, "--out", out3, "--raw-cache", self.raw],
+                            capture_output=True, text=True, env=self.env)
+        self.assertEqual(b3.returncode, 0, b3.stdout + b3.stderr)
+        D["viewer"] = "webgpu"
+        json.dump(D, open(site3, "w", encoding="utf-8"))
+        bad = subprocess.run([sys.executable, os.path.join(PAGES, "build_site.py"), site3, "--out", out3 + "x", "--raw-cache", self.raw],
+                             capture_output=True, text=True, env=self.env)
+        self.assertNotEqual(bad.returncode, 0)
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            self.skipTest("playwright not installed")
+        chrome = shutil.which("google-chrome") or shutil.which("chromium")
+        three = os.environ.get("THREEJS")  # offline: path to three.min.js r128
+        with sync_playwright() as p:
+            try:
+                b = p.chromium.launch(**({"executable_path": chrome} if chrome else {"channel": "chrome"}), args=["--no-sandbox"])
+            except Exception as e:
+                self.skipTest(f"no Chrome: {str(e)[:80]}")
+            import functools, http.server, threading
+            srv = http.server.ThreadingHTTPServer(("127.0.0.1", 0), functools.partial(
+                type("Quiet", (http.server.SimpleHTTPRequestHandler,), {"log_message": lambda *a: None}), directory=out3))
+            threading.Thread(target=srv.serve_forever, daemon=True).start()
+            served = f"http://127.0.0.1:{srv.server_address[1]}/index.html"
+            # served over http: real 3D (if WebGL works); script blocked: simple viewer; opened from disk: simple viewer
+            for mode in ("served", "blocked", "disk"):
+                blocked = mode != "served"
+                pg = b.new_page(viewport={"width": 1280, "height": 900})
+                errors, warnings = [], []
+                pg.on("pageerror", lambda e: errors.append(str(e)))
+                pg.on("console", lambda m: (errors if m.type == "error" else warnings).append(m.text)
+                      if m.type in ("error", "warning") and "fonts" not in m.text and "chart" not in m.text.lower() else None)
+                pg.route("https://fonts.*/**", lambda r: r.fulfill(body="", content_type="text/css"))
+                pg.route("**/chart.umd.min.js", lambda r: r.fulfill(body="", content_type="application/javascript"))
+                if mode == "blocked":
+                    pg.route("**/three.min.js", lambda r: r.abort())
+                elif three:
+                    pg.route("**/three.min.js", lambda r: r.fulfill(path=three, content_type="application/javascript"))
+                pg.goto(served if mode != "disk" else pathlib.Path(out3, "index.html").resolve().as_uri())
+                pg.wait_for_selector("#tabs button")
+                pg.locator("#tabs button", has_text="Sith decks").click()
+                pg.locator(".decklist button.name").first.click()
+                pg.wait_for_selector("dialog[open]")
+                pg.wait_for_timeout(1500)
+                on = pg.evaluate("V3.on")
+                if blocked:
+                    self.assertFalse(on)  # no three.js: the simple viewer still works
+                    t0 = pg.eval_on_selector("#card3d", "e => e.style.transform")
+                    pg.keyboard.press("f")
+                    self.assertNotEqual(t0, pg.eval_on_selector("#card3d", "e => e.style.transform"))
+                    self.assertTrue(any("simple viewer" in w for w in warnings), warnings)
+                elif on:  # three.js loaded and WebGL works
+                    self.assertEqual(pg.locator("#stage canvas").count(), 1)
+                    self.assertFalse(pg.is_visible("#card3d"))
+                    y0 = pg.evaluate("V3.g.rotation.y")
+                    pg.keyboard.press("f")
+                    pg.wait_for_timeout(800)
+                    self.assertGreater(abs(pg.evaluate("V3.g.rotation.y") - y0), 2.5)  # flipped about 180 degrees
+                    pg.keyboard.press("ArrowRight")
+                    self.assertIn("2 / ", pg.inner_text("#vSide"))
+                    pg.screenshot(path=os.path.join(self.w, "shot-3d.png"))
+                if mode == "blocked":  # the browser logs the request the test itself blocked
+                    errors = [e for e in errors if "Failed to load resource" not in e]
+                print(f"3D viewer ({mode}): {'on' if on else 'simple fallback'}", file=sys.stderr)
+                self.assertEqual(errors, [], f"console errors ({mode}): {errors}")
+                pg.close()
+            b.close()
+            srv.shutdown()
+
 
 if __name__ == "__main__":
     unittest.main()

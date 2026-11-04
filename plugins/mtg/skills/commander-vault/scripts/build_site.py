@@ -23,6 +23,8 @@ def validate(D):
     errs, warns = [], []
     req = lambda o, keys, where: [errs.append(f"{where}: missing {k}") for k in keys if k not in o]
     req(D, ["title", "groups", "tiers"], "site")
+    if D.get("viewer", "simple") not in ("simple", "three"):
+        errs.append(f"viewer must be simple or three, not {D.get('viewer')!r}")
     if not D.get("groups") and not D.get("tiers"):
         errs.append("site has no decks and no tier lists")
     imgs = D.get("images", {})

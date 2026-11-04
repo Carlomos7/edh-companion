@@ -11,7 +11,7 @@ Scripts (run with `uv run`, which installs their dependencies):
 Page design and its reasons: [page-spec.md](page-spec.md). Read it only when changing the template.
 
 ## Steps
-1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json]`. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.
+1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json] [--viewer 3d]`. Use `--viewer 3d` only when the player chose the 3D card viewer. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.
 2. **Add content.** Each command runs mtgdb itself, so you never type card data:
    - Decks: `add-deck site-data.json --group "<tab title>" --slug <commander-slug> --deck b3.txt --bracket 3 --notes notes.json [--reasons off-theme.json] [--budget X] [--commanders 2]`. Write `notes.json` yourself (pitch, how it wins, key cards, strengths, weaknesses, tips, YouTube picks, checks run); format is in the script's help.
    - Tier lists (optional): `add-tier ... --cards edhrec.json [--staples staples.json]`, from EDHREC numbers you pulled, with `n` per card.

@@ -8,8 +8,8 @@
     {
       "name": "mtg",
       "source": "./plugins/mtg",
-      "description": "Build, review, price and share Commander decks with the player: local Scryfall, Tagger, Spellbook and Comprehensive Rules data through an MCP server, always refreshable."
+      "description": "Build, review, price and share Commander decks with the player."
     }
   ],
-  "description": "Magic: The Gathering Commander deckbuilding for Claude Code, built with the player on verified card data."
+  "description": "Magic: The Gathering Commander deckbuilding for Claude Code, built with the player on checked card data."
 }

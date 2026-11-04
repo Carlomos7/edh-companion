@@ -15,11 +15,11 @@
 ## Extracting
 - Pull out: plan (how the deck wins), must-plays with reasons, traps (cards the creator says underperform), combos, mulligan or play notes.
 - Record a timestamp (mm:ss) for every claim.
-- Collect every card name mentioned, then run them all through `mtgdb.py normalize`:
-  - `exact`/`fuzzy` (score ≥ 0.9): use the returned name.
-  - `ambiguous`: pick from candidates using context (colors, what the card does), and note it.
-  - `none`: drop it, or find the real card from the linked decklist. Never write an unresolved name into a deck or claim.
-- Check every card the creator recommends against the index: still legal, in color identity, and its Game Changer status (the video may predate a change).
+- Collect every card name mentioned, then check them all against Scryfall:
+  - Exact match: use that name.
+  - Close or ambiguous match: pick from candidates using context (colors, what the card does), and note it.
+  - No match: drop it, or find the real card from the linked decklist. Never write an unresolved name into a deck or claim.
+- Check every card the creator recommends on Scryfall: still legal, in color identity, and its Game Changer status (the video may predate a change).
 
 ## What creators can't establish alone
-Combos (confirm in Spellbook), bracket (confirm with rules + Spellbook), prices (index), legality (index), cEDH viability (EDHTop16 / cEDH DB).
+Combos (confirm in Spellbook), bracket (confirm with rules + Spellbook), prices (Scryfall), legality (Scryfall), cEDH viability (EDHTop16 / cEDH DB).

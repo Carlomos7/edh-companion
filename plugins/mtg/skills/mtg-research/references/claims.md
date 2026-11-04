@@ -1,6 +1,6 @@
 # Claim ledger
 
-One JSON object per line in `claims.jsonl`. Every opinion or external fact that will reach the user gets a line. Facts computed by `mtgdb.py` don't need one.
+One JSON object per line in `claims.jsonl`. Every opinion or external fact that will reach the user gets a line. Card facts looked up on Scryfall don't need one.
 
 ```json
 {"id": "vader-001", "subject": "darth-vader", "type": "must-play",
@@ -16,13 +16,13 @@ One JSON object per line in `claims.jsonl`. Every opinion or external fact that 
 `must-play`, `trap`, `combo`, `rules` (cite rule numbers in `locator`), `plan`, `stat` (needs `n`), `cedh`, `printing-theme`, `ban-or-gc`, `price`, `community`, `other`.
 High impact (always verified): must-play, trap, combo, rules, cedh, printing-theme, ban-or-gc.
 
-## Rules (enforced by `audit-claims`)
+## Rules
 - Every source has `url` and `date`; videos also a `locator` timestamp.
 - must-play / trap / combo: 2 independent sources (different `author`, or different site).
 - `stat` claims carry `n` (sample size).
-- Every name in `cards` resolves in the index.
-- `--since <date>`: high-impact sources older than the cutoff are flagged.
-- `--require-verified`: high-impact claims must have `status: verified`.
+- Every name in `cards` is a real card name on Scryfall.
+- High-impact sources older than the last bans/Game Changers update are flagged.
+- High-impact claims should have `status: verified` before they are presented as settled.
 
 ## Confidence
 - **high**: 2+ independent current sources agree, or data from the authority for that question.

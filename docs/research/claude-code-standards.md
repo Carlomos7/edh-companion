@@ -127,7 +127,6 @@ Anthropic does not state one rule for this. What it does say:
 - Include an MCP connector "when Claude needs to read from or act in your product or data". A remote server reaches every surface. A local server runs only in Claude Code and local Cowork, "so most plugins reference remote servers". Source: https://claude.com/docs/connectors/building/what-to-build
 - Local stdio servers launched with `npx`/`uvx` are "fine for personal tools and prototypes" but "not recommended for distribution". Use MCPB when the server must run locally, for example to read local files. Sources: https://github.com/anthropics/claude-plugins-official/blob/main/plugins/mcp-server-dev/skills/build-mcp-server/SKILL.md and https://github.com/anthropics/claude-plugins-official/blob/main/plugins/mcp-server-dev/skills/build-mcpb/SKILL.md
 
-**Inference, not stated by Anthropic.** A CLI over a local 500 MB index fits "script bundled in the plugin" or a local MCP server. Neither reaches claude.ai chat. An MCP server gives typed tools, permission names per tool, and hook matchers such as `mcp__plugin_mtg_db__.*`. A script is simpler and is what the skills docs recommend for deterministic steps. A third-party remote MTG MCP server already exists (`j4th/mtg-mcp-server`, used by this repo as a claude.ai connector), which would cover chat surfaces.
 
 ## 3. Skill authoring rules
 
@@ -231,7 +230,6 @@ Where the feature should live. The following is **inference** from the examples 
 - Recommended uses: format or lint after edits, block protected files, logging, notifications, enforcing rules that "must hold every time". Sources: hooks-guide, features-overview.
 - Plugin agents ignore their own `hooks`, `mcpServers` and `permissionMode` frontmatter for security reasons. Source: https://code.claude.com/docs/en/sub-agents
 
-What this means for this repo (**inference**): the current hook runs `uv run mtgdb.py hook` on every Write and Edit in every session where the plugin is enabled, including non-MTG work. It pays a `uv` process start each time and only then exits for non-vault files. The documented narrowing tools are an `if` rule such as `"Write(**/vault/**)"`, or moving the hook into the `commander-vault` skill's `hooks` frontmatter.
 
 ## 6. Testing and evals
 

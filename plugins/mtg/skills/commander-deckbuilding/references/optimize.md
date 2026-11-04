@@ -4,7 +4,7 @@
 A deck link (read with an installed add-on that supports that site), a pasted export from any site, or a file. Save it as `before.txt` (Moxfield format, commander first) and keep the working copy as `<commander-slug>.txt` with a `deck-brief.md`, like a new build, so `/mtg:commander-vault` can pick it up later. Never edit the user's original.
 
 ## 2. Profile it before asking anything
-`mtg_deck_profile`, `mtg_deck_check` (at the bracket it seems to be), `mtg_simulate` and `mtg_price_plan`. A Commander section in the list sets partners automatically. That gives: legality problems, Game Changers, bracket signal, combos, cost, owned share, mana and curve health, and whether the printings already lean on a theme.
+Check it at the bracket it seems to be. That gives: legality problems, Game Changers, bracket signal, combos, cost, owned share, mana and curve health, and whether the printings already lean on a theme.
 
 Tell the user in 4 to 6 lines what you found **before** the questions, so the questions make sense. For example: "Legal except Mana Crypt (banned). Plays like B3 (2 Game Changers, no 2-card combos). Commander on curve 44% of games. 58% of cards are Lord of the Rings printings. Worth about $480." Mention cost once here; don't repeat it in every later message.
 
@@ -21,30 +21,29 @@ The full question card (one AskUserQuestion call, up to 4 questions; skip any th
 Then, in plain text, one optional line: "Any cards that must stay (pet cards)?"
 
 ## 4. Diagnose
-If EDHREC data is available, pull this commander's staples and synergy first (no question) and use them to spot what the deck is missing. Against the target bracket and construction.md: role gaps (Tagger counts), mana problems (sources vs pips, simulate), weak cards (read each before calling it weak), missing commander payoffs (commander-text search), and bracket violations for the target (Game Changers, combos, MLD, extra turns).
+If EDHREC data is available, pull this commander's staples and synergy first (no question) and use them to spot what the deck is missing. Against the target bracket and construction.md: role gaps, mana problems (sources vs pips), weak cards (read each before calling it weak), missing commander payoffs (commander-text search), and bracket violations for the target (Game Changers, combos, MLD, extra turns).
 
 ## 5. Propose
-- Every add has a specific cut and a reason, tested with `mtg_deck_swap` against the target bracket, theme map and budget.
+- Every add has a specific cut and a reason, checked against the target bracket, theme map and budget.
 - Respect the change budget and locked cards. Order by impact.
 - Close calls go to the picker page (`scripts/picker.py`).
-- Money: only with "keep it cheap" or a limit they'd exceed do adds come with `mtg_cheaper_alternatives` options; with "drippy", printing upgrades within their per-card max are their own optional list; with "no limit", don't bring up price until the hand-back.
+- Money: only with "keep it cheap" or a limit they'd exceed do adds come with cheaper options; with "drippy", printing upgrades within their per-card max are their own optional list; with "no limit", don't bring up price until the hand-back.
 - Theme on: every upgrade stays inside their theme mode. Don't propose off-theme upgrades unless they ask for them.
 
 ## 6. Apply and verify
-Write `after.txt`, then run `mtg_deck_check` (CLI `validate --themes/--reasons` if themed), `mtg_simulate` and `mtg_price_plan` in the player's price style. Then `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" diff before.txt after.txt`.
+Write `after.txt`, then re-run the checks and the price in the player's price style, and compare with `before.txt`.
 
 ## 7. Hand back
 - The diff: cuts, adds, printing swaps, cost of adds, cost to buy (minus owned).
 - Before vs after: bracket, Game Changers, commander-on-curve %, role counts, price, theme line.
-- The new list via `mtg_export` in the format they want (Moxfield keeps exact printings), plus buy links for the adds from `mtg_price_plan`.
+- The new list in the format they want (Moxfield keeps exact printings).
 - What wasn't checked, if anything.
 - If the new deck passes every check, offer the commander vault page exactly as in the main skill's hand-back.
-- Recommend 2 or 3 next steps, recommended first: export for Moxfield / Archidekt (Recommended), another pass at a different bracket, or what they still need from their collection (`mtg_collection` `have`).
+- Recommend 2 or 3 next steps, recommended first: export for Moxfield / Archidekt (Recommended), another pass at a different bracket, or what they still need from their collection.
 
 ## Edge cases
 - **Illegal deck**: fix legality first (banned, identity, count) and list those fixes separately. They don't count toward the change budget.
 - **Over target bracket**: removals to reach it come first, then upgrades.
-- **Partners or background**: pass `--commanders 2`.
 - **Proxies or "rule 0" cards**: ask once whether they play with rule 0. If not, flag them as illegal.
 - **Owned-only budget but no collection**: offer to import their collection (the `collection` skill), or treat as "suggest, don't assume owned".
 - **Deck already optimal for the target**: say so, with evidence, and offer side-grades instead of forcing changes.

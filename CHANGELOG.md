@@ -2,6 +2,17 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 6.0.0
+The plugin moves to skills only. The in-house tooling is gone.
+Removed:
+- **The `mtgdb` MCP server and the `mtgdb.py` data CLI** (card index, deck checks, swap tests, simulation, price plans, exports, research logging, collection tools).
+- **The deck and claims file-check hook** and its `vault/config.json`.
+- **The `update-data` skill.**
+- **The tests and the CI workflow.**
+- **Eval graders** that checked in-house tool use.
+
+Note: the page scripts (`site_data.py`, `build_site.py`) still call `mtgdb.py` and need rewiring. The page template is kept.
+
 ## 5.6.0
 Page redesign: mobile first, one design system, accessible.
 - **One set of tokens:** spacing (4 to 48px), type sizes, corner radii and card corners come from shared variables, so every panel, control and card lines up. Layout is written phone first and widens at 641, 821 and 1025px.

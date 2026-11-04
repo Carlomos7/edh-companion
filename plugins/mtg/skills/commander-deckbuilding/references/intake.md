@@ -40,7 +40,7 @@ For a pasted deck, the defaults come from the deck itself: its current bracket, 
    - **"Wanna drip out your cards?":** foils, borderless, showcase, Secret Lair. Then ask once, "How much are you down to spend on a single card?" (e.g. "nothing over $30")
 
    Keep this tone for the follow-ups too ("Want me to drip out the commander too?" is fine). Don't ask about proxies unless they bring it up. Don't ask about money again later.
-8. **Collection** (only if `mtg_collection` `show` finds one): "Use cards you own when they're close in quality (Recommended)" · owned cards only where possible · ignore it. If they have none, don't ask; the hand-back can suggest importing one.
+8. **Collection** (only if they have one): "Use cards you own when they're close in quality (Recommended)" · owned cards only where possible · ignore it. If they have none, don't ask; the hand-back can suggest importing one.
 9. **Pet cards and never-plays** (free text): must-includes, and cards or effects they won't play.
 
 ## Ask only when relevant

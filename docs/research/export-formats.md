@@ -1,6 +1,6 @@
 # Deck export formats: Moxfield, Archidekt and MTG Arena
 
-Research into whether text from `mtgdb.py export` imports correctly into Moxfield, Archidekt and MTG Arena.
+Research into what text imports correctly into Moxfield, Archidekt and MTG Arena.
 All sources accessed 2026-11-03. Items marked **(unconfirmed)** were not verified against a primary source, or were not tested by importing (nothing was pasted into any site).
 
 ## Summary

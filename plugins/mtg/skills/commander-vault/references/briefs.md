@@ -7,12 +7,11 @@ Each brief is self-contained (the agent hasn't seen this chat). Replace every `<
 Commander deck vault. THEME: <none | label list + mode (power/prefer/strict) + limits>. BUDGET: <none | $X/deck>.
 If THEME is none, ignore every theme instruction below.
 Skills preloaded: mtg-research, commander-deckbuilding. Follow their accuracy rules exactly.
-Card tool: uv run <abs MTGDB> [--themes <abs>/vault/themed-printings.json] <cmd>
+Card facts: Scryfall only (an add-on's Scryfall tools or the web), never memory.
 Recency cutoff (SINCE): <date> because <latest WotC update>. Rule changes since the reference files: <none | list>.
 Commanders: <name (slug)>, ...
 Write only to: <abs folders>. Read anything under vault/.
-Collection: <none | prefer owned cards; mtgdb.py collection show>
-A hook validates your deck and claim files when you write them; if it reports errors, fix them before moving on.
+Collection: <none | prefer owned cards>
 User notes: <...>
 Finish with a short report: files written, check results, **tools used and tools that failed (with the error)**, flags, open questions. No file contents.
 ```
@@ -21,13 +20,12 @@ Finish with a short report: files written, check results, **tools used and tools
 ```
 Objective: an evidence-backed profile of each commander that a deckbuilder can rely on.
 Follow mtg-research references/research-pass.md for every commander: its coverage minimums, its "Best tool first,
-then fall back" table, and its outputs. Start with mtg_research_plan; use mtg_edhrec and mtg_decklists; log every
-source with mtg_research_log (folder = the full path to vault/<slug>), dated, videos with mm:ss.
+then fall back" table, and its outputs. Log every source in vault/<slug>/claims.jsonl, dated, videos with mm:ss.
 For each commander:
 1. Data first: EDHREC staples + themes (note deck count n), Spellbook combos with the commander,
    EDHTop16 / cEDH DB presence (entries, top cuts, dates).
 2. Creators: 2 to 5 recent deck techs or articles, different channels, per mtg-research youtube.md.
-   Transcripts one at a time. Normalize every card name. Prefer linked decklists.
+   Transcripts one at a time. Check every card name against Scryfall. Prefer linked decklists.
 2b. Commander-text search (mtg-research): cards that scale the commander's own ability. List each with a verdict.
 2c. Community pass: r/EDH, primers, comments. Log what they say is missing or overrated as `community` claims.
 2d. Every combo not in Spellbook: `rules` claim with rule numbers and the full piece list.
@@ -35,16 +33,14 @@ For each commander:
    Conflicts, Sources, Shortfalls; and vault/<slug>/takes.json: 8 to 15 takes worth showing [{text,source,url,date,kind}],
    disagreements included.
 4. Log every opinion/external claim in vault/<slug>/claims.jsonl (mtg-research claims.md).
-5. Run: mtgdb.py audit-claims vault/<slug>/claims.jsonl --since <SINCE> and mtgdb.py research report vault/<slug>.
-   Fix every problem; report any shortfall.
+5. Check that every claim has dated sources newer than <SINCE> where it matters. Fix every problem; report any shortfall.
 Don't build decks.
 ```
 
 ## §2 vault-deckbuilder
 ```
 Objective: bracket-correct, themed 100-card decks for <brackets>, built from vault/<slug>/research.md.
-For each bracket: follow commander-deckbuilding "Build" including the full validate loop with
---themes and --bracket. Pick printings with `printings` (themed first, then price).
+For each bracket: follow commander-deckbuilding "Build" including the full check loop at that bracket. Pick printings by theme first, then price.
 Save vault/<slug>/b<N>.txt.
 Then:
 - vault/<slug>/deck-notes.md: per bracket plan, intended win turn, combos (Spellbook ids), off-theme reasons,
@@ -54,17 +50,17 @@ Then:
   (the research's takes.json entries), youtube (the research's videos: title, url, channel, date), checks (format: `site_data.py --help`
   in the vault skill's scripts folder). Plain, casual sentences a regular player understands.
 - vault/<slug>/consider.json: 10 to 15 per deck,
-  [{"card","why","bracket","swap_out","theme","claim_ids":[]}], every pairing passes swaptest at that bracket with no
-  blocking combos_added; each "why" cites its evidence (EDHREC %, how many real lists, creator).
+  [{"card","why","bracket","swap_out","theme","claim_ids":[]}], every pairing is legal, in color identity and within that bracket, and adds no
+  blocking combo; each "why" cites its evidence (EDHREC %, how many real lists, creator).
 - Append any new claims to vault/<slug>/claims.jsonl.
-Report per deck: validate pass, price, theme_counts, game_changers, Spellbook bracket estimate.
+Report per deck: checks passed, price, theme counts, Game Changers, Spellbook bracket estimate.
 ```
 
 ## §3 vault-merger
 ```
 Objective: one cards-to-consider list for tab <tab> (decks: <list>).
 Merge consider.json files, dedupe by card. For every card x deck pair (not just where it was suggested),
-find a sensible swap_out and test with swaptest at that deck's bracket. Keep passing pairs only.
+find a sensible swap_out and check it is legal, in color identity and within that deck's bracket. Keep passing pairs only.
 Before saving, check every merged card came from one of this tab's consider.json files and report the count.
 Save vault/tabs/<tab>/merged.json: [{"card","theme","why","fits":[{"deck":"<slug>/b<N>","swap_out","note"}]}].
 Report: cards, pairs kept, pairs dropped by reason.
@@ -77,11 +73,10 @@ Objective: independently confirm or refute the work for <slugs>. You did not wri
    random 20% of the rest: re-open each source (video at the timestamp, EDHREC page, Spellbook combo,
    EDHTop16 query) and set status verified | refuted | unverifiable with a verifier_note saying what you saw.
    Verify the claim, not the source's existence.
-2. Decks: re-run validate (with --themes, --bracket, budget), stats, Spellbook combos (two_card counts commander + 2) + bracket
-   estimate for every b<N>.txt. Re-run swaptest on every consider.json pairing. Check every Must-play in research.md is in the matching decks or explained in deck-notes.md.
-3. Printings: build a `contact-sheet` of every disputed printing plus 20 random themed ones per commander and
-   check each tag against the art. Re-run validate's printing check (gold border, digital, oversized).
-3b. Simulate: re-run `simulate` per deck and compare with the deckbuilder's reported numbers.
+2. Decks: re-check legality, color identity, bracket rules, budget, and Spellbook combos (commander + 2 counts as a two-card combo) + bracket
+   estimate for every b<N>.txt. Re-check every consider.json pairing. Check every Must-play in research.md is in the matching decks or explained in deck-notes.md.
+3. Printings: look at the art of every disputed printing plus 20 random themed ones per commander and
+   check each tag against it. Check for gold border, digital and oversized printings.
 4. Write vault/<slug>/verification.md: summary counts, every refuted/unverifiable item with evidence, every
    failed check. Do not edit decks, research or claims.jsonl.
 ```

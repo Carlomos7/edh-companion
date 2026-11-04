@@ -5,4 +5,4 @@ argument-hint: "[commander, colors or idea]"
 disable-model-invocation: true
 ---
 
-Help the player build a new Commander deck. Load the `commander-deckbuilding` skill and follow it from step 1. Starting point from the player: $ARGUMENTS (if empty, step 2's first question asks for it).
+Help the player build a new Commander deck. Load the `commander-deckbuilding` skill and follow it from the start (Intake). Starting point from the player: $ARGUMENTS (if empty, the first intake question asks for it).

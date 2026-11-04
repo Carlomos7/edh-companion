@@ -34,7 +34,7 @@ WHAT GOES ON THE PAGE
 Extras: (any of: alternative commanders | collection planner | split a pile between players, e.g. "split this Secret Lair between Sam and me; Sam wants every Gandalf card")
 Page style: fancy (images, charts, cards to consider, rankings, 3D cards) | basic (decks and numbers only, no images) | or list what you want
 Images: download into the page so it can be shared (or "Scryfall links": local page only, no download)
-Card viewer: 3D (or "simple": lighter; 3D falls back to simple on devices without 3D)
+Card viewer: 3D, spin it and it snaps back (or "simple": lighter; 3D falls back to simple on devices without 3D)
 Card labels: neutral (Play, Good, Situational, Binder, Bracket 4+; never "weak")
 Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 lines")
 ```
@@ -46,7 +46,7 @@ Look and writing: (optional, e.g. "dark theme by default", "keep summaries to 3 
 - one shared "cards to consider" list per tab: each card shows which decks it fits, what it would replace and why (with its evidence); the decklist marks replaceable cards with ⇄ and the card viewer lists the options
 - links on every card to Scryfall, EDHREC, TCGplayer and Cardmarket; the price buys that exact printing
 - card rankings for the theme or colors, with how many decks each number comes from
-- a card viewer: click to enlarge, arrow keys or swipe to browse, flip double-faced cards (or the 3D viewer, if you chose it)
+- a card viewer: click to enlarge, arrow keys or swipe to browse, flip double-faced cards, spin it in 3D (the simple viewer if you chose it)
 - a sources page with every source grouped by type (EDHREC, real decklists, combos, videos, community, articles, prices, Wizards) and what each was used for, plus data dates, what was checked, and anything left unverified
 
 The extras arrive as files next to the page when the page can't show them yet.

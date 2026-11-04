@@ -11,12 +11,17 @@ The template answers three questions in reading order:
   1. comparison strip (default bracket: price, average MV, Game Changers, on-curve %)
   2. commander picker
   3. bracket buttons (opens on the default)
-  4. summary: pitch, how it wins, key cards, strengths, weaknesses, tips, theme line, YouTube picks, checks run
-  5. stat tiles and template check (bullet bars with target bands)
-  6. charts: curve, types, pips vs sources, cast-by-turn
-  7. decklist (group, sort, filter, Copy for Moxfield)
-  8. the tab's shared swap list, with the selected commander's rows highlighted
-- **Sources & accuracy**: data dates, claim counts, still-unverified items, every source link.
+  4. deck header: name, bracket, card count, "researched from N sources" link, Copy for Moxfield
+  5. overview (the plan, how it wins, key cards, Game Changers, theme counts, commander image) next to the numbers
+     (stat tiles, price styles, template check)
+  6. decklist (3 columns; group, sort, show filter; mana pips, rarity dots, Game Changer pills, theme tags, ⇄ swap marks,
+     price = buy link, ↗ Scryfall)
+  7. cards to consider (the tab's shared swap list, this deck's rows first)
+  8. game plan (strengths, weaknesses, how to play it, checks run)
+  9. what the community says (linked takes) and the Watch list
+  10. charts: curve, types, pips vs sources, cast-by-turn (2 by 2)
+- **Sources & accuracy**: sources grouped by kind with what each was used for, data freshness, claim counts (re-checked,
+  sourced, unverified), still-unverified items.
 
 ## Detail on demand
 Full notes behind a disclosure, price ladders in the viewer, big images in the viewer, tooltips on hover and focus.
@@ -28,7 +33,7 @@ Full notes behind a disclosure, price ladders in the viewer, big images in the v
   - theme labels get slots 1, 2 and 3 (more than 3 triggers a warning)
   - off-theme uses slot 4
   - tiers use one blue ramp, and the tier letter is always shown
-- Type: Inter for text, JetBrains Mono for numbers.
+- Type: Anton for display (titles, tabs, big numbers), IBM Plex Sans for text, IBM Plex Mono for numbers.
 - Pills always carry their text, so meaning never depends on color alone.
 
 ## Charts (Chart.js 4 from cdnjs)
@@ -37,13 +42,14 @@ Full notes behind a disclosure, price ladders in the viewer, big images in the v
 - A tooltip on every chart; a legend only for 2+ series.
 - Charts redraw on theme change.
 
-## Card viewer (CSS 3D by default, three.js on request)
+## Card viewer (three.js on Fancy pages, CSS 3D otherwise)
 - Front and back faces with `backface-visibility`.
-- Drag to tilt (clamped), click or F to flip, arrows or swipe to browse the whole list in display order.
+- Hover leans the card toward the pointer; drag to spin, and on release it snaps back to the nearest face; click or F to flip;
+  arrows or swipe browse the whole list in display order. Grab and grabbing cursors on the card.
 - A pointer-tracking sheen. Esc closes and focus returns to the opener.
 - `prefers-reduced-motion` turns off tilt, sheen and animation.
 - Backs: a double-faced card shows its real back (`<id>_b`); every other card shows its Scryfall card back (`back_<card_back_id>`).
-- Default is CSS 3D: no extra download, works everywhere. The player can choose the three.js viewer instead (`init --viewer 3d`): the page then loads three.js r128 from cdnjs (about 600 KB) only at that point, draws each card as two textured planes cut from the atlas with rounded corners, lights it from the pointer for the foil shine, and lets the player spin it freely. No WebGL or no script: it falls back to the CSS viewer with one console warning. Reduced motion: no easing.
+- Fancy pages use the three.js viewer by default (Basic, or `--viewer simple`, uses CSS 3D: no extra download). The page loads three.js r128 from cdnjs (about 600 KB) only at that point, draws each card as two textured planes cut from the atlas with rounded corners, lights it from the pointer for the foil shine, and lets the player spin it freely. No WebGL or no script: it falls back to the CSS viewer with one console warning. Reduced motion: no easing.
 
 ## Images
 - WebP atlases only. Never base64 in JSON or HTML (that fails the sharing review), and never hotlinked (the viewer blocks outside images).

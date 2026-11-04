@@ -2129,7 +2129,9 @@ def deck_names(path):
 
 
 def cmd_edhrec(a):
-    slug, page = web_slug(a.commander), f"https://edhrec.com/commanders/{web_slug(a.commander)}"
+    # partners: EDHREC's page is both names' slugs, alphabetical, joined by a hyphen
+    slug = "-".join(sorted(web_slug(n) for n in [a.commander] + ([a.partner] if a.partner else [])))
+    page = f"https://edhrec.com/commanders/{slug}"
     try:
         e = cached_web_json("edhrec-" + slug, f"https://json.edhrec.com/pages/commanders/{slug}.json")
     except Exception as ex:
@@ -2149,7 +2151,9 @@ def cmd_edhrec(a):
         lists.append({"list": L.get("header"), "cards": cards[:a.limit]})
     res = {"commander": a.commander, "url": page, "decks": jd.get("card", {}).get("num_decks"),
            "decks_by_bracket": e.get("bracket_counts"), "lists": lists, "stale_cache": e.get("_stale_cache"),
-           "source": "EDHREC (json.edhrec.com, cached 24h). Inclusion = share of decks that could play the card that do."}
+           "source": "EDHREC (json.edhrec.com, cached 24h). Inclusion = share of decks that could play the card that do.",
+           "log_entry": {"kind": "stats", "title": f"EDHREC · {a.commander}{' + ' + a.partner if a.partner else ''} commander page", "url": page,
+                         "date": time.strftime("%Y-%m-%d"), "used_for": "how many decks play each card, and synergy with this commander"}}
     if a.deck:
         miss = [x for x in seen.values() if not x["in_deck"]]
         res["popular_missing"] = sorted([x for x in miss if (x["inclusion_pct"] or 0) >= a.min_pct], key=lambda x: -x["inclusion_pct"])[:20]
@@ -2176,12 +2180,14 @@ def cmd_decklists(a):
         except Exception:
             continue
         skip = {c["name"] for c in d.get("categories", []) if not c.get("includedInDeck", True)}
-        names = {((cc.get("card") or {}).get("oracleCard") or {}).get("name") for cc in d.get("cards", [])
-                 if not skip.intersection(cc.get("categories") or [])} - {None}
-        if len(names) < 60 or (d.get("name") or "").lower().startswith("copy of"):  # unfinished brews and copies
+        kept = [cc for cc in d.get("cards", []) if not skip.intersection(cc.get("categories") or [])]
+        names = {((cc.get("card") or {}).get("oracleCard") or {}).get("name") for cc in kept} - {None}
+        size = sum(int(cc.get("quantity") or 1) for cc in kept)
+        if size < 98 or (d.get("name") or "").lower().startswith("copy of"):  # unfinished brews and copies
             continue
+        # updatedAt changes whenever Archidekt refreshes prices, so the creation date is the honest one
         decks.append({"name": d.get("name"), "url": f"https://archidekt.com/decks/{x['id']}", "owner": (d.get("owner") or {}).get("username"),
-                      "bracket": d.get("edhBracket"), "updated": (d.get("updatedAt") or "")[:10], "cards": names})
+                      "bracket": d.get("edhBracket"), "created": (d.get("createdAt") or "")[:10], "size": size, "cards": names})
     if not decks:
         out({"error": f"no public Archidekt lists found for {a.commander}"}, fail=True)
     count = {}
@@ -2190,10 +2196,12 @@ def cmd_decklists(a):
             count[n] = count.get(n, 0) + 1
     basics = {"plains", "island", "swamp", "mountain", "forest", "wastes"}
     rows, have = deck_names(a.deck)
-    res = {"commander": a.commander, "lists": [{k: v for k, v in d.items() if k != "cards"} | {"size": len(d["cards"])} for d in decks],
+    res = {"commander": a.commander, "lists": [{k: v for k, v in d.items() if k != "cards"} for d in decks],
            "most_played": sorted(([n, k] for n, k in count.items() if n.lower() not in basics and n.lower() != a.commander.lower()),
                                  key=lambda t: -t[1])[:30],
-           "source": "Archidekt public decks (archidekt.com API, newest first, cached 12h)"}
+           "source": "Archidekt public decks (archidekt.com API, newest first, finished lists only, cached 12h)",
+           "log_entries": [{"kind": "decklist", "title": f"Archidekt · {d['name']} ({d['owner']})", "url": d["url"],
+                            "date": d["created"], "used_for": "what real players run with this commander"} for d in decks]}
     if a.deck:
         need = max(2, math.ceil(len(decks) * a.share))
         res["popular_missing"] = [[n, k] for n, k in res["most_played"] if k >= need and n.lower() not in have]
@@ -2239,7 +2247,7 @@ def cmd_research(a):
                                     "type": e.get("type") or "source", "confidence": e.get("confidence") or "medium",
                                     **({"n": e["n"]} if e.get("n") else {}), **({"cards": e["cards"]} if e.get("cards") else {}),
                                     "claim": e.get("claim") or e.get("used_for") or "source", "subject": e.get("subject", ""),
-                                    "status": e.get("status") or "verified",
+                                    "status": e.get("status") or "sourced",
                                     "sources": [{k: e.get(k) for k in ("title", "url", "kind", "date", "locator", "used_for") if e.get(k)}]},
                                    ensure_ascii=False) + "\n")
         a.action = "report"
@@ -2331,7 +2339,8 @@ def main(argv=None):
     s.add_argument("deck"); s.add_argument("--commanders", type=int, default=1); s.add_argument("--live", action="store_true")
     s.set_defaults(f=cmd_combos)
     s = sp.add_parser("edhrec", help="EDHREC staples, synergy and articles for a commander (--deck: what it lacks)")
-    s.add_argument("commander"); s.add_argument("--deck"); s.add_argument("--limit", type=int, default=15)
+    s.add_argument("commander"); s.add_argument("--partner", help="second commander (partners, backgrounds)")
+    s.add_argument("--deck"); s.add_argument("--limit", type=int, default=15)
     s.add_argument("--min-pct", type=float, default=40); s.set_defaults(f=cmd_edhrec)
     s = sp.add_parser("decklists", help="recent public Archidekt lists for a commander and how a deck compares")
     s.add_argument("commander"); s.add_argument("--deck"); s.add_argument("--commanders", type=int, default=1)

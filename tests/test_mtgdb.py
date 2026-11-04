@@ -377,6 +377,58 @@ class LogicTest(unittest.TestCase):
         self.assertNotEqual(bad.returncode, 0)
         self.assertIn("valid JSON", json.loads(bad.stdout)["error"])
 
+    def _run_with_web(self, fake, argv):
+        """Run a research command in-process with cached_web_json faked (no network)."""
+        import contextlib, io
+        m, old = self.m, self.m.cached_web_json
+        m.cached_web_json = fake
+        buf = io.StringIO()
+        try:
+            with contextlib.redirect_stdout(buf):
+                try:
+                    m.main(argv)
+                except SystemExit:
+                    pass
+        finally:
+            m.cached_web_json = old
+        return json.loads(buf.getvalue())
+
+    def test_edhrec_parsing_and_partner_slug(self):
+        seen = []
+        def fake(key, url, *a, **k):
+            seen.append(url)
+            return {"bracket_counts": {"3": 10}, "container": {"json_dict": {"card": {"num_decks": 200}, "cardlists": [
+                {"header": "Top Cards", "cardviews": [{"name": "Sol Ring", "num_decks": 150, "potential_decks": 200, "synergy": 0.05},
+                                                      {"name": "Frantic Search", "num_decks": 140, "potential_decks": 180, "synergy": 0.49}]}]}}}
+        deck = self.write("1 Darth Vader\n1 Sol Ring\n")
+        res = self._run_with_web(fake, ["edhrec", "Tymna the Weaver", "--partner", "Kraum, Ludevic's Opus", "--deck", deck])
+        self.assertTrue(seen[0].endswith("/kraum-ludevics-opus-tymna-the-weaver.json"), seen)
+        self.assertEqual(res["decks"], 200)
+        self.assertEqual(res["lists"][0]["cards"][0]["inclusion_pct"], 75.0)
+        self.assertEqual([x["name"] for x in res["popular_missing"]], ["Frantic Search"])  # Sol Ring is in the deck
+        self.assertEqual(res["log_entry"]["kind"], "stats")
+
+    def test_decklists_keeps_finished_lists_only(self):
+        def card(n, q=1, cats=None):
+            return {"quantity": q, "categories": cats or [], "card": {"oracleCard": {"name": n}}}
+        lists = {"results": [{"id": 1}, {"id": 2}, {"id": 3}]}
+        full = {"name": "Real list", "owner": {"username": "a"}, "createdAt": "2026-01-02T00:00:00Z", "updatedAt": "2026-11-04T00:00:00Z",
+                "categories": [{"name": "Maybeboard", "includedInDeck": False}],
+                "cards": [card("Sol Ring"), card("Island", 97), card("Brainstorm"), card("Lotus Petal", 1, ["Maybeboard"])]}
+        def fake(key, url, *a, **k):
+            if "v3" in url:
+                return lists
+            if "/1/" in url:
+                return full
+            if "/2/" in url:
+                return dict(full, name="Half a brew", cards=[card("Sol Ring"), card("Island", 40)])
+            return dict(full, name="Copy of Real list")
+        res = self._run_with_web(fake, ["decklists", "Darth Vader"])
+        self.assertEqual([x["name"] for x in res["lists"]], ["Real list"])  # unfinished and copies dropped
+        self.assertEqual((res["lists"][0]["size"], res["lists"][0]["created"]), (99, "2026-01-02"))  # maybeboard excluded
+        self.assertNotIn("Lotus Petal", [n for n, _ in res["most_played"]])
+        self.assertEqual(res["log_entries"][0]["kind"], "decklist")
+
     def test_web_slug(self):
         self.assertEqual(self.m.web_slug("Narset's Reversal"), "narsets-reversal")
         self.assertEqual(self.m.web_slug("Brazen Borrower // Petty Theft"), "brazen-borrower")

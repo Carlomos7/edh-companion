@@ -28,7 +28,8 @@ mcp = MCPServer(
     instructions=(
         "Local Magic: The Gathering data: card facts, legality, printings, prices, Game Changers, role tags, rulings, "
         "Commander Spellbook combos and the Comprehensive Rules. Use these tools for any card fact instead of memory. "
-        "Call mtg_data_status at the start of deck work; if anything is stale, offer the user mtg_data_sync. "
+        "Call mtg_data_status at the start of deck work; if anything is stale, refresh it with mtg_data_sync (say so in one "
+        "line; the user can say skip). For a quick one-fact question, offer the refresh instead. "
         "For a new deck, run the research pass: mtg_research_plan lists every source type, mtg_edhrec and "
         "mtg_decklists cover EDHREC and real decklists, and mtg_research_log records what you cite."),
 )
@@ -77,8 +78,21 @@ def deck_file(deck):
         yield path
 
 
-def deck_args(bracket, commanders, budget):
-    return ["--bracket", bracket, "--commanders", commanders] + (["--budget", budget] if budget is not None else [])
+def deck_args(bracket, commanders, budget, reasons=None):
+    return (["--bracket", bracket, "--commanders", commanders] + (["--budget", budget] if budget is not None else [])
+            + (["--reasons", local_file(reasons)] if reasons else []))
+
+
+def local_file(path):
+    path = os.path.abspath(os.path.expanduser(path))
+    if not os.path.isfile(path):
+        raise ToolError(f"file not found: {path}")
+    return path
+
+
+def theme_flag(themes):
+    """Global --themes flag for a themed deck (the theme map: which printings count as on theme, plus its limits)."""
+    return ["--themes", local_file(themes)] if themes else []
 
 
 @mcp.tool(annotations=READ)
@@ -110,13 +124,14 @@ def mtg_resolve_names(names: list[str]) -> dict:
 
 @mcp.tool(annotations=READ)
 def mtg_deck_check(deck: str, bracket: int, commanders: int = 1, budget: float | None = None,
-                   response_format: Format = "concise") -> dict:
+                   response_format: Format = "concise", themes: str | None = None, reasons: str | None = None) -> dict:
     """Full check of a Commander deck: count, singleton, color identity, legality, playable printings, Game Changers,
     bracket rules (extra turns, mass land denial), budget, curve, color sources vs pips, role counts and every
     Commander Spellbook combo in the list. `deck` is the decklist text (Moxfield export is fine) or a .txt path.
-    A Commander section in the list overrides `commanders`. concise returns problems and totals; detailed adds per-card data."""
+    A Commander section in the list overrides `commanders`. concise returns problems and totals; detailed adds per-card data.
+    Themed deck: pass `themes` (path to themed-printings.json) and `reasons` (off-theme.json) to enforce the theme's limits."""
     with deck_file(deck) as path:
-        val, _ = run("validate", path, *deck_args(bracket, commanders, budget))
+        val, _ = run(*theme_flag(themes), "validate", path, *deck_args(bracket, commanders, budget, reasons))
         stats, _ = run("stats", path, "--commanders", commanders)
         combos, _ = run("combos", path, "--commanders", commanders)
     roles = {k: v["count"] if isinstance(v, dict) else v for k, v in (stats.get("roles") or {}).items()}
@@ -127,6 +142,8 @@ def mtg_deck_check(deck: str, bracket: int, commanders: int = 1, budget: float |
            "pips": stats.get("pips"), "sources": stats.get("sources"), "roles": roles, "roles_source": stats.get("roles_source"),
            "two_card_combos": [{"cards": c["cards"], "produces": c["produces"][:3], "url": c["url"]} for c in combos["two_card"]],
            "combo_count": combos["count"], "combos_source": combos["source"]}
+    if val.get("theme"):
+        res["theme"] = {k: val["theme"].get(k) for k in ("counts", "on_theme_pct", "off_theme")}
     if bracket <= 3 and combos["two_card"]:
         res["warnings"].append(f"{len(combos['two_card'])} two-card combo(s): brackets 1 to 3 should not have these")
     if response_format == "detailed":
@@ -135,12 +152,16 @@ def mtg_deck_check(deck: str, bracket: int, commanders: int = 1, budget: float |
 
 
 @mcp.tool(annotations=READ)
-def mtg_deck_swap(deck: str, bracket: int, swaps: list[str], commanders: int = 1, budget: float | None = None) -> dict:
+def mtg_deck_swap(deck: str, bracket: int, swaps: list[str], commanders: int = 1, budget: float | None = None,
+                  themes: str | None = None, reasons: str | None = None) -> dict:
     """Test swaps on a copy of a deck and re-run the hard checks. Each swap is "-Card Out +Card In". Returns whether the
     deck still passes, new problems and the cost change. Also lists combos the swap completes (combos_added; at
-    brackets 1 to 3 any combo needing only the commander plus two cards is an error). Never suggest a swap that fails here."""
+    brackets 1 to 3 any combo needing only the commander plus two cards is an error). For a themed deck pass `themes`
+    (themed-printings.json) and `reasons` (off-theme.json): a swap that breaks the theme's off-theme limit fails.
+    Never suggest a swap that fails here."""
     with deck_file(deck) as path:
-        res, _ = run("swaptest", path, *deck_args(bracket, commanders, budget), *[x for s in swaps for x in ("--swap", s)])
+        res, _ = run(*theme_flag(themes), "swaptest", path, *deck_args(bracket, commanders, budget, reasons),
+                     *[x for s in swaps for x in ("--swap", s)])
     return res
 
 
@@ -150,15 +171,17 @@ CHANNELS = ["The Command Zone", "EDHRECast", "Commander's Quarters", "Tolarian C
 
 
 @mcp.tool(annotations=WEB_READ)
-def mtg_edhrec(commander: str, deck: str | None = None, limit: int = 15) -> dict:
+def mtg_edhrec(commander: str, deck: str | None = None, limit: int = 15, partner: str | None = None) -> dict:
     """EDHREC for a commander, built in (no add-on needed): how many decks, decks per bracket, and its card lists
     (top cards, high synergy, by type) with inclusion % and synergy. Pass the player's deck to get popular and
-    high-synergy cards it lacks. Cached for a day; cite the returned url."""
+    high-synergy cards it lacks. `partner`: the second commander of a pair. Cached for a day; pass the returned
+    log_entry to mtg_research_log."""
+    extra = ["--limit", limit] + (["--partner", partner] if partner else [])
     if deck:
         with deck_file(deck) as path:
-            res, code = run("edhrec", commander, "--deck", path, "--limit", limit)
+            res, code = run("edhrec", commander, "--deck", path, *extra)
     else:
-        res, code = run("edhrec", commander, "--limit", limit)
+        res, code = run("edhrec", commander, *extra)
     if code:
         raise ToolError(res.get("error") if isinstance(res, dict) else str(res))
     return res
@@ -168,7 +191,8 @@ def mtg_edhrec(commander: str, deck: str | None = None, limit: int = 15) -> dict
 def mtg_decklists(commander: str, deck: str | None = None, bracket: int | None = None, count: int = 8, commanders: int = 1) -> dict:
     """Real public decklists for a commander (newest Archidekt lists, within one bracket of `bracket` when given),
     each with url, owner, bracket and date, plus the most played cards across them. With the player's deck: cards
-    most lists play that it lacks (popular_missing) and its cards no list plays (in_no_list). Cite each list's url."""
+    most lists play that it lacks (popular_missing) and its cards no list plays (in_no_list). Only finished lists (98+ cards)
+    count. Pass the returned log_entries to mtg_research_log."""
     args = ["decklists", commander, "--count", count, "--commanders", commanders] + (["--bracket", bracket] if bracket else [])
     if deck:
         with deck_file(deck) as path:
@@ -235,7 +259,7 @@ def research_folder(folder):
     return folder
 
 
-@mcp.tool(annotations=READ)
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=False, idempotent_hint=True, open_world_hint=False))
 def mtg_research_report(folder: str, bracket: int | None = None) -> dict:
     """Coverage of a deck's research by source type against the minimums (shortfalls), and the grouped source list in
     <folder>/sources.md. Run before writing the plan; say any shortfall in one line."""

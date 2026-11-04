@@ -16,7 +16,8 @@ class ThemeTest(unittest.TestCase):
     def tmap(self, printings, **spec):
         path = os.path.join(self.T.tmp, f"map{time.time_ns()}.json")
         built = spec.pop("built", time.strftime("%Y-%m-%d"))
-        json.dump({"built": built, "spec": spec, "printings": printings}, open(path, "w"))
+        with open(path, "w", encoding="utf-8") as f:
+            json.dump({"built": built, "spec": spec, "printings": printings}, f)
         return path
 
     def val(self, deck, tmap=None, *extra, bracket="4"):
@@ -82,7 +83,8 @@ class ThemeTest(unittest.TestCase):
         code, rep = self.val(d, m)
         self.assertIn("without a reason", " ".join(rep["warnings"]))
         rp = os.path.join(self.T.tmp, "reasons.json")
-        json.dump({"Demonic Tutor": "no themed printing", "Sol Ring": "budget"}, open(rp, "w"))
+        with open(rp, "w", encoding="utf-8") as f:
+            json.dump({"Demonic Tutor": "no themed printing", "Sol Ring": "budget"}, f)
         code, rep = self.val(d, m, "--reasons", rp)
         self.assertNotIn("without a reason", " ".join(rep["warnings"]))
 

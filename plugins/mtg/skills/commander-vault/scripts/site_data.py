@@ -124,6 +124,14 @@ def page_settings(a):
     return {"style": style, "show": show, "images": images}, viewer
 
 
+def direct(url):
+    """Scryfall's store links go through affiliate redirects; keep the store's own product page."""
+    if not url:
+        return None
+    from urllib.parse import parse_qs, urlparse
+    return (parse_qs(urlparse(url).query).get("u") or [url])[0]
+
+
 def cmd_init(a):
     D = {"schema": 1, "title": a.title, "subtitle": a.subtitle or "", "generated": time.strftime("%Y-%m-%d"),
          "default_bracket": a.bracket, "theme": None, "tiers": [], "groups": [], "printings": {}, "images": {},
@@ -155,6 +163,7 @@ def cmd_add_deck(a):
     val = mtgdb("validate", a.deck, "--bracket", str(a.bracket), *extra, themes=themes)
     st = mtgdb("stats", a.deck, "--commanders", str(a.commanders))
     sim = mtgdb("simulate", a.deck, "--commanders", str(a.commanders), "--runs", "20000")
+    plan = mtgdb("price-plan", a.deck)
     notes = load(a.notes) if a.notes else {}
     reasons = load(a.reasons) if a.reasons else {}
     cards, types = [], {}
@@ -171,7 +180,7 @@ def cmd_add_deck(a):
                       "theme": x.get("theme") if D.get("theme") else None, "img": f, "back": b, "role": role,
                       "flags": x.get("flags", []), "reason": reasons.get(o["name"]),
                       "mana": o.get("mana_cost"), "rarity": p.get("rarity"), "gc": bool(o.get("gc")),
-                      "tcg": p.get("tcg_url"), "cm": p.get("cm_url")})
+                      "tcg": direct(p.get("tcg_url")), "cm": direct(p.get("cm_url"))})
         if not is_cmdr:
             types[main_type(o["type_line"])] = types.get(main_type(o["type_line"]), 0) + x["qty"]
         if a.ladders:
@@ -185,11 +194,13 @@ def cmd_add_deck(a):
     stats = {"price": val["price_usd"], "unpriced": val["unpriced"], "avg_mv": st["avg_mv_nonland"], "lands": st["lands"],
              "game_changers": val["game_changers"], "curve": st["curve"], "types": dict(sorted(types.items(), key=lambda kv: TYPE_ORDER.index(kv[0]) if kv[0] in TYPE_ORDER else 99)),
              "pips": st["pips"], "sources": st["sources"], "sim": sim["pct_commander_cast_by"], "template": template,
-             "template_source": "Starting ranges from construction.md (not an official template).", "roles_source": st.get("roles_source")}
+             "template_source": "Typical ranges for a Commander deck, not rules. Counts come from Scryfall's community card tags, which count a card in every role it fills, so they run high.", "roles_source": st.get("roles_source")}
     if compare:
         stats["role_compare"] = compare
     if val.get("collection"):
         stats["cost_to_buy"] = val["collection"]["cost_to_buy_usd"]
+    if plan.get("totals_usd"):
+        stats["price_styles"] = plan["totals_usd"]
     checks = {"validate": val["pass"], **(notes.get("checks") or {})}
     deck = {"bracket": a.bracket, "cards": cards, "stats": stats, "theme": val.get("theme"), "checks": checks,
             "summary": {k: notes[k] for k in ("pitch", "wins", "key_cards", "strengths", "weaknesses", "tips", "notes", "community") if k in notes},
@@ -274,7 +285,7 @@ def cmd_add_swaps(a):
 def cmd_add_claims(a):
     D = load(a.site)
     acc, seen = D["accuracy"], {s["url"] for s in D["sources"]}
-    ver = unver = 0
+    ver = src = unver = 0
     done = set(acc.setdefault("ledgers", []))
     for path in a.ledger:
         key = os.path.abspath(path)
@@ -285,8 +296,10 @@ def cmd_add_claims(a):
             if not ln.strip():
                 continue
             c = json.loads(ln)
-            if c.get("status") == "verified":
+            if c.get("status") == "verified":  # re-checked by a second reviewer (vault verifier)
                 ver += 1
+            elif c.get("status") == "sourced":  # logged with its source, not re-checked
+                src += 1
             else:
                 unver += 1
                 acc["unverified"].append({"text": c.get("claim", ""), "where": c.get("subject", "")})
@@ -297,9 +310,10 @@ def cmd_add_claims(a):
                                          "kind": s.get("kind"), "date": s.get("date"), "locator": s.get("locator"),
                                          "used_for": s.get("used_for")})
     acc["claims_verified"] = acc.get("claims_verified", 0) + ver
+    acc["claims_sourced"] = acc.get("claims_sourced", 0) + src
     acc["claims_unverified"] = acc.get("claims_unverified", 0) + unver
     save(a.site, D)
-    print(json.dumps({"verified": ver, "unverified": unver, "sources": len(D["sources"])}))
+    print(json.dumps({"verified": ver, "sourced": src, "unverified": unver, "sources": len(D["sources"])}))
 
 
 def cmd_summary(a):

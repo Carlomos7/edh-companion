@@ -46,7 +46,7 @@ Write `vault/plan.md`: inputs, slugs, bracket matrix, defaults, the cost estimat
   - **Gaps**: run `search` for the theme in names, art (`art:`) and flavor (`ft:`) across all sets and diff against the map.
   - Show the user the final drop/set list in one line.
 - Set the recency cutoff `SINCE` = date of the latest bans/Game Changers update.
-- Write `vault/config.json`: `{"since": SINCE, "budget": <number or null>, "commanders": {"<slug>": 1 or 2}}`. The plugin's hook reads it: every time anyone writes `vault/<slug>/b<N>.txt` or a `claims*.jsonl`, the hook validates it and feeds failures straight back to the writer. Hooks don't replace your gates; they stop bad files early.
+- Write `vault/config.json`: `{"since": SINCE, "budget": <number or null>, "commanders": {"<slug>": 1 or 2}}`. The plugin's hook reads it: every time a deck `vault/<slug>/b<N>.txt` or a `claims*.jsonl` is written with Write or Edit, the hook validates it and feeds failures straight back to the writer. Files copied with Bash or written by `mtg_research_log` (which validates entries itself) don't trigger it, so the gates below re-check everything. Hooks don't replace your gates; they stop bad files early.
 - Data extras: `mtgdb.py sync prices` (once per run) for vendor prices on the price ladder; if the user has a collection, `collection show` and ask whether owned cards should be preferred.
 
 ## G1 Research (vault-researcher, parallel, 2 to 3 commanders each)

@@ -10,7 +10,7 @@ Goal: every fact the user sees is either computed from the card index or traced 
 Tools: the plugin's `mtgdb` MCP server (full names `mcp__plugin_mtg_mtgdb__<tool>`) for every card fact (`mtg_card`, `mtg_resolve_names`, `mtg_rules`, `mtg_deck_check` and the rest; see [references/sources.md](references/sources.md)). Commands without an MCP tool run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command>` (`--help` lists them): `search` (any Scryfall query, cached and rate limited; Tagger `otag:` and `art:` work), `printings`, `audit-claims`, `selftest`, `contact-sheet`, `collection import|show`, `price-history`. Data lives in `~/.cache/mtg/`.
 
 ## Before answering
-1. `mtg_data_status`. If `refresh` lists a source the question depends on (prices, bans, Game Changers, rules), tell the user the data date and offer `mtg_data_sync`. No index at all: sync first.
+1. `mtg_data_status`. No index at all: sync first. For a quick one-fact question, if `refresh` lists a source it depends on (prices, bans, Game Changers, rules), tell the user the data date and offer `mtg_data_sync`. During deck work (deckbuilding, research pass), refresh without asking, as commander-deckbuilding step 1 says.
 2. After a fresh sync, run `selftest` once. If it fails, tell the user the card data may be wrong and why.
 
 ## Which source answers what

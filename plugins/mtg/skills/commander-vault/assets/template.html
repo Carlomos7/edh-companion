@@ -45,7 +45,7 @@ header.mast .sub{grid-column:1;grid-row:2;align-self:start;position:relative;z-i
 .fan .art:first-child{margin-left:0}.fanbox:hover .fan .art{transform:rotate(calc(var(--r)*1.4)) translateY(calc(var(--y) - 8px))}
 .fanbox.on3d .fan{display:none}
 .themebtn{position:absolute;top:0;right:max(var(--gutter),env(safe-area-inset-right,0px));z-index:2;font:500 13px var(--body);background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:999px;width:34px;height:34px;cursor:pointer}
-@media (max-width:700px){header.mast .wrap{grid-template-columns:minmax(0,1fr)}.fanbox{position:absolute;inset:0;height:100%;grid-column:1;opacity:.18;z-index:0}}
+@media (max-width:700px){header.mast .wrap{grid-template-columns:minmax(0,1fr)}.fanbox{display:none}}
 /* tabs */
 nav{position:sticky;top:0;z-index:5;background:var(--bg);border-bottom:1px solid var(--line)}
 nav .in{max-width:1180px;margin:0 auto;padding:8px var(--gutter);display:flex;gap:4px;overflow-x:auto;scrollbar-width:none}
@@ -112,7 +112,7 @@ th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:1px;color:v
 .bullet .num{white-space:nowrap;text-align:right;font-size:12px}.bullet .bar{position:relative;height:14px;background:var(--grid);border-radius:0 4px 4px 0}
 .bullet .band{position:absolute;top:0;bottom:0;background:color-mix(in srgb,var(--good) 22%,transparent)}
 .bullet .val{position:absolute;top:0;bottom:0;left:0;background:var(--s1);border-radius:0 4px 4px 0;height:auto!important}
-.ok{color:var(--good)}.short{color:var(--warn)}.over{color:var(--bad)}
+.ok{color:var(--good)}.short{color:var(--warn)}.over{color:var(--muted)}
 /* decklist: 3 columns, mana pips, rarity dots */
 .decklist .cols{columns:3 250px;column-gap:24px}
 .decklist .grp{break-inside:avoid;margin-bottom:14px}
@@ -255,7 +255,7 @@ function tabsList(){const t=[];if(SHOW.tiers)(D.tiers||[]).forEach(x=>t.push({id
  (D.groups||[]).forEach(g=>t.push({id:"decks-"+g.id,title:g.title,render:()=>renderGroup(g)}));
  if(SHOW.sources)t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
 let TABS=[];
-function go(id,push=true){const tab=TABS.find(t=>t.id===id)||TABS.find(t=>(D.aliases||{})[id]===t.id)||TABS[0];
+function go(id,push=true){hideTip();const tab=TABS.find(t=>t.id===id)||TABS.find(t=>(D.aliases||{})[id]===t.id)||TABS[0];
  document.querySelectorAll("#tabs button").forEach(b=>b.setAttribute("aria-selected",b.dataset.id===tab.id));
  charts.forEach(c=>c.destroy());charts=[];const m=$("#main");m.replaceChildren();tab.render(m);store.set("tab",tab.id);
  if(push)history.replaceState(null,"","#"+tab.id)}
@@ -365,19 +365,23 @@ function community(d,c){const C=(d.summary||{}).community||[],Y=c.youtube||[];if
  if(C.length)sec.append(el("div",{class:"comm"},...C.map(x=>el("figure",{},el("blockquote",{},x.text),el("figcaption",{},x.url?ext(x.url,`Open source: ${x.source}`,"",x.source," ↗"):x.source,x.date?el("span",{class:"muted"}," · "+x.date):"")))));
  if(Y.length)sec.append(el("h3",{},"Watch"),el("div",{class:"vids"},...Y.map(v=>ext(v.url,`Watch ${v.title} on YouTube`,"vid",el("b",{},v.title),el("span",{class:"muted"},[v.channel,v.date].filter(Boolean).join(" · "))," ↗"))));
  return sec}
+const CHECK_LABEL={validate:"Legal and bracket rules",legality:"Legality",bracket:"Bracket","bracket 3":"Bracket 3",spellbook:"Combo check (Commander Spellbook)",
+ "spellbook combos":"Combos (Commander Spellbook)","spellbook estimate":"Commander Spellbook bracket estimate",research_pass:"Research",theme:"Theme",verifier:"Second reviewer",simulate:"On-curve simulation"};
+function checkLine(ch){return Object.entries(ch||{}).map(([k,v])=>`${CHECK_LABEL[k]||(k.charAt(0).toUpperCase()+k.slice(1)).replace(/_/g," ")} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"}
 function deckPlan(d,c){const s=d.summary||{};const list=(h,a)=>a&&a.length?el("div",{},el("h4",{},h),el("ul",{},...a.map(x=>el("li",{},x)))):null;
  const parts=[list("Strengths",s.strengths),list("Weaknesses",s.weaknesses),list("How to play it",s.tips)].filter(Boolean);
  const sec=el("section",{class:"panel"},el("h2",{},"Game plan"));if(parts.length)sec.append(el("div",{class:"sumgrid three"},...parts));
  if(s.notes)sec.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
- const ch=d.checks||{};sec.append(el("p",{class:"note"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return sec}
+ const ch=d.checks||{};sec.append(el("p",{class:"note"},"Checks: ",checkLine(ch)));return sec}
 function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",style:"display:grid;gap:12px;align-content:start"});
  const off=(d.theme&&d.theme.counts&&d.theme.counts["off-theme"]);
  sec.append(el("div",{class:"stats"},...[SHOW.prices?["Value",money(s.price)+(s.unpriced&&s.unpriced.length?" +":""),"price"]:null,["Avg mana value",s.avg_mv??"–"],[`Out by turn ${Math.min((c.mv||4)+1,8)}`,s.sim?simAt(s.sim,c.mv)+"%":"–"],
   d.theme?["Off-theme cards",off??0]:["Game Changers",(s.game_changers||[]).length],SHOW.prices&&s.cost_to_buy!=null?["To buy",money(s.cost_to_buy),"price"]:null].filter(Boolean).map(([k,v,cls])=>el("div",{class:"stat"+(cls?" "+cls:"")},el("b",{class:"num"},v),el("span",{},k)))));
+ if(SHOW.prices&&s.price_styles)sec.append(el("p",{class:"note",style:"margin:0"},`Cheapest copies ${money(s.price_styles.budget)} · as listed ${money(s.price_styles["as-listed"])} · drippy ${money(s.price_styles.drippy)}`));
  if(s.unpriced&&s.unpriced.length)sec.append(el("p",{class:"flag"},`Price excludes ${s.unpriced.length} unpriced card(s): ${s.unpriced.join(", ")}`));
  if(s.template){sec.append(el("div",{},el("h3",{style:"margin-top:0"},"Template check"),...Object.entries(s.template).map(([role,[have,lo,hi]])=>{const mx=Math.max(hi*1.4,have,1),cls=have<lo?"short":have>hi?"over":"ok";
    return el("div",{class:"bullet"},el("span",{},role[0].toUpperCase()+role.slice(1)),el("div",{class:"bar",role:"img","aria-label":`${role}: ${have}, target ${lo} to ${hi}`},el("div",{class:"band",style:`left:${lo/mx*100}%;width:${(hi-lo)/mx*100}%`}),el("div",{class:"val",style:`width:${have/mx*100}%`})),el("span",{class:"num "+cls},`${have} · ${lo}-${hi} ${cls==="ok"?"✓":cls==="short"?"▼":"▲"}`))}),
-  el("div",{class:"legend"},el("span",{},"Bar: this deck"),el("span",{},"Green band: typical range"),el("span",{class:"ok"},"✓ in range"),el("span",{class:"short"},"▼ low"),el("span",{class:"over"},"▲ high")),
+  el("div",{class:"legend"},el("span",{},"Bar: this deck"),el("span",{},"Green band: typical range"),el("span",{class:"ok"},"✓ in range"),el("span",{class:"short"},"▼ low"),el("span",{class:"over"},"▲ above (fine: one card can fill several roles)")),
   el("p",{class:"note"},(s.template_source||"Starting ranges, not laws.")+(s.roles_source?` Role counts: ${s.roles_source}.`:""))));
   if(s.role_compare)sec.append(el("p",{class:"note"},"Where counts disagree: "+Object.entries(s.role_compare).map(([r,v])=>`${r} ${v.tagger} (Tagger) vs ${v.builder} (builder)`).join(" · ")))}
  return sec}
@@ -440,13 +444,13 @@ function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||
   G.forEach(g=>host.append(el("section",{class:"panel",id:"src-"+g.kind},el("h2",{},`${g.label} · ${g.items.length}`),el("ul",{class:"srcs"},...g.items.map(x=>el("li",{},ext(x.url,`Open ${x.title||x.url}`,"",x.title||x.url," ↗"),
    el("span",{class:"muted"},[x.date,x.locator].filter(Boolean).map(v=>" · "+v).join("")),x.used_for?el("div",{class:"note"},"Used for: "+x.used_for):null))))))}
  host.append(el("section",{class:"panel"},el("h2",{},"Data freshness"),el("table",{},el("tbody",{},...Object.entries(dd).map(([k,v])=>el("tr",{},el("th",{},k.replace(/_/g," ")),el("td",{class:"num"},/^\d{4}-\d\d-\d\dT/.test(String(v))?niceDate(v):String(v))))))));
- host.append(el("section",{class:"panel"},el("h2",{},"Accuracy"),el("div",{class:"stats"},...[["Claims verified",A.claims_verified],["Unverified (labelled)",A.claims_unverified],["Decks validated",A.decks_validated]].filter(x=>x[1]!=null).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))),
+ host.append(el("section",{class:"panel"},el("h2",{},"Accuracy"),el("div",{class:"stats"},...[["Re-checked by a second reviewer",A.claims_verified],["Claims with a source",A.claims_sourced],["Unverified (labelled)",A.claims_unverified],["Decks validated",A.decks_validated]].filter(x=>x[1]!=null).map(([k,v])=>el("div",{class:"stat"},el("b",{class:"num"},v),el("span",{},k)))),
   (A.checks||[]).length?el("ul",{},...A.checks.map(c=>el("li",{},c))):null,(A.unverified||[]).length?el("div",{},el("h3",{},"Still unverified"),el("ul",{},...A.unverified.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," · "+u.where):"")))):null))}
 
 /* ---------- viewer: CSS 3D, drag to rotate, flip, sheen ---------- */
 let V={list:[],i:0,opener:null,ry:0,rx:0,hx:0,hy:0,flipped:false};
 const VIEW=()=>SHOW.viewer&&IMG!=="none";
-function openViewer(c,list,opener){if(!VIEW())return;V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
+function openViewer(c,list,opener){if(!VIEW())return;hideTip();V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
 function cardOf(x){return x.card?{...x,name:x.card}:x}
 function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V.hy=0;apply();
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);
@@ -531,7 +535,9 @@ const V3={on:false,want:null,img:{},tex:{},
   if(busy&&$("#viewer").open)requestAnimationFrame(()=>this.frame());else this.loop=false}};
 
 /* ---------- hover preview (desktop) ---------- */
-function initTip(){const tip=el("div",{class:"tip art",hidden:true});document.body.append(tip);
+let hideTip=()=>{};
+function initTip(){const tip=el("div",{class:"tip art",hidden:true});document.body.append(tip);hideTip=()=>{tip.hidden=true};
+ ["click","scroll","keydown"].forEach(t=>addEventListener(t,hideTip,{capture:true,passive:true}));
  document.addEventListener("pointerover",e=>{const t=e.target.closest&&e.target.closest("[data-img]");if(!t||IMG==="none"||e.pointerType==="touch"){tip.hidden=true;return}
   tip.setAttribute("style",artStyle(t.dataset.img));tip.hidden=false});
  document.addEventListener("pointermove",e=>{if(tip.hidden)return;const x=Math.min(e.clientX+18,innerWidth-236),y=Math.min(e.clientY+18,innerHeight-320);tip.style.left=x+"px";tip.style.top=y+"px"},{passive:true});

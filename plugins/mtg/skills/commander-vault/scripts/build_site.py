@@ -85,8 +85,10 @@ def completeness(D):
             out.append(f"incomplete: {c['slug']}/b{d['bracket']} summary lacks {', '.join(miss)} (notes.json)")
     if decks and not any((d.get("summary") or {}).get("community") for _, d in decks):
         out.append("incomplete: no community takes on any deck (research takes.json -> notes.json community)")
-    if decks and not any(c.get("youtube") for g in D.get("groups", []) for c in g.get("commanders", [])):
-        out.append("incomplete: no videos in any Watch list (notes.json youtube)")
+    for g in D.get("groups", []):
+        for c in g.get("commanders", []):
+            if c.get("decks") and not c.get("youtube"):
+                out.append(f"incomplete: {c['slug']} has no Watch list (notes.json youtube)")
     if show.get("swaps"):
         for g in D.get("groups", []):
             if g.get("commanders") and not g.get("swaps"):
@@ -134,7 +136,13 @@ def main():
                 warns.append("more than 3 theme labels: colors beyond 3 are hard to tell apart, rely on pill text")
     D.pop("themes_path", None)
     D.pop("images", None)  # urls are build inputs, not page data
+    (D.get("accuracy") or {}).pop("ledgers", None)  # local file paths: build bookkeeping, never published
     data = json.dumps(D, ensure_ascii=False, separators=(",", ":"))
+    # Windows paths (JSON-escaped or forward slashes) or a Unix home folder not inside a URL
+    leak = re.search(r'[A-Za-z]:(?:\\\\|/)(?:Users|Documents and Settings)(?:\\\\|/)[^\\"/]+|(?<![\w.:/])/(?:Users|home)/[^/"]+/', data)
+    if leak:  # a username or home folder would ship inside a shareable page
+        print(json.dumps({"pass": False, "errors": [f"local path in page data: {leak.group(0)[:40]}... (remove it from notes or claims)"]}, indent=1))
+        sys.exit(1)
     html = open(TEMPLATE, encoding="utf-8").read().replace("__TITLE__", re.sub(r"[<>&\"]", "", D["title"]))
     separate = a.separate_data or len(data) > 3_000_000
     if separate:

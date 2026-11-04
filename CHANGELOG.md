@@ -2,6 +2,15 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.5.4
+Fixes from an independent review against every requirement:
+- **Privacy:** deck pages no longer contain local file paths (a ledger path with the Windows username was leaking), and `build_site.py` refuses to build a page that contains one.
+- **Honest claim counts:** logged sources are `sourced`, not `verified`; only the vault's second reviewer marks a claim verified. The page shows re-checked, sourced and unverified counts separately.
+- **Theme cap holds for swaps:** `mtg_deck_check` and `mtg_deck_swap` take the theme map (`themes`, `reasons`), so a swap that breaks the player's off-theme limit fails instead of being offered.
+- **Deck page:** the hover preview no longer sticks after a click, tab change or opening the viewer; the template check marks "above range" as fine instead of red (card tags count a card in every role); plain-language check labels; the three price styles (cheapest, as listed, drippy) under the numbers; store links go straight to the store (no affiliate redirect); the faded card fan behind the title on phones is gone.
+- **Research tools:** `mtg_decklists` keeps only finished lists (98+ cards) and dates them by creation; `mtg_edhrec` supports partners; both return ready-made log entries; the "no videos" warning is per commander.
+- **Docs agree:** Fancy uses the three.js viewer by default everywhere; pages.md covers single-deck pages; one data-refresh rule (refresh during deck work, offer for one-off questions); research starts once bracket and theme are known; must-include cards ride along with the defaults question; bracket estimates run on the final 100; the hook's coverage is described accurately; page-spec matches the template.
+
 ## 5.5.3
 - **Every vault page comes out the same shape:** `build_site.py` prints an `incomplete:` warning for each missing part (deck summary parts, community takes, videos, cards to consider, 10+ grouped sources), and the vault fixes each one or explains it in `plan.md`. pages.md lists what every page has.
 - **The vault uses the research pass:** G1 follows research-pass.md (minimums, best tool first, logged sources, takes.json); a deck from the build skill brings its research along; notes carry community takes and videos; cards to consider cite their evidence.

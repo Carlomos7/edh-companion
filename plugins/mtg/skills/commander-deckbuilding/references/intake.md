@@ -7,12 +7,12 @@ Why this order: players start from very different places (a commander, colors, a
 ## Fast path first (quick by default, customizable whenever they want)
 As soon as you know the starting point (question 1, or what they typed), offer the recommended setup in one question before any other round:
 
-"Want me to just run with my recommended setup?"
+"Want me to just run with my recommended setup? (Type any must-include cards in Other.)"
 - **"Yeah, use your defaults" (Recommended):** list them in the option's description, one line: bracket 3 · no infinite combos, extra turns or land destruction · best cards, normal copies, price at the end · medium interaction · plays to the commander's strengths · cards you own when close (only if they have a collection) · no theme
 - **"Defaults, but let me set money":** ask only question 7, then go
 - **"Let me pick everything":** run rounds 1 to 3 below
 
-When they take the defaults, ask nothing else up front: go straight to the skeleton (the skeleton's "Is this the deck you want?" is their chance to steer). Pet cards are optional: one line, "Any cards you definitely want in? (or just say go)". Write the defaults into `deck-brief.md` as their answers.
+When they take the defaults, ask nothing else up front: go straight to the skeleton (the skeleton's "Is this the deck you want?" is their chance to steer). Pet cards ride along: the question's text says "Type any must-include cards in Other", so no extra turn is spent on them. Write the defaults into `deck-brief.md` as their answers.
 
 For a pasted deck, the defaults come from the deck itself: its current bracket, its current spend level, any theme its printings show.
 

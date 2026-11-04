@@ -42,6 +42,8 @@ For each source type, use the first option that's installed and answers; drop to
 Run independent rows in parallel (videos one at a time). Never fill a row from memory.
 
 ## Rules
+- `title`, `used_for` and `locator` are shown to players on the page: plain English ("how many decks play each card"), no tool names, field names or API notes.
+- Logged sources are `sourced`; only the vault's verifier marks a claim `verified` after re-opening it.
 - Every card name goes through `mtg_resolve_names`. Card facts come from `mtgdb`, never from a video or thread.
 - A community "combo alert" is a hard check: run it against the bracket before any swap that completes it.
 - Opinions that disagree (with each other or with the player's theme) are shown, not acted on.

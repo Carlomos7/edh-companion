@@ -92,6 +92,19 @@ class PagesTest(unittest.TestCase):
         self.assertNotIn("data:image", html)
         self.assertNotIn("https://cards.scryfall.io", html)  # image urls never ship
         self.assertIn("<title>Sith Vault</title>", html)
+        import re
+        self.assertIsNone(re.search(r"[A-Za-z]:(\\\\|/)Users(\\\\|/)|(?<![\w.:/])/(Users|home)/", html))  # no local paths ship
+
+    def test_build_refuses_local_paths(self):
+        bad = os.path.join(self.w, "leaky.json")
+        D = json.load(open(self.site, encoding="utf-8"))
+        D["groups"][0]["commanders"][0]["decks"][0].setdefault("summary", {})["notes"] = "saved in C:\\Users\\someone\\decks"
+        with open(bad, "w", encoding="utf-8") as f:
+            json.dump(D, f)
+        p = subprocess.run([sys.executable, os.path.join(PAGES, "build_site.py"), bad, "--out", os.path.join(self.w, "leak"), "--no-images"],
+                           capture_output=True, text=True)
+        self.assertNotEqual(p.returncode, 0)
+        self.assertIn("local path", p.stdout)
 
     def test_completeness_warnings(self):
         """A page missing the parts every vault has (community, videos, sources...) builds, but says what's missing."""

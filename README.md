@@ -45,7 +45,7 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
    /plugin marketplace add Carlomos7/mtg-skills
    /plugin install mtg@carlomos7-mtg-skills
    ```
-3. **Restart Claude Code and type `/mtg:build`**, or just say "build me a Krenko deck". The first time, Claude offers to download the card data (about a minute).
+3. **Restart Claude Code and type `/mtg:build`**, or just say "build me a Krenko deck". The first time, Claude downloads the card data first (about a minute; say skip if you'd rather not).
 
 ## Your first deck
 A build is a conversation: quick by default (take the recommended setup and it's about three clicks), customizable whenever you want (say "let me pick" or "change X" at any point).
@@ -60,7 +60,7 @@ A build is a conversation: quick by default (take the recommended setup and it's
 
    Your answers are saved to `deck-brief.md`, so you can edit them or pick up later.
 3. **A plan before any list.** The deck's plan, roughly when it wins, how many lands, ramp, draw and removal, and 3 to 5 key cards. You say yes, or what to change.
-4. **Filling the deck.** Claude picks the obvious parts (lands, basic ramp) and says what it picked. Where it's taste (win conditions, close calls, your pet-card slots) you get 2 to 4 options, each with its reason and price.
+4. **Filling the deck.** Claude picks the obvious parts (lands, basic ramp) and says what it picked. Where it's taste (win conditions, close calls, your pet-card slots) you get 2 to 4 options, each with its reason (and its price, if you asked to keep it cheap or set a budget).
 5. **Checks.** Every version of the list is checked. Problems come back to you as choices, not silent changes.
 6. **Hand-back.**
    - the list and a short plan
@@ -152,6 +152,7 @@ Claude checks these at the start of each deck and offers a refresh. To do it you
 **Update the plugin:** in Claude Code run `/plugin marketplace update carlomos7-mtg-skills`, then restart Claude Code. `/plugin` shows the installed version; [CHANGELOG.md](CHANGELOG.md) says what changed.
 **Uninstall:** `/plugin uninstall mtg@carlomos7-mtg-skills`, then delete the data folder `~/.cache/mtg` (Windows: `%USERPROFILE%\.cache\mtg`).
 
+**Store links** on deck pages go straight to the store's product page (no affiliate redirects).
 **Privacy:** the plugin's tools only download public data (Scryfall, Commander Spellbook, Wizards, EDHREC, Archidekt, and MTGJSON if you ask) and keep your decks, answers and collection on your computer. Vault pages are published privately to your own claude.ai account, and add-ons you install follow their own terms.
 
 ## Troubleshooting

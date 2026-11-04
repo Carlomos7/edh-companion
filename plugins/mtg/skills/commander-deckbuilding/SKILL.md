@@ -67,7 +67,7 @@ Work in the current folder so nothing is lost and other commands (like `/mtg:com
 
 ## 4. Research pass, then the skeleton
 **Research before proposing anything; this is what makes the deck good.** No question needed; tell the player in one line ("Researching <commander>: EDHREC, real decklists, combos, videos and Reddit, a few minutes").
-- **Start it as soon as the commander is known**, in parallel with intake: dispatch the `vault-researcher` agent in the background with the brief "research pass for <commander>, bracket <N>, theme <theme or none>, deck folder <path>, follow mtg-research references/research-pass.md". No agents available? Run the pass yourself.
+- **Start it as soon as the commander, bracket and theme are known** (right after the fast-path answer, or after round 1): dispatch the `vault-researcher` agent in the background with the brief "research pass for <commander>, bracket <N>, theme <theme or none>, deck folder <path>, follow mtg-research references/research-pass.md". No agents available? Run the pass yourself.
 - Pick tools by research-pass.md's "Best tool first, then fall back" table: installed add-ons first (best results), then built-in web search, never memory.
 - `mtg_research_plan` lists every source type, the minimum for each and ready-made queries: EDHREC (`mtg_edhrec`), real decklists (`mtg_decklists`, plus Moxfield through an add-on), combos, 3+ creator videos, 4+ Reddit threads or primers, 3+ articles, a live price check, and the current Wizards bracket page (plus cEDH results at bracket 4 and 5).
 - Every source goes into `research/claims.jsonl` with `mtg_research_log` (kind, url, date, locator, what it was used for). `mtg_research_report` shows coverage; say any shortfall in one line ("no Command Zone video on her yet").
@@ -98,7 +98,7 @@ Build in order: lands and ramp, card advantage, interaction, wipes, then the pla
 ## 6. Check loop (repeat until clean)
 1. `mtg_deck_check` with the target bracket (and budget, if they set one). Fix every error. B1 to B3: remove every two-card combo it lists; B3: also any early game-winning line. Read `also_requires` on combos: those need extra pieces.
 2. `mtg_simulate`. If the commander is castable in under about half of games by the turn after its mana value, add ramp or lands.
-3. If an add-on offers a bracket estimate, compare with it. If it disagrees, fix it or explain why.
+3. If an add-on offers a bracket estimate, run it on the final 100 (not a draft) and compare. Treat it as a second opinion: it has missed Game Changers and combos the local data finds. If it disagrees, fix it or explain why, and record it in `checks` with the card count it saw.
 4. Every suggested change goes through `mtg_deck_swap` first. Drop any that fail.
 
 If a tool is down, say which check didn't run. Don't present an unchecked list as checked: the player will sleeve it up trusting that it's legal.

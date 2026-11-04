@@ -1,6 +1,6 @@
 # Vault pages (G5)
 
-Used only at the vault's G5 gate. Single decks are shared with `mtg_export` (Moxfield / Archidekt give players a shareable page).
+Used for every deck page: a single deck at the end of a build (commander-deckbuilding step 7) and the vault's G5 gate. Moxfield or Archidekt (via `mtg_export`) are the other way to share a deck.
 
 You don't write the page. You assemble validated data, and a fixed template renders it. That keeps every page consistent, cheap and tested, and every number traceable to `mtgdb.py` (found automatically; set `MTGDB_SCRIPT` to override).
 
@@ -13,7 +13,7 @@ Page design and its reasons: [page-spec.md](page-spec.md). Read it only when cha
 ## Page styles
 | Choice | Flags | What it is |
 |---|---|---|
-| Fancy (default) | `--style fancy` | every section: card rankings, decks with charts, cards to consider, sources, header card fan, prices, 3D card viewer; images downloaded into WebP atlases |
+| Fancy (default) | `--style fancy` | every section: card rankings, decks with charts, cards to consider, community takes, sources, header card fan, prices, three.js 3D card viewer; images downloaded into WebP atlases |
 | Fancy, local only | `--style fancy --images cdn` | the same, but images load from Scryfall's servers: no download, opens from disk, **can't be published** (artifact pages block outside images) |
 | Basic | `--style basic` | deck summary, numbers, decklist and sources; no images, no charts, no libraries; instant |
 | Custom | a style plus `--show a,b` / `--hide a,b` / `--viewer simple|3d` / `--images atlas|cdn|none` | sections: tiers, charts, swaps, sources, fan, prices, viewer |
@@ -29,7 +29,7 @@ The page records the result as `page.style` ("custom" once anything is overridde
 `build_site.py` prints an `incomplete:` warning for each gap. Fix it, or write why it's missing into `plan.md` (for example "no videos exist for this commander yet").
 
 ## Steps
-1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json] [--viewer 3d]`. Use `--viewer 3d` only when the player chose the 3D card viewer. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.
+1. **Init**: `uv run site_data.py init site-data.json --title "..." --bracket <default> [--themes themed-printings.json] [--viewer 3d]`. Fancy uses the three.js 3D viewer by default; pass `--viewer simple` if the player chose the simple one. Omit `--themes` for unthemed decks; the page then has no pills, theme counts or theme filters.
 2. **Add content.** Each command runs mtgdb itself, so you never type card data:
    - Decks: `add-deck site-data.json --group "<tab title>" --slug <commander-slug> --deck b3.txt --bracket 3 --notes notes.json [--reasons off-theme.json] [--budget X] [--commanders 2]`. `notes.json`: pitch, how it wins, key cards, strengths, weaknesses, tips, `community` (copy the research's `takes.json` entries: text, source, url, date), `youtube` (title, url, channel, date from the research's video sources), checks run; format is in the script's help.
    - Tier lists (optional): `add-tier ... --cards edhrec.json [--staples staples.json]`, from EDHREC numbers you pulled, with `n` per card.

@@ -16,36 +16,64 @@ By [Carlomos7](https://github.com/Carlomos7). Not a card database or a deckbuild
 - **Checks honestly.** A separate audit verifies legality, color identity, Game Changers and bracket limits, combos, printings and art, and whether recommendations are supported. Anything it couldn't check says "unverified".
 - **Shows it.** On request, an interactive deck browser: card images and viewer, variants side by side, charts, filters, swaps, theme and audit status, and every source linked.
 
+## Requirements
+| | What | Why |
+|---|---|---|
+| Required | [Claude Code](https://code.claude.com) (CLI, desktop app or IDE extension) | runs the plugin |
+| Required | [uv](https://docs.astral.sh/uv/) | runs the deck checker, exports and page builder; it fetches Python itself, so there's no separate Python install |
+| Required | internet access | card data from Scryfall, combos from Commander Spellbook, research sources |
+| Optional | a claude.ai account on a paid plan | publishing pages as private shareable links; without it, pages are saved as files |
+| Optional | Git | only for installing the YouTube transcript add-on |
+| Optional | Chrome or Edge | lets Claude test pages in a real browser before handing them over |
+| Optional | MCP add-ons ([below](#optional-integrations)) | richer, faster research; everything works without them |
+
+Install uv:
+- **Windows (PowerShell):** `winget install astral-sh.uv`
+- **macOS:** `brew install uv`
+- **Linux:** `curl -LsSf https://astral.sh/uv/install.sh | sh`
+
 ## Install
-In Claude Code:
+In Claude Code (same on every OS):
 ```
 /plugin marketplace add Carlomos7/edh-companion
 /plugin install edh-companion@edh-companion
 ```
-Restart Claude Code. Needs [uv](https://docs.astral.sh/uv/) for the deck checker and pages (`winget install astral-sh.uv` on Windows, `brew install uv` on macOS).
-
-Then just talk: "I want to build a powerful Spider-Man Commander deck that stays true to Marvel."
+Restart Claude Code, then just talk: "I want to build a powerful Spider-Man Commander deck that stays true to Marvel."
 
 ## Working with your decks
-EDH Companion keeps your decks, research and reports in one workspace. By default: `~/Documents/EDHCompanion/`
+EDH Companion keeps your decks, research and reports in one workspace. By default that's `Documents\EDHCompanion` in your home folder (`~/Documents/EDHCompanion` on macOS and Linux).
 
 **Recommended:** open Claude Code in your main workspace.
-```
+
+Windows (PowerShell):
+```powershell
 cd "$HOME\Documents\EDHCompanion"
+claude
+```
+macOS / Linux:
+```bash
+cd ~/Documents/EDHCompanion
 claude
 ```
 From there you can create decks, continue existing projects and manage Showcases just by talking to Claude.
 
 **Working on one specific deck?**
-```
+
+Windows (PowerShell):
+```powershell
 cd "$HOME\Documents\EDHCompanion\projects\spider-man"
+claude
+```
+macOS / Linux:
+```bash
+cd ~/Documents/EDHCompanion/projects/spider-man
 claude
 ```
 Useful for focused sessions.
 
 **Already opened Claude somewhere else?** No problem. EDH Companion finds your configured workspace and works with its projects without restarting Claude.
 
-The optional `/edh-companion:setup` lets you choose a different storage location. (On macOS or Linux, use forward slashes: `cd ~/Documents/EDHCompanion`.)
+The optional `/edh-companion:setup` lets you choose a different storage location.
 
 **Coming from the old `mtg` plugin?** `/plugin uninstall mtg@carlomos7-mtg-skills`, `/plugin marketplace remove carlomos7-mtg-skills`, then install as above. Old `/mtg:...` commands are replaced by plain requests.
 
@@ -65,7 +93,7 @@ Simple questions ("what does lifelink do?") get a direct answer, no workflow.
 ## Your projects
 Each deck idea gets a folder, outside the plugin:
 ```text
-~/Documents/EDHCompanion/projects/spider-man-marvel/
+EDHCompanion/projects/spider-man-marvel/
 ├── PROJECT.md     your goals and rules (theme, art, bracket, budget)
 ├── STATE.md       where things stand and what's next
 ├── DECISIONS.md   what you accepted, rejected or allowed, and why

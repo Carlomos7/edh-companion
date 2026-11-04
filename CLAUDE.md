@@ -9,12 +9,12 @@ This repo is a Claude Code plugin marketplace with one plugin, `plugins/edh-comp
 - Player data never goes in the repo (`EDHCompanion/`, `reports/` are git-ignored). The repo is public: no personal paths, names or keys.
 
 ## Test
-```bash
+```
 uv run --python 3.12 --with certifi --with jsonschema --with pyyaml --with pillow --with playwright python -m unittest discover -s tests/unit
 claude plugin validate --strict ./plugins/edh-companion
-cd plugins/edh-companion && claude plugin eval . --scaffold --mocks off --ablation none --runs 1 --tag activation   # costs real usage
+cd plugins/edh-companion; claude plugin eval . --scaffold --mocks off --ablation none --runs 1 --tag activation   # costs real usage
 ```
-Evals can't grant Bash in the Windows sandbox, so script behaviour is covered by the unit tests.
+These commands work in PowerShell and bash. Evals can't grant Bash in the Windows sandbox, so script behaviour is covered by the unit tests.
 
 ## Release
 Bump `version` in `plugins/edh-companion/.claude-plugin/plugin.json` and add a CHANGELOG entry in the same commit. Never add AI attribution lines to commits or PRs.

@@ -45,8 +45,9 @@ Undecided (candidates in RESEARCH.md)
 ## Table and power
 Bracket 3. Hard lines: no infinite combos, no extra turns.
 ## Budget
-- Gameplay: no limit; show the price at the end
+- Gameplay: about $150, flexible target (hard limit: no)
 - Aesthetics: up to $150 extra for premium printings; foils and borderless welcome, cohesive comic-art look
+- Style: drippy (others: just build it, cheap, budget, no expense spared)
 ## Theme
 - Mode: prefer (on theme unless an exception is approved)
 - Basis: official franchise cards and art

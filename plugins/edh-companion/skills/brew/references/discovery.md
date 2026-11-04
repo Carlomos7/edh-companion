@@ -5,6 +5,8 @@ The player often starts with a feeling ("I want an Avatar deck"), not a spec. He
 ## 1. Explore first
 Before asking anything that benefits from context, look: candidate commanders for the idea (Scryfall, EDHREC), the theme's card pool in each color identity, what real decks with those commanders do, and what players say about them. Reuse research.json; call research for anything big.
 
+Only recommend commanders that are verified legal: eligible as a commander and not banned, and for two commanders, a real pairing (see the audit skill's checks.md, "Commander eligibility"). `deck_check.py --commander "A" [--commander "B"]` checks this without a deck.
+
 ## 2. Recommend directions
 Show 2 to 4 options in the same short layout each:
 - **Commander or approach**, one line on what it does
@@ -18,7 +20,7 @@ Ask at natural decision points, only when the answer changes the deck. Typical o
 1. Which direction (the options above).
 2. **Theme strictness** (if there's a theme): strict / prefer with a few exceptions / themed printings only / none. And whether artwork matters.
 3. **Power**: bracket (explain it: Wizards' 1 to 5 scale; 3 is a typical upgraded deck).
-4. **Budget**, once: "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget · drippy (fancy printings, per-card max).
+4. **Budget**, once: "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget (hard limit or rough target?) · drippy (fancy printings, per-card max) · no expense spared (the ultimate blinged-out deck). Details: money-looks-export.md.
 5. Playstyle details only if the direction leaves them open (interaction level, win style).
 Multiple choice, recommended first with its reason. For low-impact gaps, state a provisional assumption ("assuming medium interaction; say if not") and move on. Record answers in PROJECT.md.
 

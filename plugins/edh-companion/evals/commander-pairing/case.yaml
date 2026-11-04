@@ -1,0 +1,8 @@
+schema_version: "1.0"
+name: commander-pairing
+description: An illegal commander pairing is caught, with the rule, and a legal alternative is offered.
+tags: [commanders, audit]
+execution: {prompt: "Can I run Pir, Imaginative Rascal and Tymna the Weaver together as my two commanders?", max_turns: 12, timeout_seconds: 600}
+runs: 2
+graders:
+  - {type: llm, name: correct, criteria: "PASS if the reply says no: Pir has 'Partner with Toothy, Imaginary Friend', which only pairs with Toothy, while Tymna has plain partner, and different partner abilities can't be combined. It may suggest Pir + Toothy or Tymna with another partner commander. FAIL if it says the pairing is legal."}

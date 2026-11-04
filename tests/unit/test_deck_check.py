@@ -88,6 +88,15 @@ class Live(unittest.TestCase):
         self.assertEqual(sol["finish"], "foil")
         self.assertIsNone(sol["price_usd"])                 # no foil price for a printing with no foil
 
+    def test_flexible_vs_hard_budget(self):
+        deck = "Commander\n1 Atraxa, Praetors' Voice\nDeck\n1 Rhystic Study\n98 Forest\n"
+        _, soft = run(deck, "--no-combos", "--budget", "5", "--per-card-max", "5")
+        _, hard = run(deck, "--no-combos", "--budget", "5", "--per-card-max", "5", "--hard-budget")
+        self.assertEqual(self.status(soft)["chk-budget-1"], "warning")   # a target: over is flagged with the amount
+        self.assertEqual(self.status(hard)["chk-budget-1"], "fail")      # a hard limit: over fails
+        self.assertEqual(self.status(soft)["chk-budget-3"], "warning")
+        self.assertEqual(self.status(hard)["chk-budget-3"], "fail")
+
     def test_commander_plus_two_combo(self):
         code, out = run("Commander\n1 Fire Lord Azula\nDeck\n1 Frantic Search\n1 Narset's Reversal\n97 Island\n", "--bracket", "3")
         two = [c for c in out["combos"]["included"] if c["two_card"]]

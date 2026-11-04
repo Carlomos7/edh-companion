@@ -22,7 +22,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 
 ## 2. Ask, one question at a time, only what they want to set
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
-2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget / drippy), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
+2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget, as a hard limit or a flexible target / drippy / no expense spared), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
 3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
 4. Research sources (optional): any to prefer (e.g. EDHREC, Reddit, a favourite creator) or to never use. Skip it and research uses everything available.
 5. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
@@ -34,7 +34,8 @@ platform: Moxfield
 workspace: ~/Documents/EDHCompanion
 defaults:
   bracket: 3
-  budget: no_limit          # no_limit | cheap | budget | drippy
+  budget: no_limit          # no_limit | cheap | budget | drippy | no_expense_spared
+  budget_limit: flexible    # flexible (a target with wiggle room) | hard
   aesthetic:
     treatments: [foil, borderless]
     per_card_max_usd: 30

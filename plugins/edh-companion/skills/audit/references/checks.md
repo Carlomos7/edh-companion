@@ -16,6 +16,13 @@ Every check in audit.json has `kind`: **deterministic** (script/tool result with
 4. Ambiguous cases from `theme_policy.unresolved` are `unverified` with the question, not decided by the auditor.
 5. Judge by the theme's **basis** in PROJECT.md (official / visual-story / mechanical / inspired) and its hard rules; flexible preferences can't fail a deck, hard rules can.
 
+## Commander eligibility (CR 903.3, 702.124; rules effective 2026-09-25)
+- A commander is a legendary creature, legendary Vehicle, or legendary Spacecraft with power/toughness, or a card that says it can be your commander. Not banned in Commander.
+- Two commanders only through one shared partner ability; abilities can't be mixed: both **partner**; both the **same "partner—[text]"** (Character select, Father & son, Friends forever (old cards printed "Friends forever" alone), Survivors); **partner with** each other by name; **choose a Background** + a legendary Background enchantment; **Doctor's companion** + a legendary creature that is only a Time Lord Doctor. Never more than two.
+- A Background is never a commander on its own.
+- Color identity is the two commanders' combined identity.
+- `deck_check.py` checks all of this (chk-legality-2, chk-legality-3) and cross-checks Scryfall's `is:commander`. A rules tool that predates 2026 gets partners wrong; trust the current rules text.
+
 ## Feasibility claims
 - Re-run the searches behind `research.json.feasibility` (or a brew claim like "no official cards exist", "only 6 eligible removal spells"). Same result: pass with the queries in evidence. Different result: fail. Couldn't run: unverified.
 - `infeasible` needs a confirmed count (for example no eligible commander); an estimate can only support `unknown` or `constrained`.
@@ -25,7 +32,7 @@ Every check in audit.json has `kind`: **deterministic** (script/tool result with
 Entries with `custom: true` (or names Scryfall can't find) are never legal Magic cards. A list containing them fails legality, even if the playgroup allows them; the audit says "casual/Rule 0 only" and checks the rest normally.
 
 ## Budgets and prices
-When PROJECT.md sets budgets: run deck_check with `--cheapest --budget --aesthetic-budget --per-card-max`. Over a hard budget fails; unpriced cards make the check unverified. Prices are Scryfall's daily price for that printing and finish, dated; any other figure is an estimate and is labelled so.
+When PROJECT.md sets budgets: run deck_check with `--cheapest --budget --aesthetic-budget --per-card-max`, adding `--hard-budget` only when PROJECT.md calls the limit hard. Over a hard limit fails; over a flexible target is a warning with the amount; unpriced cards make the check unverified. "No expense spared" has no limit to check; just report what the premium buys (looks vs gameplay). Prices are Scryfall's daily price for that printing and finish, dated; any other figure is an estimate and is labelled so.
 
 ## Acquisition claims
 When an acquisition plan is checked: products really contain the cards claimed (Scryfall `e:` search or the official list), prices have a source and date and match that printing and finish, availability claims (out of print, reprint announced, sold out) are cited, owned cards are excluded only if the player listed them. Unsupported claims are warnings; a wrong product content or price is a fail.

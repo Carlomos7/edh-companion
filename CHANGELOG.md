@@ -2,6 +2,11 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.3.0
+- **Commander eligibility, current rules (effective 2026-09-25):** a commander is a legendary creature, legendary Vehicle, or legendary Spacecraft with power/toughness, or a card that says it can be your commander; never banned; never more than two. Pairings follow CR 702.124 exactly: partner, the same partner—[text] (Character select, Father & son, Friends forever, Survivors; old "Friends forever" wording still pairs), partner with each other, choose a Background + a Background, Doctor's companion + a pure Time Lord Doctor; abilities can't be mixed and a Background is never a commander alone. `deck_check.py --commander A [--commander B]` checks a commander without a deck and cross-checks Scryfall's `is:commander`. research and brew only recommend commanders that pass. Found while testing: the installed rules tool returns pre-2026 partner rules.
+- **Budgets:** new "No expense spared: the ultimate blinged-out deck" option (collectibility called out separately from power). Budgets are flexible targets by default (over is a warning with the amount) unless the player says hard (`--hard-budget`, over fails). Recommendations come in small groups: within budget, worth stretching for (with the extra cost), and best regardless of budget; gameplay upgrades apart from printing upgrades.
+- **Tests:** 46 unit tests (commander eligibility and pairings offline and against Scryfall, flexible vs hard budgets).
+
 ## 7.2.0
 - **Getting the cards, on demand:** ask any time (before, during or after a build, or about one card or product) how to get cards. research checks real product contents (precons, Secret Lairs) against Scryfall, dated prices per printing, and availability (out of print, reprints, Reserved List); brew turns it into a short ranked plan (best path, buy-first cards, products vs singles, printing choices within the aesthetic budget, totals without owned cards), saved to ACQUISITION.md only if wanted. Offered after a finished deck, never forced. audit can check product contents and price claims. setup can save currency and preferred stores.
 

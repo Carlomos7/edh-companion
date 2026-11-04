@@ -37,7 +37,7 @@ A starting point (idea, theme, commander, card pool, or a list/Moxfield export/l
    - Themes and art: [references/themes.md](references/themes.md): what "on theme" means, feasibility, compromises, infeasible hard rules, rule changes. The theme is their goal; build the best deck inside it, and never present a deck as meeting rules it breaks.
    - Budgets (gameplay vs aesthetic), printings and finishes, bracket targeting, community alternatives and exports: [references/money-looks-export.md](references/money-looks-export.md).
    - Getting the cards (products vs singles, what to buy first, availability), whenever the player asks or budget/art makes it matter: [references/acquisition.md](references/acquisition.md).
-   - Read each card's text on Scryfall before writing its role or "why". Never invent cards.
+   - Read each card's text on Scryfall before writing its role or "why". Never invent cards. Before proposing or locking in a commander (or a pair), confirm it with `deck_check.py --commander "A" [--commander "B"]`.
    - Self-check the result (catches count, identity, bans, Game Changers, commander + 2 combos, wrong or off-set printings):
      `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" <decklist> --bracket N [--theme-sets …] --json <project>/deck_check.json`
      Fix every fail. This is not the audit.

@@ -11,7 +11,8 @@ and drift. This file only reports facts with fixed rules. Judgment (theme fit, p
 
 Usage:
   deck_check.py DECK [--commander NAME ...] [--bracket N] [--theme-sets spm,spe,...] [--no-combos] [--json OUT]
-                [--budget USD] [--aesthetic-budget USD] [--per-card-max USD] [--cheapest]
+                [--budget USD] [--aesthetic-budget USD] [--per-card-max USD] [--cheapest] [--hard-budget]
+  deck_check.py --commander NAME [--commander NAME]      only check commander eligibility and the pairing
 
 DECK is a Moxfield/Archidekt-style text list ("1 Sol Ring (C21) 263 *F*", sections Commander/Deck/Sideboard),
 or a brew.json. Finish markers *F* (foil) and *E* (etched) are read, and Archidekt [Commander] tags.
@@ -153,14 +154,80 @@ def is_land(card):
     return "Land" in card.get("type_line", "").split("//")[0]
 
 
+def front_type(card):
+    return (card.get("card_faces") or [card])[0].get("type_line", card.get("type_line", ""))
+
+
 def can_be_commander(card):
-    t, o = card.get("type_line", ""), oracle(card).lower()
-    return ("Legendary" in t and "Creature" in t) or "can be your commander" in o or "Background" in t
+    """CR 903.3 (Sep 2026): a legendary creature, Vehicle, or Spacecraft with power/toughness, or a card that says it
+    can be your commander (903.3a). A Background only with a 'choose a Background' partner (702.124k), so not alone."""
+    face = (card.get("card_faces") or [card])[0]
+    t = front_type(card)
+    if "can be your commander" in oracle(card).lower():
+        return True
+    if "Legendary" not in t:
+        return False
+    if "Creature" in t or "Vehicle" in t:
+        return True
+    return "Spacecraft" in t and (face.get("power") is not None or card.get("power") is not None)
+
+
+def partner_abilities(card):
+    """The partner abilities a card has (CR 702.124), read from its Oracle text lines."""
+    found = set()
+    for line in oracle(card).split("\n"):
+        ln = re.sub(r"\s*\(.*?\)\s*$", "", line.strip())
+        if re.fullmatch(r"Partner", ln):
+            found.add(("partner",))
+        elif m := re.fullmatch(r"Partner\s*[—-]\s*(.+)", ln):
+            found.add(("partner-text", m.group(1).strip().lower()))
+        elif m := re.fullmatch(r"Partner with (.+)", ln):
+            found.add(("partner-with", m.group(1).strip().lower()))
+        elif ln.lower() == "friends forever":  # pre-2026 printed wording, now "Partner—Friends forever"
+            found.add(("partner-text", "friends forever"))
+        elif ln.lower() == "choose a background":
+            found.add(("background-chooser",))
+        elif ln.lower() == "doctor's companion":
+            found.add(("doctors-companion",))
+    return found
+
+
+def is_background(card):
+    t = front_type(card)
+    return "Legendary" in t and "Enchantment" in t and "Background" in t
+
+
+def is_lone_doctor(card):
+    t = front_type(card)
+    return "Legendary" in t and "Creature" in t and t.split("—")[-1].split() == ["Time", "Lord", "Doctor"]
+
+
+def pairing(a, b):
+    """Can a and b be commanders together (CR 702.124)? Returns (ok, how or why not). Abilities can't be mixed (702.124f)."""
+    pa, pb = partner_abilities(a), partner_abilities(b)
+    if ("partner",) in pa and ("partner",) in pb:
+        return True, "both have partner"
+    shared = {x for x in pa if x[0] == "partner-text"} & {x for x in pb if x[0] == "partner-text"}
+    if shared:
+        return True, f"both have partner—{sorted(shared)[0][1]}"
+    if ("partner-with", b["name"].lower()) in pa and ("partner-with", a["name"].lower()) in pb:
+        return True, "partner with each other"
+    for x, y in ((a, b), (b, a)):
+        if ("background-chooser",) in partner_abilities(x) and is_background(y):
+            return True, f"{x['name']} chooses the Background {y['name']}"
+        if ("doctors-companion",) in partner_abilities(x) and is_lone_doctor(y) and "Creature" in front_type(x):
+            return True, f"{x['name']} is the Doctor's companion of {y['name']}"
+    why = "no shared partner ability"
+    if is_background(a) or is_background(b):
+        why = "a Background needs a commander with 'choose a Background'"
+    elif any(x[0] == "partner-with" for x in pa | pb):
+        why = "'partner with' only pairs with the named card"
+    return False, why
 
 
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("deck")
+    ap.add_argument("deck", nargs="?", help="decklist or brew.json; omit to check only the --commander card(s)")
     ap.add_argument("--commander", action="append", default=[])
     ap.add_argument("--bracket", type=int, choices=range(1, 6))
     ap.add_argument("--theme-sets", default="", help="comma-separated set codes counted as on theme (printing check)")
@@ -169,15 +236,21 @@ def main():
     ap.add_argument("--aesthetic-budget", type=float, help="extra spend allowed for chosen printings over the cheapest ones (USD); needs --cheapest")
     ap.add_argument("--per-card-max", type=float, help="most a single listed printing may cost (USD)")
     ap.add_argument("--cheapest", action="store_true", help="also look up each card's cheapest paper printing (slower)")
+    ap.add_argument("--hard-budget", action="store_true", help="budgets are hard limits (over = fail); by default they're flexible targets (over = warning with the amount)")
     ap.add_argument("--json", metavar="OUT", help="write the full result (per-card data included) to this file; '-' for stdout")
     a = ap.parse_args()
 
-    raw = open(a.deck, encoding="utf-8").read()
-    cards, cmd = parse_brew(json.loads(raw)) if a.deck.endswith(".json") else parse_text(raw)
+    if a.deck:
+        raw = open(a.deck, encoding="utf-8").read()
+        cards, cmd = parse_brew(json.loads(raw)) if a.deck.endswith(".json") else parse_text(raw)
+    elif a.commander:
+        cards, cmd = [], []
+    else:
+        ap.error("give a deck, or --commander NAME to check commander eligibility only")
     for n in a.commander:
         if not any(c["name"].lower() == n.lower() for c in cmd):
             cards = [c for c in cards if c["name"].lower() != n.lower()]
-            cmd.append({"qty": 1, "name": n, "set": None, "cn": None})
+            cmd.append({"qty": 1, "name": n, "set": None, "cn": None, "finish": "nonfoil"})
     entries = cmd + cards
     out = {"deck_hash": deck_hash(entries), "printings_hash": deck_hash(entries, True), "checked": time.strftime("%Y-%m-%d"),
            "commanders": [c["name"] for c in cmd], "checks": [], "cards": [], "combos": None, "stats": {}, "unavailable": []}
@@ -238,21 +311,41 @@ def main():
         for e, c in rows if c["name"] == n)]
     check("chk-singleton-1", "singleton", "No duplicates except basics and 'any number' cards", "fail" if dup else "pass", ", ".join(dup), dup)
 
-    cmd_cards = [c for e, c in rows[:len(cmd)]] if len(rows) >= len(cmd) else []
-    bad_cmd = [c["name"] for c in cmd_cards if not can_be_commander(c)]
+    cmd_cards = [found[i] for i in range(len(cmd)) if i in found]
+    deck_rows = [(entries[i], found[i]) for i in range(len(cmd), len(entries)) if i in found]
     if not cmd:
         check("chk-legality-2", "legality", "A commander is named", "unverified", "no commander given (use --commander or a Commander section)")
-    else:
-        check("chk-legality-2", "legality", "Commander can be a commander (legendary creature or says so)", "fail" if bad_cmd else "pass", ", ".join(bad_cmd), bad_cmd)
+    elif len(cmd) > 2:
+        check("chk-legality-2", "legality", "One commander, or two with a partner ability (CR 702.124g)", "fail", f"{len(cmd)} commanders listed", [c["name"] for c in cmd])
+    elif len(cmd_cards) == len(cmd):
+        # Scryfall's is:commander is the second, independent source for eligibility; disagreements are flagged.
+        try:
+            q = "(" + " or ".join('!"' + c["name"].replace('"', "") + '"' for c in cmd_cards) + ") is:commander"
+            sf = {c["name"] for c in http("https://api.scryfall.com/cards/search?q=" + urllib.parse.quote(q)).get("data", [])}
+        except Exception:
+            sf = None  # 404 when none match is also an exception; handled below
+        bad_cmd, notes = [], []
+        for c in cmd_cards:
+            ok = can_be_commander(c) or (len(cmd) == 2 and is_background(c))
+            if sf is not None and (c["name"] in sf) != can_be_commander(c) and not is_background(c):
+                notes.append(f"Scryfall is:commander disagrees for {c['name']}")
+            if not ok:
+                bad_cmd.append(c["name"])
+        if len(cmd) == 1 and is_background(cmd_cards[0]):
+            bad_cmd, why = [cmd_cards[0]["name"]], "a Background can only be a second commander (CR 702.124k)"
+        else:
+            why = "not a legendary creature, Vehicle or Spacecraft with power/toughness, and doesn't say it can be your commander (CR 903.3)"
+        banned_cmd = [c["name"] for c in cmd_cards if c["legalities"].get("commander") == "banned"]
+        st = "fail" if bad_cmd or banned_cmd else ("warning" if notes else "pass")
+        detail = "; ".join(x for x in [(", ".join(bad_cmd) + ": " + why) if bad_cmd else "", ("banned: " + ", ".join(banned_cmd)) if banned_cmd else "", "; ".join(notes)] if x)
+        check("chk-legality-2", "legality", "Commander is eligible (CR 903.3) and not banned", st, detail, bad_cmd + banned_cmd)
         if len(cmd) == 2:
-            kw = [set(c.get("keywords", [])) | ({"Background"} if "Background" in c.get("type_line", "") else set()) for c in cmd_cards]
-            ok = len(kw) == 2 and (("Partner" in kw[0] and "Partner" in kw[1]) or "Background" in kw[0] | kw[1] or "Friends forever" in kw[0] & kw[1]
-                                   or "Doctor's companion" in kw[0] | kw[1] or any("partner with" in oracle(c).lower() for c in cmd_cards))
-            check("chk-legality-3", "legality", "Two commanders are allowed together (partner, background, friends forever...)", "pass" if ok else "warning",
-                  "" if ok else "could not confirm the pairing from keywords; read both cards")
+            ok, how = pairing(cmd_cards[0], cmd_cards[1])
+            check("chk-legality-3", "legality", "The two commanders share a partner ability (CR 702.124)", "pass" if ok else "fail", how,
+                  [] if ok else [c["name"] for c in cmd_cards])
 
     identity = set(x for c in cmd_cards for x in c.get("color_identity", []))
-    off = [c["name"] for e, c in rows[len(cmd):] if not set(c.get("color_identity", [])) <= identity]
+    off = [c["name"] for e, c in deck_rows if not set(c.get("color_identity", [])) <= identity]
     check("chk-identity-1", "identity", f"Every card within the commander color identity ({''.join(sorted(identity)) or 'C'})", "fail" if off else "pass", ", ".join(off), off)
 
     banned = [c["name"] for e, c in rows if c["legalities"].get("commander") == "banned"]
@@ -294,13 +387,13 @@ def main():
         check("chk-theme-1", "theme", "Every chosen printing is from an on-theme set (" + ", ".join(sorted(sets)) + ")", "warning" if offt else "pass",
               f"{len(offt)} printings outside those sets (exceptions and art still need a human/auditor look): " + "; ".join(offt[:40]), [x.split(" (")[0] for x in offt])
 
-    nonland = [(e, c) for e, c in rows[len(cmd):] if not is_land(c)]
+    nonland = [(e, c) for e, c in deck_rows if not is_land(c)]
     curve = {}
     for e, c in nonland:
         k = str(min(int(c.get("cmc") or 0), 7)) + ("+" if int(c.get("cmc") or 0) >= 7 else "")
         curve[k] = curve.get(k, 0) + e["qty"]
     types = {}
-    for e, c in rows[len(cmd):]:
+    for e, c in deck_rows:
         front = c.get("type_line", "").split("//")[0]
         t = next((x for x in ("Land", "Creature", "Planeswalker", "Battle", "Artifact", "Enchantment", "Instant", "Sorcery") if x in front), "Other")
         types[t] = types.get(t, 0) + e["qty"]
@@ -331,24 +424,26 @@ def main():
     if a.budget is not None:
         basis, total = ("cheapest printings", cheap_total) if cheap_total is not None else ("listed printings", listed)
         missing = out["stats"].get("cheapest_missing", []) if cheap_total is not None else unpriced
-        st = "fail" if total > a.budget else ("unverified" if missing else "pass")
-        check("chk-budget-1", "other", f"Gameplay cost within ${a.budget:g} ({basis})", st,
+        over = "fail" if a.hard_budget else "warning"
+        st = over if total > a.budget else ("unverified" if missing else "pass")
+        check("chk-budget-1", "other", f"Gameplay cost within ${a.budget:g} ({basis}, {'hard limit' if a.hard_budget else 'flexible target'})", st,
               f"${total} for {basis}" + (f"; no price for: {', '.join(missing)}" if missing else ""))
     if a.aesthetic_budget is not None:
         if cheap_total is None:
             check("chk-budget-2", "other", f"Aesthetic premium within ${a.aesthetic_budget:g}", "unverified", "cheapest printings couldn't be looked up")
         else:
             prem = out["stats"]["aesthetic_premium_usd"]
-            st = "fail" if prem > a.aesthetic_budget else ("unverified" if unpriced else "pass")
+            st = ("fail" if a.hard_budget else "warning") if prem > a.aesthetic_budget else ("unverified" if unpriced else "pass")
             check("chk-budget-2", "other", f"Aesthetic premium (chosen printings over their cheapest) within ${a.aesthetic_budget:g}", st,
                   f"premium ${prem} ({out['stats']['premium_note']})" + (f"; no price for the chosen printing of: {', '.join(unpriced)}" if unpriced else ""))
     if a.per_card_max is not None:
         over = [f"{c['name']} ${p}" for e, c, p in priced if p is not None and p > a.per_card_max]
-        check("chk-budget-3", "other", f"No listed printing over ${a.per_card_max:g} each", "fail" if over else "pass", "; ".join(over))
+        check("chk-budget-3", "other", f"No listed printing over ${a.per_card_max:g} each ({'hard limit' if a.hard_budget else 'flexible target'})",
+              ("fail" if a.hard_budget else "warning") if over else "pass", "; ".join(over))
 
     if not a.no_combos and cmd:
         try:
-            body = {"commanders": [{"card": n} for n in out["commanders"]], "main": [{"card": c["name"], "quantity": e["qty"]} for e, c in rows[len(cmd):]]}
+            body = {"commanders": [{"card": n} for n in out["commanders"]], "main": [{"card": c["name"], "quantity": e["qty"]} for e, c in deck_rows]}
             res = http("https://backend.commanderspellbook.com/find-my-combos", body)
             r = res.get("results", res)
             inc = []

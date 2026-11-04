@@ -34,6 +34,7 @@ from edhcore.cards import front_type, is_land, match_name, oracle, price, prices
 from edhcore.decklist import FINISH, LINE, SECTION, deck_hash, parse_brew, parse_text  # noqa: E402,F401
 from edhcore.http import CTX, MAX_WAIT, Client, RequestError, Unavailable  # noqa: E402,F401
 from edhcore.session import RANK, Session, ident_for  # noqa: E402
+from edhcore.types import card_types  # noqa: E402
 
 GC_LIMIT = {1: 0, 2: 0, 3: 3, 4: None, 5: None}
 _SESSION = None
@@ -373,9 +374,8 @@ def main():
         k = str(min(int(c.get("cmc") or 0), 7)) + ("+" if int(c.get("cmc") or 0) >= 7 else "")
         curve[k] = curve.get(k, 0) + e["qty"]
     types = {}
-    for e, c in deck_rows:
-        front = c.get("type_line", "").split("//")[0]
-        t = next((x for x in ("Land", "Creature", "Planeswalker", "Battle", "Artifact", "Enchantment", "Instant", "Sorcery") if x in front), "Other")
+    for e, c in deck_rows:  # edhcore.types: the same rule the pages use (front face for DFCs, every half for split cards)
+        t = card_types(c)["type_group"]
         types[t] = types.get(t, 0) + e["qty"]
     priced = [(e, c, price(c, e.get("finish"))) for e, c in rows]
     prices = [p * e["qty"] for e, c, p in priced if p is not None]

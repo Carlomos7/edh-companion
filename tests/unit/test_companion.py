@@ -147,6 +147,12 @@ class Companion(unittest.TestCase):
             "src-002 has the same URL as src-001": dict(sources=[src("src-001", "https://Example.com/a"), src("src-002", "https://example.com/a/?utm_source=x")], findings=[]),
             "accessed 2999-01-01 is in the future": dict(sources=[src("src-001", "https://example.com/a", accessed="2999-01-01")], findings=[]),
             "published 2999-02 is in the future": dict(sources=[src("src-001", "https://example.com/a", published="2999-02")], findings=[]),
+            "locator source src-404 is not a defined source": dict(sources=[src("src-001", "https://example.com/a")], findings=[
+                {"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": ["src-001"],
+                 "locators": [{"source": "src-404", "at": ["1:00"]}]}]),
+            "locator source src-002 is not in its evidence": dict(sources=[src("src-001", "https://example.com/a"), src("src-002", "https://example.com/b")], findings=[
+                {"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": ["src-001"],
+                 "locators": [{"source": "src-002", "at": ["1:00-2:00"]}]}]),
         }
         for msg, extra in cases.items():   # checks newer than 7.8 warn on research.json so existing projects stay valid
             with self.subTest(msg):

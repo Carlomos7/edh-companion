@@ -23,12 +23,12 @@ SLOTS = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s5)", "var(--s6)", "var(-
 def validate(D):
     errs, warns = [], []
     req = lambda o, keys, where: [errs.append(f"{where}: missing {k}") for k in keys if k not in o]
-    req(D, ["title", "groups", "tiers"], "site")
+    req(D, ["title", "groups"], "site")
     if (D.get("page") or {}).get("images", "atlas") not in ("atlas", "cdn", "none"):
         errs.append(f"page images must be atlas, cdn or none, not {D['page'].get('images')!r}")
     if D.get("viewer", "simple") not in ("simple", "three"):
         errs.append(f"viewer must be simple or three, not {D.get('viewer')!r}")
-    if not any(D.get(k) for k in ("groups", "tiers", "rankings", "research")):
+    if not any(D.get(k) for k in ("groups", "rankings", "research")):
         errs.append("site has no decks, rankings or research")
     imgs = D.get("images", {})
     labels = {l["label"] for l in (D.get("theme") or {}).get("labels", [])} | {"off-theme"}
@@ -41,6 +41,8 @@ def validate(D):
             if c["slug"] in slugs:
                 errs.append(f"duplicate commander slug {c['slug']}")
             slugs.add(c["slug"])
+            if (c.get("hero") or {}).get("art") and c["hero"]["art"] not in imgs:
+                errs.append(f"{c['slug']}: hero image key {c['hero']['art']} not in images")
             ids = [d.get("id") or f"b{d.get('bracket')}" for d in c.get("decks", [])]
             if len(ids) != len(set(ids)):
                 errs.append(f"{c['slug']}: duplicate build ids {ids}")
@@ -51,36 +53,55 @@ def validate(D):
                 n = sum(x["qty"] for x in d.get("cards", []))
                 if n != 100:
                     errs.append(f"{w}: {n} cards, must be 100")
-                if d.get("errors"):
-                    warns.append(f"{w}: deck_check failures: {'; '.join(d['errors'][:3])}")
-                state = (d.get("validation") or {}).get("state")
+                state = (d.get("audit_view") or {}).get("verdict")
                 if state not in ("not audited", "audit out of date", "pass", "pass_with_warnings", "fail", "incomplete"):
                     errs.append(f"{w}: audit state {state!r} is not a derived state")
                 elif state != "pass":
-                    warns.append(f"{w}: shown as {state}")
+                    warns.append(f"{w}: shown as {(d.get('audit_view') or {}).get('verdict_label') or state}")
+                for x in [r for k in ("proposed", "applied", "rejected") for r in (d.get("recs_view") or {}).get(k, [])]:
+                    if x.get("img") and x["img"] not in imgs:
+                        errs.append(f"{w}: change {x.get('add')}: image key {x['img']} not in images")
                 for x in d.get("cards", []):
                     if x.get("img") and x["img"] not in imgs:
                         errs.append(f"{w}: image key {x['img']} not in images")
                     if D.get("theme") and x.get("theme") and x["theme"] not in labels:
                         errs.append(f"{w}: {x['name']} has unknown theme label {x['theme']}")
-        decks = {f"{c['slug']}/{d.get('id') or 'b' + str(d['bracket'])}" for c in g.get("commanders", []) for d in c.get("decks", [])}
-        for s in g.get("swaps", []):
-            for f in s.get("fits", []):
-                if f["deck"] not in decks:
-                    errs.append(f"swap {s['card']} points at missing deck {f['deck']}")
     for r in D.get("rankings", []):
         req(r, ["id", "title", "method", "cards"], f"ranking {r.get('title')}")
         for c in r.get("cards", []):
             if c.get("img") and c["img"] not in imgs:
                 errs.append(f"ranking {r['id']}: image key {c['img']} not in images")
-    for t in D.get("tiers", []):
-        req(t, ["id", "title", "cards"], f"tier {t.get('id')}")
-        for c in t.get("cards", []):
-            if c.get("pct") is None:
-                errs.append(f"tier {t['id']}: {c['name']} has no pct")
     if not D.get("data_dates"):
         warns.append("no data_dates: the accuracy tab will be empty")
     return errs, warns
+
+
+def hero_art(D, out_dir, mode, raw_dir=None):
+    """Commander art crops for the hero: a WebP next to the atlases (atlas), Scryfall's URL (cdn, local pages only)
+    or nothing. A crop that can't be fetched is dropped with a warning; the hero still shows the card."""
+    warns = []
+    for g in D.get("groups", []):
+        for c in g.get("commanders", []):
+            h = c.get("hero") or {}
+            if not h.get("art_crop") or mode == "cdn":
+                continue
+            src = None
+            if mode == "atlas":
+                sys.path.insert(0, HERE)
+                import palette
+                src = palette.art_file(h["art_crop"], raw_dir)
+            if not src:
+                h["art_crop"] = None
+                if mode == "atlas":
+                    warns.append(f"{c['slug']}: commander art crop could not be downloaded; the hero shows the card only")
+                continue
+            from PIL import Image
+            name = "img/" + os.path.splitext(os.path.basename(src))[0] + ".webp"
+            os.makedirs(os.path.join(out_dir, "img"), exist_ok=True)
+            with Image.open(src) as im:
+                im.convert("RGB").save(os.path.join(out_dir, name), "WEBP", quality=80, method=6)
+            h["art_crop"] = name
+    return warns
 
 
 def main():
@@ -111,6 +132,7 @@ def main():
         missing = [k for k in D["images"] if k not in man["cards"]]
         if missing:
             warns.append(f"{len(missing)} image(s) failed to download; those cards show blank art")
+    warns += hero_art(D, a.out, mode, a.raw_cache)
     if D.get("theme"):
         for i, l in enumerate(D["theme"]["labels"]):
             l.setdefault("color", SLOTS[i % len(SLOTS)])

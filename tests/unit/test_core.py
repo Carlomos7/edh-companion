@@ -286,6 +286,23 @@ class Freshness(unittest.TestCase):
             self.assertEqual(s.scryfall.search("t:goblin is:nothing"), [])
 
 
+class CardTypes(unittest.TestCase):
+    """One classifier for deck_check stats and pages: layout decides double-faced vs split handling."""
+
+    def test_layout_cases(self):
+        from edhcore.types import card_types
+        split = {"name": "Commit // Memory", "layout": "split", "type_line": "Instant // Sorcery",
+                 "card_faces": [{"type_line": "Instant"}, {"type_line": "Sorcery"}]}
+        azcanta = {"name": "Search for Azcanta // Azcanta, the Sunken Ruin", "layout": "transform",
+                   "type_line": "Legendary Enchantment // Legendary Land",
+                   "card_faces": [{"type_line": "Legendary Enchantment"}, {"type_line": "Legendary Land"}]}
+        mdfc = {"name": "Sink into Stupor // Soporific Springs", "layout": "modal_dfc", "type_line": "Instant // Land",
+                "card_faces": [{"type_line": "Instant"}, {"type_line": "Land"}]}
+        self.assertEqual((card_types(split)["type_group"], card_types(split)["types"]), ("Instant", ["Instant", "Sorcery"]))
+        self.assertEqual((card_types(azcanta)["type_group"], card_types(azcanta)["mdfc_land"]), ("Enchantment", False))
+        self.assertEqual((card_types(mdfc)["type_group"], card_types(mdfc)["mdfc_land"]), ("Instant", True))
+
+
 class CacheSafety(unittest.TestCase):
     """A corrupt cache is rebuilt, but recovery never deletes anything in a project, workspace or repo."""
 

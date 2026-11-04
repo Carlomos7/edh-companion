@@ -214,6 +214,13 @@ def research_problems(doc, known=(), soft=None):
         for ref in ev:
             if isinstance(ref, str) and ref.startswith(("src-", "fnd-")) and ref not in ids:
                 (out if sec in HARD_REF_SECTIONS else warn).append(f"{sec}: evidence {ref} is not a defined source or finding")
+    for f in doc.get("findings", []):  # timestamps must point at a source the finding actually cites
+        for loc in f.get("locators") or []:
+            s = loc.get("source")
+            if s not in set(src) | set(known):
+                warn.append(f"findings: {f.get('id')}: locator source {s} is not a defined source")
+            elif s not in (f.get("evidence") or []):
+                warn.append(f"findings: {f.get('id')}: locator source {s} is not in its evidence")
     first = {}
     for s in doc.get("sources", []):
         k = norm_url(s.get("url", ""))

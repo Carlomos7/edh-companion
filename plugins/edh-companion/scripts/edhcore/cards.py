@@ -76,7 +76,7 @@ def record(c, qty=1, commander=False, finish="nonfoil"):
         "finish": finish or "nonfoil", "finishes_available": c.get("finishes", []), "price_usd": price(c, finish),
         "price_source": "Scryfall daily price", "illustration_id": c.get("illustration_id"), "treatment": treatment(c),
         "artist": c.get("artist"), "scryfall_uri": c.get("scryfall_uri"),
-        "image": img.get("normal"), "art_crop": img.get("art_crop"), "back_image": back_image(c),
+        "image": img.get("normal"), "art_crop": img.get("art_crop"), "back_image": back_image(c), "layout": c.get("layout"),
     }
 
 

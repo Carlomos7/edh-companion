@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pyyaml", "jsonschema>=4.18", "certifi"]
+# dependencies = ["pyyaml", "jsonschema>=4.18", "certifi", "pillow"]
 # ///
 """Build the page data for the template from project files, so no number on the page is typed by hand.
 
@@ -9,12 +9,16 @@
   site_data.py from-showcase SHOWCASE  [--out SHOWCASE/report/page-data.json] [common flags]
   common flags: [--mode summary|interactive|showcase] [--theme FILE|JSON] [--title T] [--subtitle S]
                 [--style fancy|basic] [--images atlas|cdn|none] [--viewer simple|3d] [--show a,b] [--hide a,b]
+                [--include-notes]
 
 A project gives PROJECT.md, DECISIONS.md, research.json (all optional) and brew.json / brew-<variant>.json, each paired
 with audit.json / audit-<variant>.json. A project needs a brew file or research.json. Card data (names, printings,
 images, prices, Oracle-text roles, mana, cast-by-turn, price ladder) comes from the audit skill's deck_check.py.
 Projects that fail `companion.py validate` are refused. The audit state is derived, never upgraded: no audit file ->
 "not audited"; audit of another version or hash -> "audit out of date"; else the audit verdict.
+Presentation views (findings, disagreements, sources, audit, recommendations, notices, hero, card types) come from
+views.py, colours from palette.py. Private notes (DECISIONS.md lines, PROJECT.md text) are left out unless
+--include-notes; STATE.md is never read.
 
 A showcase is a folder with showcase.yaml (title, mode, theme, projects[] with project path relative to
 <workspace>/projects = SHOWCASE/../../projects, or absolute, plus optional group and theme). Project files are only read.
@@ -23,17 +27,17 @@ Modes: showcase = every section, 3D viewer, card fan (default); interactive = sa
 minimal animation; summary = reports/summary.md only (Markdown). --style basic = no images or charts.
 Writes presentation-checks.md next to the output with the inputs, sections and theme source.
 """
-import argparse, glob, json, os, re, shutil, subprocess, sys, tempfile, time, urllib.parse
+import argparse, glob, json, os, re, shutil, subprocess, sys, tempfile, time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 DECK_CHECK = os.path.normpath(os.path.join(HERE, "..", "..", "audit", "scripts", "deck_check.py"))
 PLUGIN_SCRIPTS = os.path.normpath(os.path.join(HERE, "..", "..", "..", "scripts"))
+sys.path.insert(0, HERE)
+import palette as artpal, views  # noqa: E402  (site_data.palette() below is the legacy accent pair)
 # shortcut: every single-faced card shows Magic's standard back; deck_check has no card_back_id. Upgrade if it adds one.
 STD_BACK = "0aeebaf5-8c7d-4636-9e82-8c27447861f7"
 TEMPLATE_RANGES = {"lands": (35, 38), "ramp": (8, 12), "draw": (8, 12), "removal": (8, 12), "wipe": (2, 4)}
-CLASS_LABEL = {"verified_fact": "Verified facts", "calculated": "Calculated", "popularity_metric": "Popularity stats",
-               "community_opinion": "Community opinions", "model_assessment": "Claude's assessments", "unresolved": "Unresolved"}
-BRACKETS = {1: "Exhibition", 2: "Core", 3: "Upgraded", 4: "Optimized", 5: "cEDH"}
+CLASS_LABEL, BRACKETS = views.CLASS_LABEL, views.BRACKETS  # one label set for the page, the summary and the docs
 
 SECTIONS = ("charts", "swaps", "sources", "fan", "prices", "viewer")
 ALL = dict.fromkeys(SECTIONS, True)
@@ -101,20 +105,17 @@ def deck_check(deck_path, tmp, project, cheapest=False, cards_only=False):
 
 
 def note_unavailable(site, res, where):
-    """Show missing or stale card data on the page (sources & accuracy) instead of failing the build."""
+    """Show missing or stale card data on the page (sources & accuracy, and a notice) instead of failing the build."""
     v = (res.get("data") or {}).get("verification")
     items = list(res.get("unavailable") or []) + ([f"card data {v} (as of {res['data'].get('as_of')})"] if v in ("stale", "unavailable") else [])
     site.D["accuracy"]["unverified"] += [{"text": x, "where": where} for x in items]
+    if v in ("stale", "unavailable"):
+        site.notice("warn", f"Card data is {v} (as of {res['data'].get('as_of') or 'unknown'}, {where}): prices, legality and printings may have changed.")
+    for x in res.get("unavailable") or []:
+        site.notice("warn", f"{x} ({where}).")
 
 
-def video_link(url, ts):
-    """Link that starts the video at mm:ss or h:mm:ss."""
-    secs = 0
-    for part in ts.split(":"):
-        secs = secs * 60 + int(part)
-    u = urllib.parse.urlparse(url)
-    q = [(k, v) for k, v in urllib.parse.parse_qsl(u.query) if k != "t"] + [("t", f"{secs}s")]
-    return urllib.parse.urlunparse(u._replace(query=urllib.parse.urlencode(q)))
+video_link = views.time_url  # one link rule for every timestamp on the page
 
 
 def theme_setup(brews):
@@ -242,6 +243,16 @@ def theme_arg(s):
     return load(s) if os.path.exists(s) else json.loads(s)
 
 
+def look_for(candidates, identity=None, art_url=None, fetch=True):
+    """resolve_look plus look.palette (full light/dark roles): explicit theme > commander artwork > identity > neutral.
+    The art crop comes from the shared image cache (downloaded once); offline or unreadable art falls back."""
+    look = resolve_look(candidates, identity)
+    theme = next((c for _, c in candidates if c), None)
+    art = artpal.art_file(art_url) if art_url and fetch and not theme else None
+    look["palette"] = artpal.resolve(theme, art, identity_hues(identity) if identity else None, NEUTRAL)
+    return look
+
+
 # ---------- one report, many projects ----------
 class Site:
     def __init__(self, a, multi):
@@ -249,11 +260,19 @@ class Site:
         self.D = {"schema": 3, "title": "", "subtitle": "", "generated": time.strftime("%Y-%m-%d"), "tiers": [], "groups": [], "rankings": [],
                   "research": [], "images": {f"back_{STD_BACK}": f"https://backs.scryfall.io/normal/{STD_BACK[0]}/{STD_BACK[1]}/{STD_BACK}.jpg"},
                   "default_back": f"back_{STD_BACK}", "sources": [], "data_dates": {}, "fan": [], "multi": multi,
-                  "accuracy": {"counts": {}, "findings": [], "unverified": [], "decks": []}}
+                  "accuracy": {"counts": {}, "findings": [], "unverified": [], "decks": []},
+                  "notices": [], "findings_view": [], "disagreements_view": [], "sources_view": [], "research_tab": []}
         self.D["page"], self.D["viewer"] = page_settings(a)
         self.report = {"inputs": [], "sections": [], "looks": []}
         self.swaps, self.swap_cards, self.cms, self.slugs, self.titles = {}, {}, {}, set(), []
-        self.brews = []
+        self.brews, self.researches, self.recs, self.hero_in = [], [], [], {}
+        self.notes = bool(getattr(a, "include_notes", False))
+        self.fetch_art = self.D["page"]["mode"] != "summary"
+
+    def notice(self, level, text, proj=None):
+        text = f"{proj}: {text}" if proj else text
+        if all(n["text"] != text for n in self.D["notices"]):
+            self.D["notices"].append({"level": level, "text": text, "project": proj})
 
     def add_img(self, card):
         if not card.get("image") or self.D["page"]["images"] == "none":
@@ -339,10 +358,12 @@ def status_of(card, data=None):
     return (st if st in ("upcoming", "banned", "not_legal") else None), (rel if st == "upcoming" else None)
 
 
-def research_views(site, research, proj, title, links, built, groups, ws):
+def research_views(site, research, proj, title, links, built, groups, ws, deck_names=()):
     """Commanders compared and rankings tabs. A research-only project gets its own research tab; otherwise the
-    commanders go into the deck tabs of that project as a compact comparison."""
-    refs = [c["card"] for c in research.get("commanders", [])] + [x["card"] for r in research.get("rankings", []) for x in r["cards"]]
+    commanders go into the deck tabs of that project as a compact comparison. Every project with research content
+    also gets a research_tab entry (candidates, recommendations, gaps, next steps; findings live in findings_view)."""
+    refs = ([c["card"] for c in research.get("commanders", [])] + [x["card"] for r in research.get("rankings", []) for x in r["cards"]]
+            + [c["card"] for c in research.get("card_candidates", [])])
     found = site.lookup(refs, ws)
     card = lambda ref: found.get(ref["name"].lower()) or found.get(ref["name"].split(" // ")[0].lower()) or {}
     rows = []
@@ -363,7 +384,8 @@ def research_views(site, research, proj, title, links, built, groups, ws):
             st, rel = status_of(k, x)
             cards.append({"name": x["card"]["name"], "img": f, "back": b, "rank": x["rank"], "tier": x.get("tier"), "pct": x.get("inclusion_pct"),
                           "decks": x.get("decks"), "n": x.get("total_decks"), "why": x["why"], "evidence": links(x["evidence"]),
-                          "status": st, "releases": rel, "set": k.get("set"), "cn": k.get("collector_number"), "type": k.get("type_line")})
+                          "status": st, "releases": rel, "set": k.get("set"), "cn": k.get("collector_number"), "type": k.get("type_line"),
+                          **(views.card_types(k) if k else {})})
         site.D["rankings"].append({"id": rid, "title": r["group"], "project": proj, "scope": r.get("scope"), "method": r["method"],
                                    "as_of": r.get("as_of"), "cards": cards})
     if groups:
@@ -376,6 +398,22 @@ def research_views(site, research, proj, title, links, built, groups, ws):
                                                       "positions": [{"position": p["position"], "sources": links(p["evidence"])} for p in d["positions"]]}
                                                      for d in research.get("disagreements", [])],
                                    "feasibility": (research.get("feasibility") or {}).get("verdict")})
+    if any(research.get(k) for k in ("findings", "disagreements", "card_candidates", "recommended_next_steps", "recommendations")):
+        names = {n.lower() for n in deck_names}
+        cands = []
+        for c in research.get("card_candidates", []):
+            k = card(c["card"])
+            f, b = site.add_img(k) if k else (None, None)
+            cands.append({"name": c["card"]["name"], "img": f, "back": b, "set": k.get("set"), "cn": k.get("collector_number"),
+                          "relevance": c["relevance"], "synergy": c.get("synergy"), "role": c.get("role"), "theme_fit": c.get("theme_fit"),
+                          "in_deck": c["card"]["name"].lower() in names, "_ev": c.get("evidence", []), **(views.card_types(k) if k else {})})
+        site.D["research_tab"].append({
+            "id": slug(f"research-tab {proj or ''}"), "title": "Research" + (f": {title}" if site.multi else ""), "project": proj,
+            "has_builds": bool(groups), "question": research["scope"]["question"], "version": research["version"], "created": research.get("created"),
+            "feasibility": research.get("feasibility"), "candidates": cands, "gaps": list(research.get("gaps", [])),
+            "recommendations": [dict(r, _ev=r.get("evidence", [])) for r in research.get("recommendations", [])],
+            "alternatives": [dict(x, _ev=x.get("evidence", [])) for x in research.get("alternatives", [])],
+            "next_steps": list(research.get("recommended_next_steps", [])), "follow_up_questions": list(research.get("follow_up_questions", []))})
 
 
 def add_project(site, ws, group_override=None, look_cands=()):
@@ -405,10 +443,15 @@ def add_project(site, ws, group_override=None, look_cands=()):
     tsite, tlabel = theme_setup([b["brew"] for b in builds])
     if tsite:
         D["theme"] = D.get("theme") or tsite
-    decisions = decision_lines(ws)
+    decisions = decision_lines(ws) if site.notes else []
+    if not site.notes and (decision_lines(ws) or project or os.path.exists(os.path.join(ws, "STATE.md"))):
+        site.notice("info", "Private notes (DECISIONS.md, PROJECT.md text, STATE.md) are not included in this page; "
+                            "rebuild with --include-notes for your own copy.")
     community, youtube, links = research_parts(site, research, proj) if research else ([], [], lambda r: [])
     if research:
+        site.researches.append((proj, research))
         site.report["inputs"].append({"file": f"{pname}/research.json" if proj else "research.json", "version": research["version"]})
+    deck_names = set()
     price = lambda card: float(card["price_usd"]) if card.get("price_usd") else None
     used_groups, built = [], set()
     for B in builds:
@@ -437,7 +480,8 @@ def add_project(site, ws, group_override=None, look_cands=()):
                           "set": c["set"], "cn": c["collector_number"], "price": price(c), "theme": tlabel.get(bc.get("theme")),
                           "img": f, "back": b, "roles": c.get("roles") or {}, "label": bc.get("role"), "flags": fails.get(c["name"], []),
                           "mana": c.get("mana_cost"), "gc": c["game_changer"], "status": st, "releases": rel, "cheapest": c.get("cheapest"),
-                          "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None})
+                          "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None, **views.card_types(c)})
+        deck_names.update(c["name"] for c in cards)
         s = res["stats"]
         roles = s.get("roles") or {}
         stats = {"price": s["price_usd"], "price_note": s.get("price_note"), "unpriced": [c["name"] for c in cards if c["price"] is None],
@@ -448,6 +492,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
         for k in ("mana", "cast_by_turn", "price_ladder"):
             if s.get(k):
                 stats[k] = s[k]
+        stats["type_counts"], stats["mdfc_lands"] = views.type_counts(cards)  # views.card_types: one rule for groups, filters, charts
         if "roles" in s:
             stats["template"] = {"lands": [s["lands"], *TEMPLATE_RANGES["lands"]], **{r: [roles.get(r, 0), *TEMPLATE_RANGES[r]] for r in ("ramp", "draw", "removal", "wipe")}}
             stats["template_source"] = ("Typical ranges for a Commander deck, not rules. Role counts come from fixed Oracle-text rules "
@@ -470,7 +515,11 @@ def add_project(site, ws, group_override=None, look_cands=()):
                 ("Alternatives considered", [f"{x['option']}: {x['why']}" for x in brew.get("alternatives", [])]),
                 ("Proposed cuts", [f"{r['cut']}: {r['reason']} ({r['id']}, {r['status']})" for r in brew["recommendations"]
                                    if r.get("cut") and not r.get("add") and r["status"] != "rejected"]),
-                ("Theme (PROJECT.md)", project.get("Theme", [])),
+                # the theme rules explain the badges, so they always show; PROJECT.md's own words only with --include-notes
+                ("Theme rules", [x for x in [f"Mode: {pol['mode']}" if pol.get("mode") else None,
+                                             f"Counts as on theme: {pol['eligibility']}" if pol.get("eligibility") else None,
+                                             f"Artwork matters: {'yes' if pol['art_required'] else 'no'}" if "art_required" in pol else None] if x]),
+                ("Theme (PROJECT.md)", project.get("Theme", []) if site.notes else []),
                 ("Player decisions (DECISIONS.md)", decisions)]
         summary = {"pitch": st["game_plan"], "wins": win or None, "sections": [{"title": t, "items": i} for t, i in secs if i], "community": community}
         cmd_names = [c["name"] for c in brew["commander"]["cards"]]
@@ -487,6 +536,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
         label = B["id"].upper() if re.fullmatch(r"b\d", B["id"]) else B["id"]
         deck = {"id": B["id"], "label": label, "bracket": tb["bracket"], "project": proj, "rule0": rule0, "future": brew.get("future"),
                 "cards": cards, "stats": stats, "theme": theme, "validation": val, "summary": summary, "version": brew["version"],
+                "archetype": st["archetype"], "audit_view": views.audit_view(audit, val),
                 "moxfield": "Commander\n" + "\n".join(lines[:ncmd]) + "\n\nDeck\n" + "\n".join(lines[ncmd:]),
                 "errors": [f"{ch['id']}: {ch['requirement']}" + (f" ({ch['detail']})" if ch.get("detail") else "") for ch in res["checks"] if ch["status"] == "fail"]}
         g = site.group(group_override or brew.get("group") or " / ".join(cmd_names))
@@ -501,13 +551,20 @@ def add_project(site, ws, group_override=None, look_cands=()):
             site.slugs.add(cslug)
             c0 = next((c for c in cards if c["commander"]), {"img": None, "mv": 0})  # the commander's data may be unavailable
             identity = sorted({x for c in res["cards"] if c["commander"] for x in c.get("color_identity", [])})
+            art = next((c.get("art_crop") for c in res["cards"] if c["commander"]), None)
             cm = site.cms[key] = {"slug": cslug, "name": " / ".join(cmd_names), "project": proj, "img": c0["img"], "mv": c0["mv"], "decks": [],
-                                  "youtube": youtube, "look": resolve_look(cands, identity)}
+                                  "youtube": youtube, "look": look_for(cands, identity, art, site.fetch_art)}
+            site.hero_in[cslug] = (identity, art)
             g["commanders"].append(cm)
-            site.report["looks"].append({"for": cm["name"] + (f" ({proj})" if proj else ""), "source": cm["look"]["source"]})
+            site.report["looks"].append({"for": cm["name"] + (f" ({proj})" if proj else ""), "source": cm["look"]["source"],
+                                         "palette": cm["look"]["palette"]["source"]})
             if c0["img"]:
                 D["fan"].append(c0["img"])
         cm["decks"].append(deck)
+        site.recs.append((deck, brew["recommendations"], proj, [c["name"] for c in cards]))
+        if research:
+            for n in views.research_notices(research, brew, label if len(builds) > 1 else None):
+                site.notice(n["level"], n["text"], proj)
         for r in brew["recommendations"]:
             if r["status"] != "rejected" and r.get("add"):
                 row = site.swaps.setdefault(g["id"], {}).setdefault(r["add"].lower(), {
@@ -520,10 +577,35 @@ def add_project(site, ws, group_override=None, look_cands=()):
         prefix = f"{pname}/" if proj else ""
         site.report["inputs"].append({"file": prefix + os.path.basename(B["file"]), "version": brew["version"], "deck_hash": brew["deck_hash"], "audit_state": val["state"]})
     if research:
-        research_views(site, research, proj, ptitle or pname, links, built, used_groups, ws)
+        research_views(site, research, proj, ptitle or pname, links, built, used_groups, ws, deck_names)
     # swap cards are looked up per project, under that project's provider exclusions
     want = [{"name": r["card"]} for rows in site.swaps.values() for k, r in rows.items() if k not in site.swap_cards]
     site.swap_cards.update(site.lookup(want, ws))
+
+
+def page_fields(D):
+    """The page-data the template reads, nothing more: working fields the Markdown summary and presentation-checks use
+    (validation, swaps, the old sources list, per-commander video lists...) stay out of the published page."""
+    P = {k: v for k, v in D.items() if k not in ("tiers", "sources", "schema", "generated")}
+    P["accuracy"] = {"unverified": D["accuracy"]["unverified"]}
+    P["look"] = {k: v for k, v in D["look"].items() if k not in ("l", "d")}
+    P["groups"] = []
+    for g in D["groups"]:
+        G = {k: v for k, v in g.items() if k != "swaps"}
+        G["commanders"] = []
+        for c in g["commanders"]:
+            C = {k: v for k, v in c.items() if k != "youtube"}
+            C["look"] = {k: v for k, v in (c.get("look") or {}).items() if k not in ("l", "d")}
+            C["decks"] = []
+            for d in c["decks"]:
+                X = {k: v for k, v in d.items() if k not in ("validation", "errors", "archetype")}
+                X["summary"] = {k: v for k, v in d["summary"].items() if k != "community"}
+                X["stats"] = {k: v for k, v in d["stats"].items() if k != "types"}
+                X["cards"] = [{k: v for k, v in x.items() if k != "land"} for x in d["cards"]]
+                C["decks"].append(X)
+            G["commanders"].append(C)
+        P["groups"].append(G)
+    return P
 
 
 def finish(site, default_dir):
@@ -537,7 +619,31 @@ def finish(site, default_dir):
             if c:
                 row["img"], _ = site.add_img(c)
                 row["price"], row["set"], row["cn"] = (float(c["price_usd"]) if c.get("price_usd") else None), c["set"], c["collector_number"]
+                row.update(views.card_types(c))
         g["swaps"] = rows
+    # presentation views: one source numbering for the page, claim-specific cites, applied vs proposed recs, hero
+    R = views.Research(site.researches)
+    D["findings_view"], D["disagreements_view"], D["sources_view"] = R.findings_view(), R.disagreements_view(), R.sources_view()
+    for deck, recs, proj, names in site.recs:
+        deck["recs_view"] = views.recs_view(recs, names, lambda refs, p=proj: R.cites(p, refs))
+        in_deck = {c["name"].lower(): c for c in deck["cards"]}
+        for item in [x for k in ("proposed", "applied", "rejected") for x in deck["recs_view"][k] if x.get("add")]:
+            c = found.get(item["add"].lower())
+            if c:  # proposed or rejected adds: the swap lookup; applied ones are in the deck already
+                item["img"], _ = site.add_img(c)
+                item.update(price=float(c["price_usd"]) if c.get("price_usd") else None, set=c["set"], cn=c["collector_number"])
+            elif item["add"].lower() in in_deck:
+                d = in_deck[item["add"].lower()]
+                item.update(img=d.get("img"), price=d.get("price"), set=d.get("set"), cn=d.get("cn"))
+    for t in D["research_tab"]:
+        for x in t["candidates"] + t["recommendations"] + t["alternatives"]:
+            x["cites"] = R.cites(t["project"], x.pop("_ev"))
+    for g in D["groups"]:
+        for cm in g["commanders"]:
+            ident, art = site.hero_in.get(cm["slug"], (None, None))
+            cm["hero"] = views.hero(cm, ident, art if D["page"]["images"] != "none" else None)
+            for d in cm["decks"]:  # each build switch shows its own stats and verdict
+                d["hero"] = views.hero(cm, ident, None, d)
     A = D["accuracy"]
     A["counts"] = list(A["counts"].items())
     decks = [d for g in D["groups"] for c in g["commanders"] for d in c["decks"]]
@@ -548,13 +654,15 @@ def finish(site, default_dir):
     first = D["groups"][0]["commanders"][0]["name"] if D["groups"] else None
     D["title"] = a.title or D.get("title") or ptitle or (f"{first} decks" if first else "Research")
     if not D.get("subtitle"):
-        D["subtitle"] = a.subtitle or " · ".join(x for x in [" ".join(project.get("Goal", [])), site.brews[0]["strategy"]["archetype"] if site.brews else None,
+        goal = " ".join(project.get("Goal", [])) if site.notes else None  # PROJECT.md free text is private by default
+        D["subtitle"] = a.subtitle or " · ".join(x for x in [goal, site.brews[0]["strategy"]["archetype"] if site.brews else None,
                                                                "builds " + ", ".join(d["label"] for d in decks) if len(decks) > 1 and not site.multi else None] if x)
     if site.multi:
         D["overview"] = [{"group": g["title"], "tab": "decks-" + g["id"], "commander": c["name"], "project": c["project"], "build": d["label"],
                           "bracket": d["bracket"], "price": d["stats"]["price"], "audit": d["validation"]["state"]}
                          for g in D["groups"] for c in g["commanders"] for d in c["decks"]]
-    site.report["looks"].insert(0, {"for": "pages with several commanders (overview, research, rankings, sources)", "source": D["look"]["source"]})
+    site.report["looks"].insert(0, {"for": "pages with several commanders (overview, research, rankings, sources)", "source": D["look"]["source"],
+                                    "palette": D["look"]["palette"]["source"]})
     site.report["sections"] = sections(D, decks)
     summary_mode = D["page"]["mode"] == "summary"
     out = os.path.abspath(a.out or os.path.join(default_dir, "page-data.json"))
@@ -566,7 +674,7 @@ def finish(site, default_dir):
         site.report["summary"] = md
     else:
         tmpd = out + ".tmp"
-        json.dump(D, open(tmpd, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
+        json.dump(page_fields(D), open(tmpd, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
         os.replace(tmpd, out)
         site.report["out"] = out
     site.report.update(mode=D["page"]["mode"], decks=[f"{d['label']}" + (f" ({d['project']})" if d["project"] else "") + f": {d['validation']['state']}" for d in decks],
@@ -582,7 +690,7 @@ def build(a):
     cli = theme_arg(a.theme)
     ws = os.path.abspath(a.workspace)
     own = opt(os.path.join(ws, "report-theme.yaml"))
-    site.D["look"] = resolve_look([("--theme", cli), (f"{os.path.basename(ws)}/report-theme.yaml", own)])
+    site.D["look"] = look_for([("--theme", cli), (f"{os.path.basename(ws)}/report-theme.yaml", own)])
     add_project(site, ws, look_cands=[("--theme", cli)])
     finish(site, os.path.join(ws, "reports"))
 
@@ -599,7 +707,7 @@ def build_showcase(a):
         a.mode = cfg["mode"]
     site = Site(a, multi=True)
     cli = theme_arg(a.theme)
-    site.D["look"] = resolve_look([("--theme", cli), ("showcase.yaml theme", cfg.get("theme"))])
+    site.D["look"] = look_for([("--theme", cli), ("showcase.yaml theme", cfg.get("theme"))])
     site.D["title"] = cfg.get("title") or ""
     site.D["subtitle"] = cfg.get("subtitle") or ""
     base = os.path.normpath(os.path.join(sc, "..", "..", "projects"))
@@ -623,6 +731,9 @@ def write_checks(path, report, D):
     rows += ["", "## Sections", "| Section | Shown | Why not |", "|---|---|---|"]
     rows += [f"| {x['name']} | {'yes' if x['included'] else 'no'} | {x['why_not'] or ''} |" for x in report["sections"]]
     rows += ["", "## Theme", "| Applies to | Source |", "|---|---|"] + [f"| {x['for']} | {x['source']} |" for x in report["looks"]]
+    rows += ["", "## Palette (theme > artwork > identity > neutral; contrast checked)", "| Applies to | Palette from |", "|---|---|"]
+    rows += [f"| {x['for']} | {x.get('palette') or ''} |" for x in report["looks"]]
+    rows += ["", "## Notices shown", *([f"- {n['level']}: {n['text']}" for n in D.get("notices", [])] or ["- none"])]
     rows += ["", "## Browser and accessibility", "Not run yet: widths, light/dark, console errors, overflow, viewer, build switch, sources, axe-core results.", ""]
     with open(path, "w", encoding="utf-8", newline="\n") as h:
         h.write("\n".join(rows))
@@ -646,7 +757,8 @@ def sections(D, decks):
             ("price ladder", bool(show["prices"]) and has("price_ladder"), "hidden by page mode/style" if not show["prices"] else "deck_check --cheapest found no printings; never estimated"),
             ("mana sources vs color requirements", bool(show["charts"]) and has("mana"), "hidden by page mode/style" if not show["charts"] else "deck_check gave no mana data"),
             ("upcoming / banned status pills", any(c.get("status") for d in decks for c in d["cards"]) or any(c.get("status") for r in D["rankings"] for c in r["cards"]), "no card is upcoming, banned or not legal"),
-            ("planned-for-release note", any(d.get("future") for d in decks), "no brew.json future block")]
+            ("planned-for-release note", any(d.get("future") for d in decks), "no brew.json future block"),
+            ("research views (findings, disagreements, sources)", bool(D.get("research_tab")), "no research.json with findings, disagreements, candidates or next steps")]
     return [{"name": n, "included": bool(inc), "why_not": None if inc else why} for n, inc, why in rows]
 
 
@@ -659,27 +771,76 @@ def money(v):
     return "–" if v is None else f"${v:,.2f}"
 
 
+def cite_md(cites):
+    """Markdown citations: [n](source) plus each cited moment as its own link."""
+    return "; ".join(f"[{c['n']}]({c['url']})" + (" at " + ", ".join(f"[{a['t']}]({a['url']})" for a in c["at"]) if c["at"] else "") for c in cites)
+
+
+def _with_cites(text, cites):
+    return text + (f" ({cite_md(cites)})" if cites else "")
+
+
+def audit_md(av):
+    """Verdict first, then failures, warnings and unverified checks in full, then the passes by name."""
+    out = []
+    if av.get("method_common"):
+        out += [f"Method used by most checks: {av['method_common']}", ""]
+    for g in av["groups"]:
+        if g["status"] == "pass":
+            out += [f"**{g['label'].capitalize()}:** " + "; ".join(c["title"] for c in g["checks"]) + ".", ""]
+            continue
+        out += [f"**{g['label'].capitalize()}**", ""]
+        for c in g["checks"]:
+            extra = f" Method: {c['method']}." if c["method"] and c["method"] != av.get("method_common") else ""
+            out.append(f"- **{c['title']}** ({c['status_label']}). {c['result'] or ''}{extra}".rstrip())
+        out.append("")
+    for title, items in (("Required fixes", [f"{f.get('title') or f.get('check')}: {f['fix']}" for f in av.get("required_fixes", [])]),
+                         ("Next steps", av.get("next_steps", [])), ("Limits of this audit", av.get("limitations", []))):
+        if items:
+            out += [f"**{title}**", ""] + [f"- {x}" for x in items] + [""]
+    return out
+
+
+def recs_md(rv):
+    out = []
+    line = lambda r: (f"- {' / '.join(x for x in [('+' + r['add']) if r.get('add') else None, ('-' + r['cut']) if r.get('cut') else None] if x)}: "
+                      + _with_cites(f"{r.get('reason') or ''}" + (f" Trade-off: {r['tradeoffs']}" if r.get("tradeoffs") else "") + f" ({r['id']}, {r['status_label']})", r["cites"]))
+    for key, title in (("applied", "In the deck"), ("proposed", "Proposed, not in the deck"), ("rejected", "Rejected")):
+        if rv.get(key):
+            out += [f"**{title}**", ""] + [line(r) for r in rv[key]] + [""]
+    return out
+
+
 def summary_md(D):
+    """summary.md: the same facts as the page, complete (nothing sliced), conclusion first, citations with moments."""
     out = [f"# {D['title']}", ""]
     if D.get("subtitle"):
         out += [D["subtitle"], ""]
     dd = D["data_dates"]
     out += [f"Generated {D['generated']} from the project files. Card data and prices: Scryfall"
             + (f", as of {dd['card data and prices (Scryfall)']}" if dd.get("card data and prices (Scryfall)") else "") + ".", ""]
+    for n in D.get("notices", []):
+        out += [f"> **{'Note' if n['level'] == 'info' else 'Warning'}.** {n['text']}", ""]
     for g in D["groups"]:
         for c in g["commanders"]:
             for d in c["decks"]:
-                s, v = d["stats"], d["validation"]
+                s, v, av = d["stats"], d["validation"], d.get("audit_view") or {}
                 out += [f"## {g['title']}: {c['name']} · {d['label']}" if g["title"] != c["name"] else f"## {c['name']} · {d['label']}", ""]
                 if d.get("project"):
                     out += [f"Project: {d['project']} · version {d['version']}", ""]
+                verdict = av.get("verdict_label") or v["state"]
+                counts = views.counts_text(av.get("counts") or {})
+                lead = (av.get("summary") or {}).get("lead")
+                out += [f"**Audit.** {verdict}" + (f" ({v['note']})" if v.get("note") else "") + (f": {counts}." if counts else "") + (f" {lead}" if lead else ""), ""]
                 out += [f"**Plan.** {d['summary']['pitch']}", ""]
                 if d["summary"].get("wins"):
                     out += [f"**How it wins.** {d['summary']['wins']}", ""]
-                out += [f"**Rule 0.** {d['rule0']}", "", f"**Audit.** {v['state']}" + (f" ({v['note']})" if v.get("note") else "")
-                        + (f": {v['verdict'].get('summary')}" if v.get("verdict") and v["verdict"].get("summary") else ""), ""]
+                out += [f"**Rule 0.** {d['rule0']}", ""]
+                mdfc = s.get("mdfc_lands") or 0
                 out += ["| Cards | Lands | Avg mana value | Value (listed printings) | Game Changers |", "|---|---|---|---|---|",
-                        f"| {sum(x['qty'] for x in d['cards'])} | {s['lands']} | {s['avg_mv']} | {money(s['price'])} | {len(s['game_changers'])} |", ""]
+                        f"| {sum(x['qty'] for x in d['cards'])} | {s['lands']}{f' + {mdfc} MDFC' if mdfc else ''} | {s['avg_mv']} | {money(s['price'])} | {len(s['game_changers'])} |", ""]
+                if s.get("type_counts"):
+                    out += ["Card types (front face; split and adventure cards by every half): " + " · ".join(f"{k} {n}" for k, n in s["type_counts"].items()), ""]
                 if s.get("roles"):
                     out += ["Roles (from fixed Oracle-text rules; a card can count in several): "
                             + " · ".join(f"{k} {n}" for k, n in sorted(s["roles"].items()) if k != "land"), ""]
@@ -698,18 +859,48 @@ def summary_md(D):
                 flagged = [x for x in d["cards"] if x.get("status")]
                 if flagged:
                     out += ["Status: " + "; ".join(f"{x['name']} {x['status']}" + (f" (releases {x['releases']})" if x.get("releases") else "") for x in flagged), ""]
+                if av.get("groups"):
+                    out += ["### Audit checks", ""] + audit_md(av)
+                if any((d.get("recs_view") or {}).get(k) for k in ("applied", "proposed", "rejected")):
+                    out += ["### Recommendations", ""] + recs_md(d["recs_view"])
                 out += ["### Decklist", "", "```text", d["moxfield"], "```", ""]
-                srcs = [x for x in D["sources"] if x.get("project") == d.get("project")][:5]
-                if srcs:
-                    out += ["### Top sources", ""] + [f"- [{x['title']}]({x['url']})" for x in srcs] + [""]
         if g["alts"]:
             out += [f"### Commanders compared ({g['title']})", ""] + commander_table(g["alts"])
-    for r in D["research"]:
-        out += [f"## {r['title']}", "", r["question"], ""]
-        if r["commanders"]:
-            out += ["### Commanders compared", ""] + commander_table(r["commanders"])
-        for x in r["disagreements"]:
-            out += [f"**Disagreement: {x['topic']}**", ""] + [f"- {p['position']}" for p in x["positions"]] + ([x["explanation"]] if x.get("explanation") else []) + [""]
+    for t in D.get("research_tab", []):
+        p = t["project"]
+        out += [f"## {t['title']}", "", t["question"], ""]
+        if t.get("feasibility"):
+            out += [f"**Feasibility.** {t['feasibility'].get('verdict')}", ""]
+        for r in D["research"]:
+            if r["project"] == p and r["commanders"]:
+                out += ["### Commanders compared", ""] + commander_table(r["commanders"])
+        dis = [x for x in D.get("disagreements_view", []) if x["project"] == p]
+        if dis:
+            out += ["### Where sources disagree", ""]
+            for x in dis:
+                out += [f"**{x['topic']}**", ""] + [f"- {_with_cites(pos['text'], pos['cites'])}" for pos in x["positions"]] + ([x["explanation"]] if x.get("explanation") else []) + [""]
+        groups = [x for x in D.get("findings_view", []) if x["project"] == p]
+        if groups:
+            out += ["### Findings", ""]
+            for fg in groups:
+                out += [f"#### {fg['title']} ({len(fg['items'])})", ""]
+                for it in fg["items"]:
+                    rest = it["body"][len(it["headline"]):] if it["body"].startswith(it["headline"]) else " " + it["body"]
+                    rest = rest if rest[:1] in (":", ";", ",") else " " + rest.strip()  # "**Headline**: rest" after a clause cut
+                    tags = ", ".join(x for x in [it["class_label"], f"{it['confidence']} confidence", "sources disagree" if it["disputed"] else None] if x)
+                    out.append(f"- **{it['headline']}**{rest.rstrip()} [{tags}; {it['id']}]" + (f" ({cite_md(it['cites'])})" if it["cites"] else ""))
+                    out += [f"  - {k}: {it[f]}" for k, f in (("Why", "explanation"), ("Limits", "limitations")) if it.get(f)]
+                out.append("")
+        for title, items in (("Recommendations", [_with_cites(f"{r['text']} {r.get('why') or ''}".strip(), r["cites"]) for r in t["recommendations"]]),
+                             ("Alternatives", [_with_cites(f"{x['option']}: {x['why']}", x["cites"]) for x in t["alternatives"]]),
+                             ("Gaps", t["gaps"]), ("Next steps", t["next_steps"]),
+                             ("Open questions", [q["question"] + (f" Recommended: {q['recommended']}." if q.get("recommended") else "") for q in t["follow_up_questions"]])):
+            if items:
+                out += [f"### {title}", ""] + [f"- {x}" for x in items] + [""]
+        if t["candidates"]:
+            out += ["### Card candidates", "", "| Card | Role | Why | Theme fit | In the deck | Sources |", "|---|---|---|---|---|---|"]
+            out += [f"| {_cell(c['name'])} | {_cell(c.get('role'))} | {_cell(c['relevance'])} | {_cell(c.get('theme_fit'))} | {'yes' if c['in_deck'] else 'no'} | {_cell(cite_md(c['cites']))} |"
+                    for c in t["candidates"]] + [""]
     for r in D["rankings"]:
         out += [f"## Ranking: {r['title']}" + (f" ({r['project']})" if r.get("project") else ""), ""]
         out += [x for x in [r.get("scope"), f"Method: {r['method']}" + (f" (as of {r['as_of']})" if r.get("as_of") else ""),
@@ -720,8 +911,16 @@ def summary_md(D):
             stt = (c["status"] or "") + (f", releases {c['releases']}" if c.get("releases") else "")
             out.append(f"| {c['rank']} | {_cell(c['tier'])} | {_cell(c['name'])} | {inc} | {_cell(c['why'])} | {stt} |")
         out.append("")
-    if D["sources"]:
-        out += ["## Sources", ""] + [f"- [{s['title']}]({s['url']})" + (f" · {s['date']}" if s.get("date") else "") + (f" · {s['project']}" if s.get("project") else "") for s in D["sources"]] + [""]
+    if D.get("sources_view"):
+        out += ["## Sources", ""]
+        for g in D["sources_view"]:
+            out += [f"### {g['kind_label']}", ""]
+            for s in g["items"]:
+                meta = " · ".join(x for x in [s.get("creator"), s.get("date"), s.get("project")] if x)
+                moments = ", ".join(f"[{m['t']}]({m['url']})" + (f" ({', '.join(m['findings'])})" if m["findings"] else "") for m in s["moments"])
+                out.append(f"{s['n']}. [{s['title']}]({s['url']})" + (f" · {meta}" if meta else "")
+                           + (f". Cited by {', '.join(s['cited_by'])}" if s["cited_by"] else "") + (f". Moments: {moments}" if moments else ""))
+            out.append("")
     return "\n".join(out)
 
 
@@ -752,6 +951,8 @@ def main():
         s.add_argument("--viewer", choices=["simple", "3d"], help="card viewer: simple (CSS) or 3d (three.js). Default: the mode's")
         s.add_argument("--show", help=f"comma list of sections to turn on ({', '.join(SECTIONS)})")
         s.add_argument("--hide", help="comma list of sections to turn off")
+        s.add_argument("--include-notes", action="store_true",
+                       help="include DECISIONS.md lines and PROJECT.md text (the player's own copy; shared pages leave them out)")
     a = ap.parse_args()
     a.mode_given = a.mode is not None
     a.mode = a.mode or "showcase"

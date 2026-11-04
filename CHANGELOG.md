@@ -2,6 +2,16 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.1.0
+Reports redesigned: one component system for Interactive Report and Showcase, built from a deterministic view layer.
+- **Answer first, evidence on demand:** findings show a headline and a short body, with numbered citations that link to the exact video moment for that claim; evidence, quotes and every source stay one click away (nothing truncated or dropped). Disagreements are shown open. The audit leads with counts, fails and warnings first, passes collapsed ("27 checks passed"), the shared method shown once, plain labels (no `pass_with_warnings`).
+- **Design system:** type scale, spacing, two shadows, colour roles derived from the commander's artwork (contrast enforced: text 4.5:1, UI 3:1; explicit themes still win), light and dark, sticky section nav, card grid with a density toggle, list view and all filters kept, charts with a takeaway and a data table. Showcase adds the artwork-led hero and restrained motion; reduced motion respected.
+- **Card types, one rule:** `edhcore/types.py` classifies every card for deck_check's stats and the page (multi-type cards match every type filter, front face decides double-faced cards, split cards count every half, MDFC lands shown as "36 lands + 1 MDFC", basics once with ×N); each build and showcase group has its own counts.
+- **Honest content:** accepted recommendations show as applied, not "cards to consider"; research written for an older deck version gets a notice; private notes (DECISIONS.md, PROJECT.md text, STATE.md) are left out of shared pages unless `--include-notes`.
+- **Writing:** Summary mode (Markdown) is complete (audit, disagreements, all findings and sources, numbered).
+- **Breaking for generated pages only:** page-data drops the legacy fields (`tiers`, the `sources`/`used_for` dump, per-build `validation`/`errors`, `swaps`, video lists, the old accent pair). Rebuild old pages; project files are unaffected.
+- **Measured on the real Azula project:** page height 50,459 → 31,222 px on a phone (390 px) in Interactive mode, 20,040 → 20,647 px at 1440 (more content now shown: disagreements, candidates, next steps). axe-core: 0 violations; no console errors or horizontal overflow at 390/768/1440, light and dark.
+
 ## 8.0.0
 A shared data core, deterministic research coordination and a verified research → deck handoff. Existing projects, decklists and audits work unchanged (all new fields are optional).
 - **Shared data core (`scripts/edhcore/`):** one HTTP client, cache and card model for every script. Failures are handled per endpoint, never per provider: a 429 waits for Retry-After and makes every process wait; 5xx and timeouts back off and retry 3 times; other 4xx aren't held against the endpoint; three exhausted calls in a row open that endpoint's breaker (60 s doubling to 10 min, then a probe). Rate limits are shared across parallel processes through a disposable SQLite cache in `~/.cache/edh-companion/` (`EDHC_CACHE_DIR`, `EDHC_NO_CACHE=1`); recovery never deletes anything but its own files and never inside a workspace, project, repo or home folder.

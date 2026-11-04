@@ -75,15 +75,15 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(sorted(self.decks), ["b3", "b4"])
         for d in self.decks.values():
             self.assertEqual(sum(c["qty"] for c in d["cards"]), 100)
-            self.assertEqual(d["errors"], [])
+            self.assertNotIn("errors", d)  # internal deck_check failures go to presentation-checks.md, not the page
 
     def test_audit_states_derived_never_upgraded(self):
-        self.assertEqual(self.decks["b3"]["validation"]["state"], "pass_with_warnings")
-        self.assertEqual(self.decks["b4"]["validation"]["state"], "audit out of date")
-        self.assertNotIn("checks", self.decks["b4"]["validation"])  # an out-of-date audit's checks are never shown
-        kinds = {c["kind"] for c in self.decks["b3"]["validation"]["checks"]}
-        self.assertEqual(kinds, {"deterministic", "judgment"})
-        self.assertIn('"state":"audit out of date"', self.html)
+        b3, b4 = self.decks["b3"]["audit_view"], self.decks["b4"]["audit_view"]
+        self.assertEqual((b3["verdict"], b3["verdict_label"]), ("pass_with_warnings", "Pass with warnings"))
+        self.assertEqual(b4["verdict"], "audit out of date")
+        self.assertFalse([c for g in b4.get("groups", []) for c in g["checks"]])  # an out-of-date audit's checks are never shown
+        self.assertTrue([c for g in b3["groups"] for c in g["checks"]])
+        self.assertIn('"verdict":"audit out of date"', self.html)
         states = {i["file"]: i["audit_state"] for i in self.report["inputs"] if "audit_state" in i}
         self.assertEqual(states, {"brew-b3.json": "pass_with_warnings", "brew-b4.json": "audit out of date"})
         self.assertIn("| brew-b4.json | 2 | a7499368e991 | audit out of date |", self.checks_md)
@@ -103,13 +103,14 @@ class Pipeline(unittest.TestCase):
         self.assertEqual(shown(audit), "pass")
 
     def test_sources_link_out(self):
-        src = self.D["sources"]
+        src = [s for g in self.D["sources_view"] for s in g["items"]]
         self.assertEqual(len(src), 6)
         self.assertTrue(all(re.match(r"https?://", s["url"]) for s in src))
-        video = next(s for s in src if s["links"])
-        self.assertEqual([l["url"].rsplit("t=", 1)[1] for l in video["links"]], ["25s", "73s", "89s"])
-        self.assertTrue(all(c["url"].startswith("http") for c in self.decks["b3"]["summary"]["community"]))
-        self.assertTrue(self.D["groups"][0]["commanders"][0]["youtube"])
+        self.assertEqual([s["n"] for s in sorted(src, key=lambda s: s["n"])], list(range(1, 7)))  # numbered like the markers
+        moments = [m for s in src for m in s["moments"]]
+        self.assertEqual([m["url"].rsplit("t=", 1)[1] for m in moments], ["25s", "73s", "89s"])  # every moment links to its time
+        cites = [c for g in self.D["findings_view"] for i in g["items"] for c in i["cites"]]
+        self.assertTrue(cites and all(c["n"] in {s["n"] for s in src} for c in cites))
 
     def test_no_invented_numbers(self):
         blob = json.dumps(self.D)
@@ -117,22 +118,28 @@ class Pipeline(unittest.TestCase):
             self.assertNotIn(key, blob)
         for d in self.decks.values():
             s, cards = d["stats"], d["cards"]
-            self.assertEqual(s["lands"], sum(c["qty"] for c in cards if c["land"] and not c["commander"]))
+            self.assertEqual(s["lands"], sum(c["qty"] for c in cards if c["type_group"] == "Land"))
             self.assertAlmostEqual(s["price"], sum(c["price"] * c["qty"] for c in cards if c["price"] is not None), places=1)
             self.assertEqual(s["unpriced"], [c["name"] for c in cards if c["price"] is None])
+            # one type rule (edhcore.types, shared with deck_check): groups cover every card
+            self.assertEqual(sum(s["type_counts"].values()), 100)
         hidden = {x["name"] for x in self.report["sections"] if not x["included"]}
         self.assertIn("research tab (commanders compared, disagreements)", hidden)  # krenko's research sits next to builds
         self.assertTrue(all(x["why_not"] for x in self.report["sections"] if not x["included"]))
 
     def test_sections_and_swaps(self):
-        sw = {s["card"]: s for s in self.D["groups"][0]["swaps"]}
-        self.assertEqual(set(sw), {"Goblin Surprise", "Jeska's Will"})  # the rejected rec is left out
-        self.assertEqual({f["deck"].split("/")[1] for f in sw["Goblin Surprise"]["fits"]}, {"b3", "b4"})
+        rv = {d: self.decks[d]["recs_view"] for d in ("b3", "b4")}
+        prop = {d: {x["add"]: x for x in rv[d]["proposed"] if x.get("add")} for d in rv}
+        self.assertEqual(set(prop["b3"]) | set(prop["b4"]), {"Goblin Surprise"})
+        self.assertEqual([x["add"] for x in rv["b4"]["applied"]], ["Jeska's Will"])  # already in b4: applied, not "to consider"
+        self.assertEqual([x["add"] for x in rv["b3"]["rejected"]], ["Cyclonic Rift"])  # rejected listed apart
+        self.assertTrue(all(x.get("img") in self.D["images"] for p in prop.values() for x in p.values()))  # proposals show their card
         titles = [x["title"] for x in self.decks["b3"]["summary"]["sections"]]
         self.assertIn("Proposed cuts", titles)
         self.assertEqual(self.D["theme"]["labels"][0]["label"], "On theme")
-        self.assertIn("Player decisions (DECISIONS.md)", titles)
-        self.assertIn("Theme (PROJECT.md)", titles)
+        self.assertNotIn("Player decisions (DECISIONS.md)", titles)  # private notes need --include-notes (test_views.Privacy)
+        self.assertNotIn("Theme (PROJECT.md)", titles)
+        self.assertIn("Theme rules", titles)
         self.assertEqual(self.D["title"], "Krenko Goblins")
         dfc = next(c for c in self.decks["b3"]["cards"] if c["name"].startswith("Valakut Awakening"))
         self.assertTrue(dfc["back"] and dfc["back"].endswith("_b"))
@@ -275,9 +282,36 @@ class Showcase(unittest.TestCase):
         self.assertEqual(looks["krenko"]["source"], "showcase.yaml projects[../../krenko] theme")
         self.assertEqual(looks["krenko"]["style"], "gothic")
         self.assertEqual(looks["talrand"]["source"], "commander color identity (U)")
-        self.assertNotEqual(looks["talrand"]["l"]["a"], looks["spider-gwen"]["l"]["a"])
+        self.assertNotEqual(looks["talrand"]["palette"]["l"]["accent"], looks["spider-gwen"]["palette"]["l"]["accent"])
+        self.assertNotIn("l", looks["talrand"])  # the old accent pair isn't published; palette roles replace it
         self.assertEqual(self.D["look"]["source"], "neutral")
         self.assertIn("| Talrand, Sky Summoner (talrand) | commander color identity (U) |", self.checks_md)
+
+    def test_page_has_views_and_no_legacy_fields(self):
+        """The page carries the views the template reads, per page, commander and build (each build its own counts);
+        legacy fields (tiers, the old sources dump, per-deck validation/errors, swaps, video lists) aren't published."""
+        for k in ("groups", "rankings", "research", "accuracy", "look", "data_dates", "fan",
+                  "findings_view", "disagreements_view", "sources_view", "research_tab", "notices"):
+            self.assertIn(k, self.D)
+        for k in ("tiers", "sources", "schema"):
+            self.assertNotIn(k, self.D)
+        self.assertEqual(set(self.D["accuracy"]), {"unverified"})
+        looks = {c["project"]: c["look"]["palette"]["source"] for g in self.D["groups"] for c in g["commanders"]}
+        self.assertEqual(looks["krenko"], "theme")  # an explicit showcase theme beats the artwork
+        self.assertIn(looks["talrand"], ("artwork", "identity"))
+        for g in self.D["groups"]:
+            for c in g["commanders"]:
+                self.assertEqual(c["hero"]["name"], c["name"])
+                self.assertNotIn("youtube", c)
+                self.assertFalse(any("swaps" in g for g in self.D["groups"]))
+                for d in c["decks"]:
+                    for k in ("summary", "moxfield", "rule0", "stats", "cards", "audit_view", "recs_view", "hero"):
+                        self.assertIn(k, d)
+                    for k in ("validation", "errors", "archetype"):
+                        self.assertNotIn(k, d)
+                    self.assertEqual(d["hero"]["stats"][2]["value"].split()[0], str(d["stats"]["lands"]))  # each build's own hero stats
+                    self.assertEqual(sum(d["stats"]["type_counts"].values()), sum(x["qty"] for x in d["cards"]))
+                    self.assertEqual(d["stats"]["lands"], d["stats"]["type_counts"].get("Land", 0))
 
     def test_future_and_showcase_mode(self):
         tal = next(d for g in self.D["groups"] for c in g["commanders"] for d in c["decks"] if d["project"] == "talrand")
@@ -298,7 +332,7 @@ class ResearchOnly(unittest.TestCase):
             r = D["research"][0]
             self.assertEqual([c["name"] for c in r["commanders"]], ["Spider-Gwen, Free Spirit", "Electro, Assaulting Battery"])
             self.assertTrue(r["commanders"][0]["disadvantages"] and r["disagreements"])
-            self.assertEqual(len(D["sources"]), 2)
+            self.assertEqual(sum(len(g["items"]) for g in D["sources_view"]), 2)
             self.assertIn('"rankings"', html)
             hidden = {x["name"] for x in report["sections"] if not x["included"]}
             self.assertIn("overview and decklist", hidden)
@@ -327,7 +361,7 @@ class Modes(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(tmp, "page-data.json")))  # summary mode writes Markdown only
             with open(os.path.join(tmp, "summary.md"), encoding="utf-8") as h:
                 md = h.read()
-            for part in ("# Talrand spells", "**Plan.**", "**Rule 0.** Bracket 2 (Core); no Game Changers", "**Audit.** not audited",
+            for part in ("# Talrand spells", "**Plan.**", "**Rule 0.** Bracket 2 (Core); no Game Changers", "**Audit.** Not audited",
                          "Roles (from fixed Oracle-text rules", "### Decklist", "1 Talrand, Sky Summoner", "**Planned for release.**", "Price ladder"):
                 self.assertIn(part, md)
             self.assertNotIn("weak", md.lower())
@@ -546,7 +580,7 @@ class CacheReuse(unittest.TestCase):
                                     "--out", os.path.join(tmp, phase, "page-data.json"), "--images", "cdn"],
                                    capture_output=True, text=True, encoding="utf-8", env=dict(env, EDHC_BENCH_LOG=log))
                 self.assertEqual(p.returncode, 0, p.stderr)
-                rows[phase] = [r for r in (json.loads(x) for x in open(log, encoding="utf-8")) if r.get("kind", "request") == "request"] if os.path.exists(log) else []  # the probe also logs sleeps and body reads
+                rows[phase] = [r for r in (json.loads(x) for x in open(log, encoding="utf-8")) if r.get("kind", "request") == "request"] if os.path.exists(log) else []
             coll = [r for r in rows["cold"] if "/cards/collection" in r["url"]]
             self.assertTrue(coll)
             dup = [k for k, n in collections.Counter((r["url"], r["body"]) for r in rows["cold"]).items() if n > 1]

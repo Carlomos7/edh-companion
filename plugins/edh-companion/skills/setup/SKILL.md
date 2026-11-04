@@ -25,7 +25,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget, as a hard limit or a flexible target / drippy / no expense spared), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
 3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
 4. Research sources (optional): any to prefer (e.g. EDHREC, Reddit, a favourite creator) or to never use. Skip it and research uses everything available.
-5. Workspace folder: `~/Documents/EDHCompanion` (Recommended) or another path.
+5. Workspace folder: `~/Documents/EDHCompanion` (Recommended, used from any folder Claude Code starts in) · another path · this folder (creates `EDHCompanion/workspace.yaml` here so it's used when Claude Code starts here). Existing projects are never moved; if they live elsewhere, say where and let the player move them. Say plainly where the choice is saved (`workspace:` in the config file) and that every future session uses it, wherever Claude Code is started; a marked local folder (`workspace.yaml`) is the only thing that overrides it.
 
 ## 3. Save
 Config file: `~/.config/edh-companion/config.yaml`. Read it first if it exists; show the changes and get a yes before overwriting any existing value. Write only what was answered:

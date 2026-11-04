@@ -1,10 +1,11 @@
 #!/usr/bin/env bash
-# Eval scaffold: a saved Spider-Gwen project in ./EDHCompanion (the skills look there first).
+# Eval scaffold: a saved Spider-Gwen project in ./EDHCompanion, marked as the workspace (workspace.yaml).
 # Usage: workspace.sh <none|strict>
 set -euo pipefail
 MODE="${1:-none}"
 P=EDHCompanion/projects/spider-gwen
 mkdir -p "$P/decklists"
+echo "# marks this folder as the EDH Companion workspace for this run" > EDHCompanion/workspace.yaml
 if [ "$MODE" = strict ]; then
   THEME='- Mode: strict
 - Counts as on theme: cards from the Marvel'"'"'s Spider-Man set (SPM) or printings whose art shows Spider-Man characters

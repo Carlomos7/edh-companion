@@ -29,10 +29,27 @@ class Companion(unittest.TestCase):
         fn(d)
         json.dump(d, open(path, "w", encoding="utf-8"))
 
-    def test_where_prefers_local_folder(self):
+    def test_local_folder_needs_marker(self):
+        code, out = sh("where", cwd=self.tmp)
+        self.assertNotIn("marked folder", out)            # a stray EDHCompanion folder isn't used
+        self.assertIn("isn't the workspace", out)
+        open(os.path.join(self.tmp, "EDHCompanion", "workspace.yaml"), "w").close()
         code, out = sh("where", cwd=self.tmp)
         self.assertEqual(code, 0)
-        self.assertIn("current folder", out)
+        self.assertIn("marked folder in the current directory", out)
+
+    def test_started_inside_a_project(self):
+        code, out = sh("where", cwd=os.path.join(self.p, "decklists"))
+        self.assertIn("project    spider-gwen", out)
+        code, out = sh("where", cwd=self.tmp)
+        self.assertNotIn("Claude Code started inside it", out)
+
+    def test_projects_lists_for_resume(self):
+        open(os.path.join(self.tmp, "EDHCompanion", "workspace.yaml"), "w").close()
+        code, out = sh("projects", cwd=self.tmp)
+        self.assertIn("project spider-gwen", out)
+        self.assertIn("A fast Spider-Gwen aggro deck.", out)  # the goal, not the heading
+        self.assertIn("brew.json", out)
 
     def test_valid_project_not_audited(self):
         code, out = sh("validate", self.p)

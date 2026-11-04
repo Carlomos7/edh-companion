@@ -28,7 +28,7 @@ A starting point (idea, theme, commander, card pool, or a list/Moxfield export/l
 - [ ] 7. Hand back: what changed, why, what's verified, honest weaknesses, next steps
 ```
 
-1. **Load.** Resume from STATE.md's next step. If the latest audit's version/hash doesn't match brew.json, the audit is out of date: say so.
+1. **Load.** No project named? Check for saved ones first and offer to resume a match ([schemas/README.md](../../schemas/README.md), "Starting a session"). Resume from STATE.md's next step. If the latest audit's version/hash doesn't match brew.json, the audit is out of date: say so.
 2. **Discover.** For a broad request, don't hand over a deck or a questionnaire. Follow [references/discovery.md](references/discovery.md): research and present a few directions with a recommendation, ask one meaningful question at a time at natural decision points, check that the restrictions allow a functional deck (confirmed limits vs estimates), and explain trade-offs so the player chooses deliberately. If the request is already specific, skip ahead.
 3. **Plan.** In under 15 lines: game plan and roughly when it wins at this bracket, role targets ([references/construction.md](references/construction.md)), 3 to 5 key cards with reasons and refs, what the bracket allows and what stays out, the theme line. Ask "Build it?" with options.
 4. **Build or revise.**
@@ -40,12 +40,14 @@ A starting point (idea, theme, commander, card pool, or a list/Moxfield export/l
    - Read each card's text on Scryfall before writing its role or "why". Never invent cards. Before proposing or locking in a commander (or a pair), confirm it with `deck_check.py --commander "A" [--commander "B"]`.
    - Self-check the result (catches count, identity, bans, Game Changers, commander + 2 combos, wrong or off-set printings):
      `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" <decklist> --bracket N [--theme-sets …] --json <project>/deck_check.json`
-     Fix every fail. This is not the audit.
+     Fix every fail. This is not the audit. Role counts (ramp, draw, removal...) come from deck_check's Oracle-text rules, not your own labels; a card can fill several roles. Unreleased cards show as upcoming with their release date: keep them out of the playable list, or plan a `future` version in brew.json.
+   - Splitting a card pool (a Secret Lair, a box) between decks or players: `uv run --script "${CLAUDE_SKILL_DIR}/scripts/allocate.py" pool.txt --target Me=decklists/main-v3.txt --target "Sam=Doctor Doom" [--want Sam:Card]`. It never assigns a copy twice and leaves ties to the players.
 5. **Save** (after meaningful changes, not every message): brew.json per `schemas/brew.schema.json` (bump `version`, `deck_hash` and `statistics` from deck_check, never typed); the list as a new `decklists/<variant>-v<N>.txt` (Moxfield format: `Commander` then `Deck` sections; `(SET) number` whenever the printing matters); accepted/rejected/allowed items as dated lines in DECISIONS.md; goals the player states in PROJECT.md; progress and next steps in STATE.md. Variants are `brew-<variant>.json`. Validate with `companion.py validate`.
 6. **Audit at the boundary.** Invoke the audit skill on this version; it runs judgment checks in a fresh `auditor` agent so this conversation doesn't grade its own work. Present its verdict exactly. Its required fixes come back to the player as proposals, not silent edits.
 7. **Hand back.** The list or the diff (exports per money-looks-export.md when they want to import it); the plan in 3 to 5 lines; a Rule 0 summary (bracket, how it wins and roughly when, Game Changers, combos); the price once, in their money style; audit status; then remaining weaknesses and compromises stated plainly (also in brew.json `limitations` and PROJECT.md) without pushing them off their preferences; a few community-backed alternative swaps when they'd help; 1 to 3 next steps, recommended first, e.g. export it, plan how to get the cards, or a page (all offered, never done unasked).
 
 ## Talking to the player
+- Describe shortcomings specifically (consistency, interaction, speed, resilience, mana, card flow), never "weak card" or "weak deck".
 - Friend-at-the-table tone; explain a term the first time (bracket, Game Changer, Rule 0).
 - Decisions as multiple choice with the recommended option first and its reason. Low-impact unknowns get a stated provisional assumption instead of a question.
 - Money comes up once, then at hand-back, unless a set budget is now broken.

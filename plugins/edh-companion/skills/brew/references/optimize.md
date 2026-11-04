@@ -15,7 +15,7 @@ Run deck_check.py at the bracket it seems to be and read the cards. Tell the pla
 Plus one optional line: "Any cards that must stay?"
 
 ## 4. Diagnose
-With research.json (or EDHREC/decklist data gathered via the research skill): role gaps against construction.md, mana (sources vs pips), weak cards (read each before calling it weak), missing commander payoffs, popular high-synergy cards it lacks, and bracket problems for the target.
+With research.json (or EDHREC/decklist data gathered via the research skill): role gaps against construction.md, mana (sources vs pips), cards that underperform here (read each first, and say how: too slow, off-plan, redundant, fragile), missing commander payoffs, popular high-synergy cards it lacks, and bracket problems for the target.
 
 ## 5. Propose (never apply)
 - Each swap is a `recommendations` entry: `rec-NNN`, add + cut, reason, evidence refs, theme status, trade-off, `status: proposed`.

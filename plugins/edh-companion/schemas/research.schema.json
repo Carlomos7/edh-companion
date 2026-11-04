@@ -274,6 +274,13 @@
           },
           "evidence": {
             "$ref": "common.schema.json#/$defs/evidence_refs"
+          },
+          "legal_check": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "How eligibility was verified, e.g. 'deck_check.py --commander 2026-11-04'."
           }
         }
       }
@@ -495,6 +502,102 @@
         }
       },
       "description": "Sources the player asked to favour or avoid for this research, and therefore used or skipped."
+    },
+    "rankings": {
+      "type": "array",
+      "description": "Best cards per theme or group (e.g. 'Spider-Man heroes', 'Spider-Man villains'). Ranked by evidence; popularity numbers are labelled as popularity, never as strength.",
+      "items": {
+        "type": "object",
+        "required": [
+          "group",
+          "method",
+          "cards"
+        ],
+        "properties": {
+          "group": {
+            "type": "string"
+          },
+          "scope": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "What the ranking covers, e.g. 'Red Spider-Man cards, Commander-legal'."
+          },
+          "method": {
+            "type": "string",
+            "description": "How cards were ranked: e.g. 'EDHREC inclusion % among Spider-Man commanders (n decks), then community picks'."
+          },
+          "as_of": {
+            "$ref": "common.schema.json#/$defs/date"
+          },
+          "cards": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "required": [
+                "card",
+                "rank",
+                "why",
+                "evidence"
+              ],
+              "properties": {
+                "card": {
+                  "$ref": "common.schema.json#/$defs/card_ref"
+                },
+                "rank": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "tier": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "description": "Optional S/A/B/C/D from the stated method's cutoffs."
+                },
+                "inclusion_pct": {
+                  "type": [
+                    "number",
+                    "null"
+                  ]
+                },
+                "decks": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "total_decks": {
+                  "type": [
+                    "integer",
+                    "null"
+                  ]
+                },
+                "why": {
+                  "type": "string"
+                },
+                "evidence": {
+                  "$ref": "common.schema.json#/$defs/evidence_refs"
+                },
+                "status": {
+                  "enum": [
+                    "legal",
+                    "upcoming",
+                    "banned",
+                    "not_legal",
+                    null
+                  ],
+                  "description": "From Scryfall; upcoming = not released yet."
+                },
+                "releases": {
+                  "$ref": "common.schema.json#/$defs/date"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

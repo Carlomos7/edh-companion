@@ -26,6 +26,27 @@ Restart Claude Code. Needs [uv](https://docs.astral.sh/uv/) for the deck checker
 
 Then just talk: "I want to build a powerful Spider-Man Commander deck that stays true to Marvel."
 
+## Working with your decks
+EDH Companion keeps your decks, research and reports in one workspace. By default: `~/Documents/EDHCompanion/`
+
+**Recommended:** open Claude Code in your main workspace.
+```
+cd "$HOME\Documents\EDHCompanion"
+claude
+```
+From there you can create decks, continue existing projects and manage Showcases just by talking to Claude.
+
+**Working on one specific deck?**
+```
+cd "$HOME\Documents\EDHCompanion\projects\spider-man"
+claude
+```
+Useful for focused sessions.
+
+**Already opened Claude somewhere else?** No problem. EDH Companion finds your configured workspace and works with its projects without restarting Claude.
+
+The optional `/edh-companion:setup` lets you choose a different storage location. (On macOS or Linux, use forward slashes: `cd ~/Documents/EDHCompanion`.)
+
 **Coming from the old `mtg` plugin?** `/plugin uninstall mtg@carlomos7-mtg-skills`, `/plugin marketplace remove carlomos7-mtg-skills`, then install as above. Old `/mtg:...` commands are replaced by plain requests.
 
 ## Skills
@@ -54,7 +75,7 @@ Each deck idea gets a folder, outside the plugin:
 ├── decklists/     every version, ready to import into Moxfield
 └── reports/       pages
 ```
-Come back any time ("let's keep working on my Spider-Man deck") and Claude picks up from STATE.md with your decisions intact. A folder named `EDHCompanion` in the current directory is used instead, if there is one; `setup` can point somewhere else. Details: [project files](plugins/edh-companion/schemas/README.md).
+Come back any time ("let's keep working on my Spider-Man deck") and Claude picks up from STATE.md with your decisions intact. Several projects can share one interactive page (a showcase) while keeping their own files and decisions. Details: [project files](plugins/edh-companion/schemas/README.md).
 
 ## Optional integrations
 Everything works with Claude Code's built-in web search. These make research richer and faster; the skills find them by what they can do, so similar tools work too. Nothing is installed for you.

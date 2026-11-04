@@ -2,6 +2,17 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 7.4.0
+- **Reliable deck statistics:** `deck_check.py` counts roles (ramp, draw, removal, counters, wipes, tutors, protection, recursion) from fixed Oracle-text rules in `analytics.py`, cards can fill several roles, and each role names the rule that matched. Claude's own labels no longer drive the numbers.
+- **Analytics:** mana sources vs color requirements (Scryfall produced_mana, the deck's colors only); a seeded, reproducible cast-by-turn simulation with its assumptions stated; price ladders (affordable / as listed / premium printings) with dates.
+- **Upcoming cards:** unreleased cards show as upcoming with their Scryfall release date, separate from banned and not-legal cards; brew can plan a `future` version.
+- **Card pools:** `allocate.py` divides a pool (a Secret Lair, a box) between decks or players: wishes, then decks that list the card, then commanders whose colors fit; never assigns a copy twice; ties go to the players.
+- **Research:** theme rankings (`rankings` in research.json, per group, with method, date and sample sizes) and verified commander checks recorded per candidate.
+- **Workspace:** one persistent workspace wherever Claude Code starts; a local `EDHCompanion` folder is used only when marked with `workspace.yaml`; starting inside a project picks it up; `companion.py projects` lists projects to resume; projects are created and resumed conversationally. README "Working with your decks".
+- **Wording:** shortcomings are named specifically (consistency, interaction, speed, resilience, mana), never "weak".
+- **Tests:** 62 unit tests (role rules, mana, simulation, allocation, workspace and project detection).
+- Coming next: report modes (summary / interactive / showcase), ranking tabs, multi-project showcases and commander color theming on the page.
+
 ## 7.3.0
 - **Commander eligibility, current rules (effective 2026-09-25):** a commander is a legendary creature, legendary Vehicle, or legendary Spacecraft with power/toughness, or a card that says it can be your commander; never banned; never more than two. Pairings follow CR 702.124 exactly: partner, the same partner—[text] (Character select, Father & son, Friends forever, Survivors; old "Friends forever" wording still pairs), partner with each other, choose a Background + a Background, Doctor's companion + a pure Time Lord Doctor; abilities can't be mixed and a Background is never a commander alone. `deck_check.py --commander A [--commander B]` checks a commander without a deck and cross-checks Scryfall's `is:commander`. research and brew only recommend commanders that pass. Found while testing: the installed rules tool returns pre-2026 partner rules.
 - **Budgets:** new "No expense spared: the ultimate blinged-out deck" option (collectibility called out separately from power). Budgets are flexible targets by default (over is a warning with the amount) unless the player says hard (`--hard-budget`, over fails). Recommendations come in small groups: within budget, worth stretching for (with the extra cost), and best regardless of budget; gameplay upgrades apart from printing upgrades.

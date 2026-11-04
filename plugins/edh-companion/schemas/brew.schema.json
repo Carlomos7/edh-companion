@@ -454,6 +454,42 @@
         "type": "string"
       },
       "description": "Known gameplay compromises of this build (often theme- or budget-driven): consistency, interaction, mana, win conditions, achievable bracket."
+    },
+    "group": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "description": "Report grouping, e.g. 'Heroes' or 'Villains'; builds with the same group share a tab."
+    },
+    "future": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "A planned version for cards not released yet.",
+      "properties": {
+        "waits_for": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "card": {
+                "type": "string"
+              },
+              "releases": {
+                "$ref": "common.schema.json#/$defs/date"
+              }
+            }
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      }
     }
   }
 }

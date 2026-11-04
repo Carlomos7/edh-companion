@@ -3,11 +3,46 @@
 All four skills work from one folder per project, outside the plugin. This file is the single description of that folder; skills link here instead of repeating it.
 
 ## Where projects live
-1. `./EDHCompanion/` in the current folder, if it exists (keeps a project next to other work; also used by tests).
-2. Otherwise the `workspace:` in the config file, if set (the `setup` skill writes it).
-3. Otherwise `~/Documents/EDHCompanion/`.
+One persistent workspace, the same wherever Claude Code is started:
+1. `$EDH_COMPANION_HOME`, if set.
+2. `./EDHCompanion/` in the current folder **only if it contains `workspace.yaml`** (the player chose to keep a workspace there; setup creates the marker). A stray `EDHCompanion` folder without it is ignored and mentioned.
+3. The `workspace:` in the config file, if set.
+4. `~/Documents/EDHCompanion/`.
 
-Config file: `~/.config/edh-companion/config.yaml` (optional; see the setup skill). `python scripts/companion.py where` prints the resolved paths.
+Config file: `~/.config/edh-companion/config.yaml` (optional; see the setup skill). `companion.py where` prints the resolved paths. Ask about the location only if the player wants it elsewhere or the default can't be written; otherwise just use it.
+
+## Starting a session
+- **Started inside a project?** If the current folder or one of its parents has a PROJECT.md (or sits directly under `<workspace>/projects/`), that's the project: read it and carry on, no questions.
+- **Creating and resuming is conversational.** "Start a Spider-Man project" creates `<workspace>/projects/<slug>/` (writing the first file creates the folder); "let's get back to my Doom deck" finds it by name. Players never need to make or open folders themselves.
+- Otherwise, when a request is about a deck, commander or report and no project is named, check what exists first: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" projects` (or list `<workspace>/projects/` and read each STATE.md first line). If something matches, offer to resume it in one line ("You have a Spider-Gwen project from Nov 4, last step: upgrade pass. Continue that?"). Unrelated projects stay separate unless the player asks to combine them.
+
+## Showcases (several projects in one report)
+```text
+EDHCompanion/showcases/<name>/
+├── showcase.yaml   which projects, how they're grouped, the mode and the theme
+└── report/         generated page (never edited by hand)
+```
+```yaml
+title: Marvel Commander Showcase
+mode: showcase          # summary | interactive | showcase
+theme: null             # optional, see Report themes
+projects:
+  - project: spider-gwen
+    group: Heroes
+  - project: doom
+    group: Villains
+```
+Projects keep their own files, decisions and audits; a showcase only points at them. When a new report is requested and a showcase already exists that fits (same theme, same player, related decks), offer to add the deck to it (as a new tab, a variant, or in a group) instead of a separate report; once the player agrees, that grouping is saved in showcase.yaml and reused without asking again. Regenerate reports from the source files; never edit generated HTML.
+
+## Report themes
+Pages take accent colors from each commander's color identity automatically. A saved theme overrides that: `<project>/report-theme.yaml` or `theme:` in showcase.yaml (whole report or per project), e.g.
+```yaml
+accent: "#c8102e"
+accent2: "#1f3a93"
+style: comic        # comic | gothic | flames | null
+label: Spider-Man comic
+```
+Precedence: a theme the player asks for now > the saved theme > the commander's colors > neutral. Save a theme only when the player wants it kept.
 
 ## One project
 ```text

@@ -21,8 +21,11 @@ Prices are Scryfall's daily prices for the listed printing and finish (verified 
 finds the cheapest paper printing of each card so gameplay cost and the aesthetic premium can be told apart.
 Exit: 0 every check passed, 1 a check failed, 2 a check could not run (network/unknown cards).
 """
-import argparse, hashlib, json, re, ssl, sys, time, urllib.error, urllib.parse, urllib.request
+import argparse, hashlib, json, os, re, ssl, sys, time, urllib.error, urllib.parse, urllib.request
 import certifi
+
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
+import analytics  # noqa: E402  roles, mana, simulation
 
 UA = {"User-Agent": "mtg-skills-deck-check/1.0", "Accept": "application/json"}
 CTX = ssl.create_default_context(cafile=certifi.where())
@@ -125,7 +128,8 @@ def treatment(card):
 
 
 def cheapest(names):
-    """Cheapest paper printing (any finish) per card name, via Scryfall search with unique=prints, 15 names per query."""
+    """Cheapest and priciest paper printing (any finish) per card name, via Scryfall search with unique=prints,
+    15 names per query. Returns {name: {usd, set, collector_number, max_usd, max_set, max_collector_number}}."""
     best = {}
     for i in range(0, len(names), 15):
         q = "(" + " or ".join('!"' + n.replace('"', '') + '"' for n in names[i:i + 15]) + ") game:paper"
@@ -134,8 +138,14 @@ def cheapest(names):
             res = http(url)
             for c in res.get("data", []):
                 vals = [float(v) for k, v in (c.get("prices") or {}).items() if k in ("usd", "usd_foil", "usd_etched") and v]
-                if vals and (c["name"] not in best or min(vals) < best[c["name"]]["usd"]):
-                    best[c["name"]] = {"usd": min(vals), "set": c["set"], "collector_number": c["collector_number"]}
+                if not vals:
+                    continue
+                b = best.setdefault(c["name"], {"usd": min(vals), "set": c["set"], "collector_number": c["collector_number"],
+                                                "max_usd": max(vals), "max_set": c["set"], "max_collector_number": c["collector_number"]})
+                if min(vals) < b["usd"]:
+                    b.update(usd=min(vals), set=c["set"], collector_number=c["collector_number"])
+                if max(vals) > b["max_usd"]:
+                    b.update(max_usd=max(vals), max_set=c["set"], max_collector_number=c["collector_number"])
             url = res.get("next_page") if res.get("has_more") else None
             time.sleep(0.5)
     return best
@@ -348,8 +358,20 @@ def main():
     off = [c["name"] for e, c in deck_rows if not set(c.get("color_identity", [])) <= identity]
     check("chk-identity-1", "identity", f"Every card within the commander color identity ({''.join(sorted(identity)) or 'C'})", "fail" if off else "pass", ", ".join(off), off)
 
+    today = time.strftime("%Y-%m-%d")
     banned = [c["name"] for e, c in rows if c["legalities"].get("commander") == "banned"]
-    illegal = [c["name"] for e, c in rows if c["legalities"].get("commander") not in ("legal", "banned")]
+    upcoming = [(c["name"], c.get("released_at")) for e, c in rows
+                if c["legalities"].get("commander") == "not_legal" and (c.get("released_at") or "") > today and not c.get("digital")]
+    illegal = [c["name"] for e, c in rows if c["legalities"].get("commander") not in ("legal", "banned") and c["name"] not in {n for n, _ in upcoming}]
+    if upcoming:
+        check("chk-legality-4", "legality", "Unreleased cards (not legal until released)", "warning",
+              "; ".join(f"{n}: releases {d} (Scryfall release date; Commander legality expected on release, not yet confirmed)" for n, d in upcoming),
+              [n for n, _ in upcoming])
+    for card in out["cards"]:
+        hit = next((d for n, d in upcoming if n == card["name"]), None)
+        card["status"] = "banned" if card["legal"] == "banned" else ("upcoming" if hit else ("legal" if card["legal"] == "legal" else "not_legal"))
+        if hit:
+            card["releases"] = hit
     check("chk-legality-1", "legality", "No banned or non-Commander-legal cards", "fail" if banned or illegal else "pass",
           "; ".join(x for x in [("banned: " + ", ".join(banned)) if banned else "", ("not legal: " + ", ".join(illegal)) if illegal else ""] if x), banned + illegal)
 
@@ -404,6 +426,19 @@ def main():
                          "average_mv": round(sum((c.get("cmc") or 0) * e["qty"] for e, c in nonland) / max(1, sum(e["qty"] for e, c in nonland)), 2),
                          "price_usd": round(sum(prices), 2), "price_unpriced": unpriced, "price_as_of": out["checked"],
                          "price_note": f"{len(prices)} of {len(rows)} lines priced: Scryfall daily price for the listed printing and finish (default printing when none listed)"})
+    deck_qty = [(e["qty"], c) for e, c in deck_rows]
+    counts, per = analytics.role_counts(deck_qty)
+    out["stats"]["roles"] = counts
+    out["stats"]["roles_note"] = "from fixed Oracle-text rules (analytics.py); a card can count in several roles"
+    for card in out["cards"]:
+        card["roles"] = per.get(card["name"], {}) if not card["commander"] else analytics.roles(next(c for c in cmd_cards if c["name"] == card["name"]))
+    out["stats"]["mana"] = analytics.mana([(e["qty"], c) for e, c in rows], identity)
+    if len(cmd_cards) == 1 and deck_rows:
+        mv = int(cmd_cards[0].get("cmc") or 0)
+        out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, mv)
+    elif len(cmd_cards) == 2 and deck_rows:
+        out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, max(int(c.get("cmc") or 0) for c in cmd_cards))
+        out["stats"]["cast_by_turn"]["assumptions"] += "; two commanders: the more expensive one"
     listed = out["stats"]["price_usd"]
     cheap_total = None
     if a.cheapest or a.aesthetic_budget is not None:
@@ -413,6 +448,9 @@ def main():
             cheap_total = round(sum(best[c["name"]]["usd"] * e["qty"] for e, c in rows if c["name"] in best), 2)
             both = [(e, c, p) for e, c, p in priced if p is not None and c["name"] in best]
             premium = round(sum((p - best[c["name"]]["usd"]) * e["qty"] for e, c, p in both), 2)
+            out["stats"]["price_ladder"] = {"affordable_usd": cheap_total, "as_listed_usd": listed,
+                                            "premium_usd": round(sum(best[c["name"]]["max_usd"] * e["qty"] for e, c in rows if c["name"] in best), 2),
+                                            "note": "affordable = cheapest paper printing of each card, premium = most expensive; basics excluded; Scryfall daily prices", "as_of": out["checked"]}
             out["stats"].update({"price_cheapest_usd": cheap_total, "aesthetic_premium_usd": premium,
                                  "premium_note": f"over {len(both)} cards priced both ways",
                                  "cheapest_missing": [n for n in names if n not in best]})

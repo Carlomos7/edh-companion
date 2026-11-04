@@ -23,5 +23,5 @@ The Command Zone's template ("Commander Deckbuilding Template for the New Era", 
 - When the player chose a theme, build the best deck inside it. Mention a big trade-off once at the skeleton; don't name stronger off-theme cards unless they ask (see themes.md, "The player's theme is the goal").
 - Never claim a card is "on theme" without checking its printing (art and set); see themes.md.
 
-## Weak card heuristics (always read the card first)
+## Cards that may underperform here (always read the card first; say what falls short: speed, consistency, interaction, resilience)
 High MV with one job, no interaction with the plan, redundant beyond need in a role, slow taplands, cards the deck's own data (EDHREC lift with this commander) shows people cut.

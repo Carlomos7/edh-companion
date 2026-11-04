@@ -6,6 +6,7 @@
 """Small helpers for edh-companion project folders.
 
   companion.py where                 print the config file and workspace paths (and whether they exist)
+  companion.py projects             list saved projects and showcases (for resuming in a new session)
   companion.py validate <project>    check research.json / brew*.json / audit*.json against the schemas,
                                      resolve citation IDs, and report stale or contradictory audits
   companion.py goals-hash <project>  fingerprint of PROJECT.md's rules; audits record it so a rule change makes them stale
@@ -22,16 +23,68 @@ SCHEMAS = os.path.join(HERE, "..", "schemas")
 CONFIG = os.path.join(os.path.expanduser("~"), ".config", "edh-companion", "config.yaml")
 
 
-def workspace():
-    """Same order as schemas/README.md: ./EDHCompanion, then config, then ~/Documents/EDHCompanion."""
-    if os.path.isdir("EDHCompanion"):
-        return os.path.abspath("EDHCompanion"), "current folder"
+def config():
     if os.path.exists(CONFIG):
         with open(CONFIG, encoding="utf-8") as h:
-            ws = (yaml.safe_load(h) or {}).get("workspace")
-        if ws:
-            return os.path.expanduser(ws), "config"
+            return yaml.safe_load(h) or {}
+    return {}
+
+
+def workspace():
+    """One persistent workspace, wherever Claude Code starts (schemas/README.md):
+    $EDH_COMPANION_HOME, then a folder the player marked as a workspace here (EDHCompanion/workspace.yaml),
+    then the config file's workspace, then ~/Documents/EDHCompanion."""
+    if os.environ.get("EDH_COMPANION_HOME"):
+        return os.path.abspath(os.path.expanduser(os.environ["EDH_COMPANION_HOME"])), "EDH_COMPANION_HOME"
+    if os.path.exists(os.path.join("EDHCompanion", "workspace.yaml")):
+        return os.path.abspath("EDHCompanion"), "marked folder in the current directory"
+    ws = config().get("workspace")
+    if ws:
+        return os.path.expanduser(ws), "config"
     return os.path.join(os.path.expanduser("~"), "Documents", "EDHCompanion"), "default"
+
+
+def current_project(start="."):
+    """The project Claude Code was started in: the nearest folder (this one or a parent) with PROJECT.md,
+    or a folder directly under <workspace>/projects/. None when started elsewhere."""
+    d = os.path.abspath(start)
+    while True:
+        if os.path.isfile(os.path.join(d, "PROJECT.md")):
+            return d
+        parent = os.path.dirname(d)
+        if os.path.basename(parent) == "projects" and os.path.isdir(d):
+            return d
+        if parent == d:
+            return None
+        d = parent
+
+
+def first_line(path, heading=None):
+    if not os.path.exists(path):
+        return ""
+    with open(path, encoding="utf-8") as h:
+        lines = [x.strip("- ").strip() for x in h if x.strip() and not x.lstrip().startswith("#")]
+    return lines[0][:100] if lines else ""
+
+
+def projects():
+    """Projects and showcases in the workspace, newest first, with enough to offer a resume."""
+    ws, how = workspace()
+    rows = []
+    for kind in ("projects", "showcases"):
+        base = os.path.join(ws, kind)
+        if not os.path.isdir(base):
+            continue
+        for name in os.listdir(base):
+            d = os.path.join(base, name)
+            if not os.path.isdir(d):
+                continue
+            files = [os.path.join(dp, f) for dp, _, fs in os.walk(d) for f in fs]
+            rows.append({"kind": kind[:-1], "name": name, "path": d, "updated": max((os.path.getmtime(f) for f in files), default=os.path.getmtime(d)),
+                         "goal": first_line(os.path.join(d, "PROJECT.md")), "state": first_line(os.path.join(d, "STATE.md")),
+                         "builds": sorted(os.path.basename(f) for f in glob.glob(os.path.join(d, "brew*.json"))),
+                         "reports": os.path.isfile(os.path.join(d, "reports", "index.html")) or os.path.isfile(os.path.join(d, "report", "index.html"))})
+    return ws, how, sorted(rows, key=lambda r: -r["updated"])
 
 
 def goals_hash(d):
@@ -129,13 +182,33 @@ def validate(d):
 
 
 def main():
-    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "validate", "goals-hash"):
+    if len(sys.argv) < 2 or sys.argv[1] not in ("where", "projects", "validate", "goals-hash"):
         sys.exit(__doc__)
     if sys.argv[1] == "where":
         ws, how = workspace()
         print(f"config     {CONFIG} ({'exists' if os.path.exists(CONFIG) else 'not created; optional'})")
         print(f"workspace  {ws} ({how}; {'exists' if os.path.isdir(ws) else 'created on first project'})")
         print(f"projects   {os.path.join(ws, 'projects')}")
+        cur = current_project()
+        if cur:
+            print(f"project    {os.path.basename(cur)} ({cur}; Claude Code started inside it)")
+        here = os.path.abspath("EDHCompanion")
+        if os.path.isdir(here) and here != ws:
+            print(f"note       {here} exists here but isn't the workspace (no workspace.yaml); it is not used")
+        return
+    if sys.argv[1] == "projects":
+        import time
+        ws, how, rows = projects()
+        print(f"workspace {ws} ({how})")
+        cur = current_project()
+        if cur:
+            print(f"current   {os.path.basename(cur)} (started inside this project: {cur})")
+        if not rows:
+            print("no projects yet")
+        for r in rows:
+            when = time.strftime("%Y-%m-%d", time.localtime(r["updated"]))
+            extra = ", ".join(x for x in [", ".join(r["builds"]), "page" if r["reports"] else ""] if x)
+            print(f"- {r['kind']} {r['name']} ({when}){': ' + r['goal'] if r['goal'] else ''}{' | now: ' + r['state'] if r['state'] else ''}{' | ' + extra if extra else ''}")
         return
     if len(sys.argv) < 3:
         sys.exit(f"usage: companion.py {sys.argv[1]} <project-dir>")

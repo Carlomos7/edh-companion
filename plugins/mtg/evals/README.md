@@ -29,7 +29,7 @@ claude plugin eval . --judge-model sonnet    # steadier judging
 
 Notes:
 - `--mocks off` starts the plugin's real `mtgdb` MCP server (local, reads only the card cache). `--allow-tools` lets runs use it; eval runs deny MCP tools otherwise.
-- `EVAL_MTG_CACHE`: each eval run gets an empty home folder and only `EVAL_*` variables pass through, so this points the server at your synced data.
+- `EVAL_MTG_CACHE`: each eval run gets an empty home folder and only `EVAL_*` variables pass through, so this points the server at your synced data. Collection changes made during evals go to the sandbox, never to your real collection.
 - Granting `Bash` makes the eval sandbox Bash; on some Windows setups that sandbox can't start, so the cases are written to work without Bash.
 - Each run starts in an empty workspace. Sync the data first (`uv run scripts/mtgdb.py sync`); runs read it from `~/.cache/mtg/`.
 - Every run and judge call costs real usage. b3-combo-trap is the expensive one.

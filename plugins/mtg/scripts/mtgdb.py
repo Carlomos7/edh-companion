@@ -55,7 +55,11 @@ UA = {"User-Agent": "mtgdb/2.0 (+https://github.com/Carlomos7/mtg-skills)", "Acc
 CACHE = os.path.expanduser(os.environ.get("MTG_CACHE") or os.environ.get("EVAL_MTG_CACHE") or "~/.cache/mtg")
 DB_DEFAULT = os.environ.get("MTGDB", os.path.join(CACHE, "cards.sqlite"))
 EXTRA_DB = os.environ.get("MTGDB_EXTRA", os.path.join(CACHE, "extra.sqlite"))  # survives re-index
-COLLECTION = os.environ.get("MTG_COLLECTION", os.path.join(CACHE, "collection.json"))
+# Eval runs borrow the real card data via EVAL_MTG_CACHE but must never write a player's collection there:
+# their collection goes to the eval sandbox's own home instead.
+COLLECTION = os.environ.get("MTG_COLLECTION") or (
+    os.path.expanduser("~/.mtg-eval-collection.json") if os.environ.get("EVAL_MTG_CACHE") and not os.environ.get("MTG_CACHE")
+    else os.path.join(CACHE, "collection.json"))
 EXTRA_SCHEMA = """
 CREATE TABLE IF NOT EXISTS tags(oracle_id TEXT, name TEXT, tag TEXT, synced TEXT);
 CREATE INDEX IF NOT EXISTS ix_tags ON tags(oracle_id);

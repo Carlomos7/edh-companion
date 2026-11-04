@@ -7,7 +7,9 @@
 - Rough channel fit: The Command Zone and EDHRECast for template and staples; budget channels for budget builds; cEDH creators (e.g. Play to Win, cEDH-focused channels) only for B5. Rank channels by what you actually find, not by this list.
 
 ## Pulling transcripts
-- **One video at a time**, never in parallel (parallel fetches get rate limited). On a block or rate error, wait, then continue serially, or use the video's linked decklist or other sources.
+- **One video at a time**, never in parallel (parallel fetches get rate limited).
+- **Transcript tool blocked** ("YouTube is blocking requests from your IP", common on some networks): fetch the video URL with a web fetch tool instead (`parallel-search` `web_fetch`, or WebFetch) and ask for the transcript; it usually returns it with timestamps. `get_video_info` still works for title, channel, date and the decklist link.
+- Still nothing? Use the video's linked decklist and description, and cite the video as "watch" only, without quoting it.
 - If the video links a decklist, pull it (`moxfield_decklist`) and treat it as the primary artifact; the transcript explains it.
 
 ## Extracting

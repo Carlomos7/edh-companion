@@ -2,6 +2,12 @@
 
 Players get a new version with `/plugin marketplace update carlomos7-mtg-skills` and a restart.
 
+## 5.4.0
+- **Community research on every build:** before the plan, the build checks Reddit (r/EDH, r/EDHBrews, r/CompetitiveEDH), articles and primers, and 2 or 3 recent creator videos, then keeps 6 to 10 takes with their sources. Combos the community mentions are checked against your bracket.
+- **"What the community says" on the page:** each take links to its thread, article or video, with a Watch list and every source in Sources & accuracy.
+- **YouTube fallback:** when the transcript tool is blocked, the video page is fetched with a web fetch tool instead, which usually returns the transcript.
+- **Responsive pass:** phone and tablet layouts tidied (stacked overview, two-up filters, readable rows, viewer controls no longer overlap the card name), checked at 390, 768, 1024 and 1440 px.
+
 ## 5.3.0
 - **Links on every card:** the card viewer has Scryfall, EDHREC, TCGplayer and Cardmarket buttons; in the decklist the price opens the exact printing on TCGplayer and ↗ opens it on Scryfall. Basic pages (no viewer) link card names to Scryfall.
 - **Page layout reordered:** deck header with Copy for Moxfield up top, then the plan next to the numbers, the decklist, cards to consider, the game plan, and the charts last in a 2 by 2 grid. The bracket switch only shows when there's more than one bracket.

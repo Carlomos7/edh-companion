@@ -19,6 +19,7 @@
 
 notes.json (per deck, written by the agent; every field optional):
   {"pitch": "", "wins": "", "key_cards": [], "strengths": [], "weaknesses": [], "tips": [], "notes": "",
+   "community": [{"text": "", "source": "", "url": "", "date": ""}],
    "youtube": [{"title": "", "url": "", "channel": "", "date": ""}], "checks": {"spellbook": true, "verifier": "pass"},
    "role_builder_counts": {"draw": 11}}
 edhrec.json: [{"name": "Card", "pct": 41.2, "n": 1203}]  (n = decks behind the number)
@@ -191,7 +192,7 @@ def cmd_add_deck(a):
         stats["cost_to_buy"] = val["collection"]["cost_to_buy_usd"]
     checks = {"validate": val["pass"], **(notes.get("checks") or {})}
     deck = {"bracket": a.bracket, "cards": cards, "stats": stats, "theme": val.get("theme"), "checks": checks,
-            "summary": {k: notes[k] for k in ("pitch", "wins", "key_cards", "strengths", "weaknesses", "tips", "notes") if k in notes},
+            "summary": {k: notes[k] for k in ("pitch", "wins", "key_cards", "strengths", "weaknesses", "tips", "notes", "community") if k in notes},
             "moxfield": open(a.deck, encoding="utf-8").read().strip(), "errors": val["errors"]}
     grp = next((g for g in D["groups"] if g["title"] == a.group), None)
     if not grp:

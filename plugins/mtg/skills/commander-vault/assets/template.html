@@ -121,6 +121,35 @@ th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:1px;color:v
 .decklist button.name{all:unset;cursor:zoom-in;min-width:0;overflow-wrap:anywhere;font-weight:500}
 .decklist button.name:hover{color:var(--s1)}.decklist button.name:focus-visible{outline:3px solid var(--s1);outline-offset:1px}
 .decklist .off{color:var(--gold)}
+.ovgrid{display:grid;grid-template-columns:minmax(0,1fr) 150px;gap:18px;align-items:start}
+.ovgrid .hero{float:none;width:100%;margin:0}.sumgrid{clear:none!important}
+@media (max-width:640px){.ovgrid{grid-template-columns:minmax(0,1fr) 92px;gap:12px}}
+
+.comm{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,300px),1fr));gap:12px}
+.comm figure{margin:0;padding:12px 14px;background:var(--field);border:1px solid var(--line);border-left:3px solid var(--accent);border-radius:4px;display:flex;flex-direction:column;gap:8px}
+.comm blockquote{margin:0;font-size:14px;line-height:1.45}.comm figcaption{font-size:12px;margin-top:auto}.comm a,a.vid{color:var(--s1)}
+.vids{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,280px),1fr));gap:8px}
+a.vid{display:grid;gap:2px;text-decoration:none;padding:10px 12px;border:1px solid var(--line);border-radius:4px;font-size:13px}a.vid:hover{border-color:var(--s1)}a.vid b{color:var(--text)}
+/* responsive: tablet */
+@media (max-width:1024px){.overview{grid-template-columns:minmax(0,1fr)!important}.overview>.panel:last-child .stats{grid-template-columns:repeat(4,minmax(0,1fr))}}
+/* responsive: phone */
+@media (max-width:640px){
+ main{padding:14px 12px 48px;gap:14px}section.panel{padding:12px}
+ h2{font-size:24px}.deckhead h2{font-size:28px}
+ .deckhead{align-items:stretch}.deckhead>.row{width:100%}.deckhead .copy{flex:1}
+ .overview>.panel:last-child .stats{grid-template-columns:repeat(2,minmax(0,1fr))}
+ .ctrl{display:grid;grid-template-columns:1fr 1fr;gap:8px}.ctrl input[type=search]{grid-column:1/-1}.ctrl .note{grid-column:1/-1;margin:0!important}
+ .ctrl select,.ctrl input{width:100%}
+ .decklist .ln{padding:7px 0;font-size:14px}a.ext{opacity:.7}
+ .sumgrid,.sumgrid.three{grid-template-columns:minmax(0,1fr)}
+ .legend{gap:6px 12px}
+ .chart{height:200px}
+ .fanbox{opacity:.12}
+ nav .in{padding:6px 12px}nav button{font-size:14px;padding:6px 10px}
+ .vw{padding:12px;gap:14px}.side{padding:0 4px 24px}
+ .stage canvas,.card3d{width:min(320px,78vw)}
+}
+.three{grid-template-columns:repeat(3,minmax(0,1fr))}@media (max-width:900px){.sumgrid.three{grid-template-columns:minmax(0,1fr)}}
 .overview{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
 .charts{grid-template-columns:repeat(2,minmax(0,1fr))!important}
 @media (max-width:820px){.overview,.charts{grid-template-columns:minmax(0,1fr)!important}}
@@ -179,7 +208,7 @@ body.noprice .pr,body.noprice .stat.price{display:none}
 .vbtns .btn{background:#161c29;color:#e7ebf3;border:1px solid #39425a;border-radius:999px;min-width:44px;height:44px}
 .vbtns .btn:hover{background:#222a3b}
 #vFlip{background:rgba(13,17,26,.62);backdrop-filter:blur(10px) saturate(1.4);border-color:rgba(255,255,255,.28);font-weight:600;padding:0 16px}
-@media (max-width:760px){.vw{grid-template-columns:1fr;align-content:start;overflow:auto}.side{max-height:none}.bullet{grid-template-columns:74px 1fr 80px}}
+@media (max-width:760px){.vw{grid-template-columns:1fr;align-content:start;align-items:start;overflow:auto}.side{max-height:none}.bullet{grid-template-columns:74px 1fr 80px}}
 @media (prefers-reduced-motion:reduce){.card3d,.fan .art,.tile{transition:none}.sheen{display:none}}
 @media (prefers-reduced-motion:no-preference){main>*{animation:in .18s ease-out}@keyframes in{from{transform:translateY(4px)}to{transform:none}}}
 </style>
@@ -304,6 +333,7 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
   body.append(deckList(deck));
   const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(SHOW.swaps&&sw.length)body.append(swapList(G,cur,deck.bracket));
   const plan=deckPlan(deck,cur);if(plan)body.append(plan);
+  const com=community(deck,cur);if(com)body.append(com);
   if(SHOW.charts)body.append(el("div",{},el("h2",{},"Mana and curve"),deckCharts(deck)));}
  drawC()}
 let CUR={};
@@ -311,9 +341,9 @@ function swapsFor(name){const k=`${CUR.slug}/b${CUR.b}`;return (CUR.G&&CUR.G.swa
 function fitsHere(s){const k=`${CUR.slug}/b${CUR.b}`;return (s.fits||[]).filter(f=>f.deck===k)}
 function simAt(sim,mv){const k="turn_"+Math.min((mv||4)+1,8);return sim[k]??"–"}
 function orderedCards(d){return [...d.cards].sort((a,b)=>(b.commander-a.commander)||(TYPE_ORDER.indexOf(mainType(a.type))-TYPE_ORDER.indexOf(mainType(b.type)))||(a.mv-b.mv)||a.name.localeCompare(b.name))}
-function deckSummary(d,c,flat){const s=d.summary||{},w=el("div");
+function deckSummary(d,c,flat){const s=d.summary||{},box=el("div",{class:"ovgrid"}),w=el("div");box.append(w);
  const cmd=d.cards.find(x=>x.commander);
- if(cmd&&IMG!=="none"){const h=art(cmd.img,cmd.name);h.classList.add("hero");h.tabIndex=0;h.dataset.img=cmd.img;h.onclick=e=>openViewer(cmd,flat,e.currentTarget);w.append(h)}
+ if(cmd&&IMG!=="none"){const h=art(cmd.img,cmd.name);h.classList.add("hero");h.tabIndex=0;h.dataset.img=cmd.img;h.onclick=e=>openViewer(cmd,flat,e.currentTarget);box.append(h)}
  w.append(el("h3",{style:"margin-top:0"},"The plan"));
  if(s.pitch)w.append(el("p",{class:"pitch"},s.pitch));
  const byName=Object.fromEntries(d.cards.map(x=>[x.name.toLowerCase(),x]));
@@ -325,11 +355,15 @@ function deckSummary(d,c,flat){const s=d.summary||{},w=el("div");
  const gcs=(d.stats||{}).game_changers||[];
  w.append(el("div",{class:"row"},...(gcs.length?gcs.map(g=>el("span",{class:"pill gc"},"GC · "+g)):[el("span",{class:"pill"},"No Game Changers")])));
  if(d.theme)w.append(el("div",{class:"thcount"},el("b",{},`${d.theme.on_theme_pct??"–"}% on theme`),...Object.entries(d.theme.counts||{}).map(([k,v])=>el("span",{},tag(k)," ",el("b",{class:"num"},v)))));
- return w}
+ return box}
+function community(d,c){const C=(d.summary||{}).community||[],Y=c.youtube||[];if(!C.length&&!Y.length)return null;
+ const sec=el("section",{class:"panel"},el("h2",{},"What the community says"),el("p",{class:"note"},"Takes from players, writers and creators, each linked so you can read or watch the whole thing. Opinions, not rules: some disagree with each other."));
+ if(C.length)sec.append(el("div",{class:"comm"},...C.map(x=>el("figure",{},el("blockquote",{},x.text),el("figcaption",{},x.url?ext(x.url,`Open source: ${x.source}`,"",x.source," ↗"):x.source,x.date?el("span",{class:"muted"}," · "+x.date):"")))));
+ if(Y.length)sec.append(el("h3",{},"Watch"),el("div",{class:"vids"},...Y.map(v=>ext(v.url,`Watch ${v.title} on YouTube`,"vid",el("b",{},v.title),el("span",{class:"muted"},[v.channel,v.date].filter(Boolean).join(" · "))," ↗"))));
+ return sec}
 function deckPlan(d,c){const s=d.summary||{};const list=(h,a)=>a&&a.length?el("div",{},el("h4",{},h),el("ul",{},...a.map(x=>el("li",{},x)))):null;
  const parts=[list("Strengths",s.strengths),list("Weaknesses",s.weaknesses),list("How to play it",s.tips)].filter(Boolean);
  const sec=el("section",{class:"panel"},el("h2",{},"Game plan"));if(parts.length)sec.append(el("div",{class:"sumgrid three"},...parts));
- if(c.youtube&&c.youtube.length)sec.append(el("h3",{},"Watch"),el("ul",{},...c.youtube.map(v=>el("li",{},el("a",{href:v.url,target:"_blank",rel:"noopener"},v.title," ↗")," ",el("span",{class:"muted"},`${v.channel||""} · ${v.date||""}`)))));
  if(s.notes)sec.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
  const ch=d.checks||{};sec.append(el("p",{class:"note"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return sec}
 function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",style:"display:grid;gap:12px;align-content:start"});

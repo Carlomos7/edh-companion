@@ -227,8 +227,8 @@ class PagesTest(unittest.TestCase):
             self.assertEqual(pg.locator(".decklist .art").count(), 0)
             self.assertEqual(pg.locator("canvas").count(), 0)
             self.assertFalse(any("chart" in u.lower() or "three" in u for u in scripts), scripts)  # basic loads no libraries
-            pg.locator(".decklist button.name").first.click()
-            self.assertFalse(pg.evaluate("document.querySelector('#viewer').open"))
+            self.assertEqual(pg.locator(".decklist button.name").count(), 0)  # no viewer: names link to Scryfall instead
+            self.assertTrue(pg.locator(".decklist a.name").first.get_attribute("href").startswith("https://scryfall.com/"))
             overflow = pg.evaluate("document.documentElement.scrollWidth - document.documentElement.clientWidth")
             self.assertLessEqual(overflow, 0)
             self.assertEqual(errors, [])

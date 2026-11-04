@@ -169,7 +169,8 @@ def cmd_add_deck(a):
                       "commander": is_cmdr, "set": p["set_code"], "cn": p["cn"], "price": p["usd"] if p["usd"] is not None else p["usd_foil"],
                       "theme": x.get("theme") if D.get("theme") else None, "img": f, "back": b, "role": role,
                       "flags": x.get("flags", []), "reason": reasons.get(o["name"]),
-                      "mana": o.get("mana_cost"), "rarity": p.get("rarity"), "gc": bool(o.get("gc"))})
+                      "mana": o.get("mana_cost"), "rarity": p.get("rarity"), "gc": bool(o.get("gc")),
+                      "tcg": p.get("tcg_url"), "cm": p.get("cm_url")})
         if not is_cmdr:
             types[main_type(o["type_line"])] = types.get(main_type(o["type_line"]), 0) + x["qty"]
         if a.ladders:

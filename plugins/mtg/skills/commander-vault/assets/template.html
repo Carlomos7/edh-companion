@@ -121,6 +121,21 @@ th{font:600 11px var(--body);text-transform:uppercase;letter-spacing:1px;color:v
 .decklist button.name{all:unset;cursor:zoom-in;min-width:0;overflow-wrap:anywhere;font-weight:500}
 .decklist button.name:hover{color:var(--s1)}.decklist button.name:focus-visible{outline:3px solid var(--s1);outline-offset:1px}
 .decklist .off{color:var(--gold)}
+.overview{display:grid;grid-template-columns:minmax(0,1.35fr) minmax(0,1fr);gap:18px;align-items:start}
+.charts{grid-template-columns:repeat(2,minmax(0,1fr))!important}
+@media (max-width:820px){.overview,.charts{grid-template-columns:minmax(0,1fr)!important}}
+.decklist .ln{grid-template-columns:minmax(0,1fr) auto auto 14px!important}
+.decklist a.name{color:inherit;text-decoration:none;font-weight:500;min-width:0;overflow-wrap:anywhere}.decklist a.name:hover{color:var(--s1);text-decoration:underline}
+a.buy{color:var(--muted);text-decoration:none;border-radius:3px}a.buy:hover{color:var(--s1);text-decoration:underline}
+a.ext{color:var(--muted);text-decoration:none;font-size:12px;opacity:0;transition:opacity .12s;text-align:center}
+.ln:hover a.ext,a.ext:focus-visible{opacity:1}a.ext:hover{color:var(--s1)}
+@media (hover:none){a.ext{opacity:.7}}
+.links{display:flex;flex-wrap:wrap;gap:6px;margin:0 0 10px}
+.links a{font:500 12px var(--body);color:#e7ebf3;text-decoration:none;border:1px solid #39425a;border-radius:999px;padding:4px 10px}
+.links a:hover{background:#222a3b;border-color:#5a6680}.links a:focus-visible{outline:3px solid #3987e5;outline-offset:2px}
+.stage{cursor:grab}.stage.grabbing,.stage.grabbing canvas{cursor:grabbing}
+.vbtns .btn,#vFlip,.seg .btn,nav button{cursor:pointer}
+.vbtns .btn:active{transform:scale(.96)}
 .swlist{display:grid}.swrow{display:grid;grid-template-columns:minmax(150px,1fr) minmax(0,2fr) minmax(0,1.5fr) auto;gap:6px 16px;padding:10px 0;border-top:1px solid var(--line);font-size:13.5px;align-items:baseline}
 .swrow.other{opacity:.6}.swrow button.name{all:unset;cursor:zoom-in;font-weight:600}.swrow button.name:hover{color:var(--s1)}.swrow button.name:focus-visible{outline:3px solid var(--s1)}
 @media (max-width:760px){.swrow{grid-template-columns:minmax(0,1fr) auto}.swrow>div{grid-column:1/-1}}
@@ -258,6 +273,13 @@ function cardTile(c,ctx){return el("button",{class:"tile",onclick:e=>openViewer(
 /* ---------- deck tabs ---------- */
 const BR={1:"Exhibition",2:"Core",3:"Upgraded",4:"Optimized",5:"cEDH"};
 function pips(cost){const out=el("span",{class:"pips"});String(cost||"").replace(/\{([^}]+)\}/g,(_,s)=>{const k=/^[WUBRG]$/.test(s)?s:"";out.append(el("span",{class:"pip "+k,title:s},k?"":s.replace("/","")))});return out}
+const enc=encodeURIComponent;
+function cardLinks(c){const n=c.card||c.name,front=n.split(" // ")[0];
+ const slug=front.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g,"").replace(/['’,.!?:"]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
+ return {scryfall:c.set&&c.cn?`https://scryfall.com/card/${c.set}/${enc(c.cn)}`:`https://scryfall.com/search?q=${enc('!"'+n+'"')}`,edhrec:`https://edhrec.com/cards/${slug}`,
+  tcgplayer:c.tcg||`https://www.tcgplayer.com/search/magic/product?productLineName=magic&q=${enc(front)}`,cardmarket:c.cm||`https://www.cardmarket.com/en/Magic/Products/Search?searchString=${enc(front)}`}}
+function ext(href,label,cls,...kids){return el("a",{href,target:"_blank",rel:"noopener",class:cls||"","aria-label":label,title:label},...kids)}
+function linkRow(c){const L=cardLinks(c);return el("div",{class:"links"},ext(L.scryfall,"Open on Scryfall","","Scryfall ↗"),ext(L.edhrec,"Open on EDHREC","","EDHREC ↗"),ext(L.tcgplayer,"Buy on TCGplayer","","TCGplayer ↗"),ext(L.cardmarket,"Buy on Cardmarket","","Cardmarket ↗"))}
 function rar(r){return r?el("span",{class:"rar "+r,title:r}):null}
 function tag(label){if(!D.theme||!label)return null;return label==="off-theme"?el("span",{class:"tp off"},"Off"):el("span",{class:"tp",style:`--c:${themeColor(label)}`},label)}
 function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{});
@@ -275,11 +297,14 @@ function renderGroup(G,host=$("#main")){const key="grp:"+G.id,st=store.get(key,{
   const seg=el("div",{class:"seg",role:"group","aria-label":"Choose a bracket"},...cur.decks.map(d=>el("button",{class:"btn","aria-pressed":d.bracket===deck.bracket,onclick:()=>{store.set(key+":"+cur.slug,d.bracket);drawC()}},
    el("b",{},"B"+d.bracket),el("small",{},`${BR[d.bracket]||""}${SHOW.prices?" · "+money((d.stats||{}).price):""}`))));
   const flat=orderedCards(deck);CUR={G,slug:cur.slug,b:deck.bracket};
-  body.append(el("div",{class:"deckhead"},el("h2",{},cur.name),seg));
-  body.append(el("div",{class:"two"},el("section",{class:"panel"},deckSummary(deck,cur,flat)),deckNumbers(deck,cur)));
-  if(SHOW.charts)body.append(deckCharts(deck));
+  const copy=el("button",{class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
+  body.append(el("div",{class:"deckhead"},el("div",{},el("h2",{},cur.name),el("p",{class:"note",style:"margin:4px 0 0"},`Bracket ${deck.bracket} · ${BR[deck.bracket]||""} · ${deck.cards.reduce((a,c)=>a+c.qty,0)} cards`)),
+   el("div",{class:"row"},cur.decks.length>1?seg:null,copy)));
+  body.append(el("div",{class:"overview"},el("section",{class:"panel"},deckSummary(deck,cur,flat)),deckNumbers(deck,cur)));
   body.append(deckList(deck));
-  const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(SHOW.swaps&&sw.length)body.append(swapList(G,cur,deck.bracket));}
+  const sw=(G.swaps||[]).filter(s=>s.fits.some(f=>f.deck.startsWith(cur.slug+"/")));if(SHOW.swaps&&sw.length)body.append(swapList(G,cur,deck.bracket));
+  const plan=deckPlan(deck,cur);if(plan)body.append(plan);
+  if(SHOW.charts)body.append(el("div",{},el("h2",{},"Mana and curve"),deckCharts(deck)));}
  drawC()}
 let CUR={};
 function swapsFor(name){const k=`${CUR.slug}/b${CUR.b}`;return (CUR.G&&CUR.G.swaps||[]).filter(s=>s.fits.some(f=>f.deck===k&&f.swap_out===name))}
@@ -289,21 +314,24 @@ function orderedCards(d){return [...d.cards].sort((a,b)=>(b.commander-a.commande
 function deckSummary(d,c,flat){const s=d.summary||{},w=el("div");
  const cmd=d.cards.find(x=>x.commander);
  if(cmd&&IMG!=="none"){const h=art(cmd.img,cmd.name);h.classList.add("hero");h.tabIndex=0;h.dataset.img=cmd.img;h.onclick=e=>openViewer(cmd,flat,e.currentTarget);w.append(h)}
- w.append(el("h3",{style:"margin-top:0"},`Bracket ${d.bracket} · ${BR[d.bracket]||""}`));
+ w.append(el("h3",{style:"margin-top:0"},"The plan"));
  if(s.pitch)w.append(el("p",{class:"pitch"},s.pitch));
  const byName=Object.fromEntries(d.cards.map(x=>[x.name.toLowerCase(),x]));
  const keyCard=k=>{const n=String(k).split(/:| - /)[0].trim().toLowerCase();return byName[n]||d.cards.find(x=>x.name.toLowerCase().startsWith(n))};
  const list=(h,a)=>a&&a.length?el("div",{},el("h4",{},h),el("ul",{},...a.map(x=>el("li",{},x)))):null;
  const keys=(s.key_cards||[]).map(k=>{const card=keyCard(k);return card?el("button",{title:String(k),"data-img":card.img,onclick:e=>openViewer(card,flat,e.currentTarget)},card.name.split(" // ")[0]):null}).filter(Boolean);
  w.append(el("div",{class:"sumgrid"},s.wins?el("div",{},el("h4",{},"How it wins"),el("p",{},s.wins)):null,
-  keys.length?el("div",{},el("h4",{},"Key cards"),el("ul",{class:"keys"},...keys.map(k=>el("li",{},k)))):list("Key cards",s.key_cards),
-  list("Strengths",s.strengths),list("Weaknesses",s.weaknesses),list("How to play it",s.tips)));
+  keys.length?el("div",{},el("h4",{},"Key cards"),el("ul",{class:"keys"},...keys.map(k=>el("li",{},k)))):list("Key cards",s.key_cards)));
  const gcs=(d.stats||{}).game_changers||[];
  w.append(el("div",{class:"row"},...(gcs.length?gcs.map(g=>el("span",{class:"pill gc"},"GC · "+g)):[el("span",{class:"pill"},"No Game Changers")])));
  if(d.theme)w.append(el("div",{class:"thcount"},el("b",{},`${d.theme.on_theme_pct??"–"}% on theme`),...Object.entries(d.theme.counts||{}).map(([k,v])=>el("span",{},tag(k)," ",el("b",{class:"num"},v)))));
- if(c.youtube&&c.youtube.length)w.append(el("h3",{},"Watch"),el("ul",{},...c.youtube.map(v=>el("li",{},el("a",{href:v.url,target:"_blank",rel:"noopener"},v.title)," ",el("span",{class:"muted"},`${v.channel||""} · ${v.date||""}`)))));
- if(s.notes)w.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
- const ch=d.checks||{};w.append(el("p",{class:"note",style:"clear:both"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return w}
+ return w}
+function deckPlan(d,c){const s=d.summary||{};const list=(h,a)=>a&&a.length?el("div",{},el("h4",{},h),el("ul",{},...a.map(x=>el("li",{},x)))):null;
+ const parts=[list("Strengths",s.strengths),list("Weaknesses",s.weaknesses),list("How to play it",s.tips)].filter(Boolean);
+ const sec=el("section",{class:"panel"},el("h2",{},"Game plan"));if(parts.length)sec.append(el("div",{class:"sumgrid three"},...parts));
+ if(c.youtube&&c.youtube.length)sec.append(el("h3",{},"Watch"),el("ul",{},...c.youtube.map(v=>el("li",{},el("a",{href:v.url,target:"_blank",rel:"noopener"},v.title," ↗")," ",el("span",{class:"muted"},`${v.channel||""} · ${v.date||""}`)))));
+ if(s.notes)sec.append(el("details",{},el("summary",{},"Full notes"),el("div",{class:"t2",style:"white-space:pre-wrap"},s.notes)));
+ const ch=d.checks||{};sec.append(el("p",{class:"note"},"Checks: ",Object.entries(ch).map(([k,v])=>`${k} ${v===true?"✓":v===false?"✗":v}`).join(" · ")||"none recorded"));return sec}
 function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",style:"display:grid;gap:12px;align-content:start"});
  const off=(d.theme&&d.theme.counts&&d.theme.counts["off-theme"]);
  sec.append(el("div",{class:"stats"},...[SHOW.prices?["Value",money(s.price)+(s.unpriced&&s.unpriced.length?" +":""),"price"]:null,["Avg mana value",s.avg_mv??"–"],[`Out by turn ${Math.min((c.mv||4)+1,8)}`,s.sim?simAt(s.sim,c.mv)+"%":"–"],
@@ -314,7 +342,6 @@ function deckNumbers(d,c){const s=d.stats||{},sec=el("section",{class:"panel",st
   el("div",{class:"legend"},el("span",{},"Bar: this deck"),el("span",{},"Green band: typical range"),el("span",{class:"ok"},"✓ in range"),el("span",{class:"short"},"▼ low"),el("span",{class:"over"},"▲ high")),
   el("p",{class:"note"},(s.template_source||"Starting ranges, not laws.")+(s.roles_source?` Role counts: ${s.roles_source}.`:""))));
   if(s.role_compare)sec.append(el("p",{class:"note"},"Where counts disagree: "+Object.entries(s.role_compare).map(([r,v])=>`${r} ${v.tagger} (Tagger) vs ${v.builder} (builder)`).join(" · ")))}
- sec.append(el("button",{class:"btn copy",style:"justify-self:start",onclick:e=>copyText(d.moxfield||d.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy list for Moxfield"));
  return sec}
 function deckCharts(d){const s=d.stats||{},ch=el("div",{class:"charts"});
  const box=t=>{const p=el("section",{class:"panel"});ch.append(p);return p};
@@ -336,7 +363,7 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
  const q=el("input",{type:"search",placeholder:"Card name",value:st.q,"aria-label":"Filter decklist"});
  const count=el("span",{class:"note","aria-live":"polite",style:"margin-left:auto;align-self:center"});
  sec.append(el("div",{class:"ctrl"},q,grp,srt,only,count));const out=el("div",{class:"cols"});sec.append(out);
- sec.append(el("div",{class:"legend"},D.theme?el("span",{},...D.theme.labels.map(l=>tag(l.label)),tag("off-theme")," printing theme"):null,el("span",{},...["common","uncommon","rare","mythic"].map(rar)," rarity"),el("span",{},el("span",{class:"pill gc"},"GC")," Game Changer"),(CUR.G&&CUR.G.swaps||[]).length?el("span",{},el("span",{class:"swp"},"⇄")," swap options"):null,el("span",{},"Hover a name to preview · click to enlarge")));
+ sec.append(el("div",{class:"legend"},D.theme?el("span",{},...D.theme.labels.map(l=>tag(l.label)),tag("off-theme")," printing theme"):null,el("span",{},...["common","uncommon","rare","mythic"].map(rar)," rarity"),el("span",{},el("span",{class:"pill gc"},"GC")," Game Changer"),(CUR.G&&CUR.G.swaps||[]).length?el("span",{},el("span",{class:"swp"},"⇄")," swap options"):null,el("span",{},VIEW()?"Hover a name to preview · click to enlarge · price buys · ↗ Scryfall":"Name or ↗ opens Scryfall · price buys")));
  [grp,srt,q,only].forEach(i=>i.addEventListener("input",draw));
  function draw(){const s={group:grp.value,sort:srt.value,q:q.value,only:only.value};store.set(key,s);
   let cs=d.cards.filter(c=>(!s.q||c.name.toLowerCase().includes(s.q.toLowerCase()))&&(!s.only||(s.only==="gc"?(c.gc||gcs.has(c.name.toLowerCase())):c.theme===s.only)));
@@ -348,10 +375,11 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   const flat=order.flatMap(g=>groups[g]);  // the viewer browses the list in display order
   if(!cs.length){out.replaceChildren(el("p",{class:"note"},"No cards match. Clear the search or set Show to all cards."));return}
   out.replaceChildren(...order.map(g=>el("div",{class:"grp"},el("h3",{},el("span",{},g),el("span",{class:"num"},groups[g].reduce((a,c)=>a+c.qty,0))),...groups[g].map(c=>el("div",{class:"ln"},
-   el("button",{class:"name"+(c.theme==="off-theme"?" off":""),"data-img":c.img,onclick:e=>openViewer(c,flat,e.currentTarget)},c.qty>1?c.qty+"× ":"",c.name,(c.gc||gcs.has(c.name.toLowerCase()))?[" ",el("span",{class:"pill gc"},"GC")]:"",rar(c.rarity),tag(c.theme),
+   el(VIEW()?"button":"a",{class:"name"+(c.theme==="off-theme"?" off":""),"data-img":c.img,...(VIEW()?{onclick:e=>openViewer(c,flat,e.currentTarget)}:{href:cardLinks(c).scryfall,target:"_blank",rel:"noopener"})},c.qty>1?c.qty+"× ":"",c.name,(c.gc||gcs.has(c.name.toLowerCase()))?[" ",el("span",{class:"pill gc"},"GC")]:"",rar(c.rarity),tag(c.theme),
     swapsFor(c.name).length?el("span",{class:"swp",title:"Has tested swap options"},"⇄"):"",
     c.flags&&c.flags.length?el("span",{class:"flag",title:c.flags.join(", ")},"!"):""),
-   pips(c.mana),el("span",{class:"num muted pr"},money(c.price)))))))}
+   pips(c.mana),c.price!=null?ext(cardLinks(c).tcgplayer,`Buy ${c.name} on TCGplayer`,"num pr buy",money(c.price)):el("span",{class:"num muted pr"},"–"),
+   ext(cardLinks(c).scryfall,`${c.name} on Scryfall`,"ext","↗"))))))}
  draw();return sec}
 function swapList(G,c,b){const k=`${c.slug}/b${b}`,sec=el("section",{class:"panel"},el("h2",{},"Cards to consider"),el("p",{class:"note"},"Each swap was tested against this deck's bracket. Click a card to see it; the cards they replace show a ⇄ in the decklist."));
  const rows=[...(G.swaps||[])].sort((x,y)=>(y.fits.some(f=>f.deck===k))-(x.fits.some(f=>f.deck===k)));
@@ -359,7 +387,7 @@ function swapList(G,c,b){const k=`${c.slug}/b${b}`,sec=el("section",{class:"pane
   el("button",{class:"name","data-img":s.img,onclick:e=>openViewer(s,rows,e.currentTarget)},s.card,tag(s.theme)),
   el("div",{class:"t2"},s.why||""),
   el("div",{},...s.fits.filter(f=>f.deck===k||G.commanders.length>1).map(f=>el("div",{},el("span",{class:"muted"},"swap out "),el("b",{},f.swap_out),f.note?el("span",{class:"muted"}," · "+f.note):""))),
-  el("span",{class:"num muted pr"},money(s.price))))));return sec}
+  s.price!=null?ext(cardLinks(s).tcgplayer,`Buy ${s.card} on TCGplayer`,"num pr buy",money(s.price)):el("span",{})))));return sec}
 function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1500)};
  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
  function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}
@@ -372,22 +400,23 @@ function renderSources(host=$("#main")){const A=D.accuracy||{},dd=D.data_dates||
  const src=D.sources||[];if(src.length)host.append(el("section",{class:"panel"},el("h2",{},`Sources (${src.length})`),el("ul",{},...src.map(s=>el("li",{},el("a",{href:s.url,target:"_blank",rel:"noopener"},s.title||s.url)," ",el("span",{class:"muted"},[s.kind,s.date,s.locator].filter(Boolean).join(" · ")))))))}
 
 /* ---------- viewer: CSS 3D, drag to rotate, flip, sheen ---------- */
-let V={list:[],i:0,opener:null,ry:0,rx:0,flipped:false};
-function openViewer(c,list,opener){if(!SHOW.viewer||IMG==="none")return;V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
+let V={list:[],i:0,opener:null,ry:0,rx:0,hx:0,hy:0,flipped:false};
+const VIEW=()=>SHOW.viewer&&IMG!=="none";
+function openViewer(c,list,opener){if(!VIEW())return;V.list=list;V.i=Math.max(0,list.indexOf(c));V.opener=opener;showCard();const dlg=$("#viewer");if(!dlg.open)dlg.showModal();$("#vFlip").focus()}
 function cardOf(x){return x.card?{...x,name:x.card}:x}
-function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=0;V.ry=0;apply();
+function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V.hy=0;apply();
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
  if(V3.on)V3.show(c.img,c.back||D.default_back);
- const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),el("p",{},pill(c.theme)," ",c.pct!=null?el("span",{class:"num"},`${c.pct}% inclusion${c.n?` (n=${c.n.toLocaleString()})`:""}`):""));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},pill(c.theme)," ",c.pct!=null?el("span",{class:"num"},`${c.pct}% inclusion${c.n?` (n=${c.n.toLocaleString()})`:""}`):""));
  if(c.why)side.append(el("p",{},c.why));
  if(c.card){const f=fitsHere(V.list[V.i]);if(f.length)side.append(el("div",{class:"alt"},el("h4",{},"Swap in for"),...f.map(x=>el("p",{},el("b",{},x.swap_out),x.note?" · "+x.note:""))))}
  else{const sw=swapsFor(c.name);if(sw.length)side.append(el("div",{class:"alt"},el("h4",{},"Swap options"),el("p",{class:"muted"},"Tested against this deck's bracket."),
   ...sw.map(x=>el("button",{onclick:()=>{const orig=V.list[V.i];V.list=[orig,...sw];V.i=1+sw.indexOf(x);showCard()}},el("b",{},x.card),SHOW.prices&&x.price!=null?" · "+money(x.price):"",x.why?el("span",{}," · "+x.why):"",fitsHere(x).filter(f=>f.swap_out===c.name&&f.note).map(f=>el("span",{class:"muted"}," · "+f.note))))))}
  if(c.reason)side.append(el("p",{},el("b",{},"Off-theme because: "),c.reason));
  const lad=(D.printings||{})[c.name];if(lad&&lad.length)side.append(el("h3",{},"Printings, cheapest to rarest"),el("table",{},el("tbody",{},...lad.map(p=>el("tr",{style:p.theme?`box-shadow:inset 3px 0 0 ${themeColor(p.theme)}`:""},el("td",{},`${(p.set||"").toUpperCase()} #${p.cn||""}`),el("td",{},p.theme||""),el("td",{class:"n num"},money(p.price)),el("td",{class:"n num muted"},p.foil!=null?"foil "+money(p.foil):""))))),D.data_dates&&D.data_dates.prices?el("p",{class:"muted"},"Prices as of "+niceDate(D.data_dates.prices)):"");
- side.append(el("p",{class:"muted"},`${V.i+1} / ${V.list.length} · ← → to browse, F to flip, drag to tilt`))}
-function apply(){if(V3.on){V3.kick();return}$("#card3d").style.transform=`rotateX(${V.rx}deg) rotateY(${V.ry+(V.flipped?180:0)}deg)`}
+ side.append(el("p",{class:"muted"},`${V.i+1} / ${V.list.length} · ← → browse · F or click flips · drag to spin, it snaps back`))}
+function apply(){if(V3.on){V3.kick();return}$("#card3d").style.transform=`rotateX(${V.rx+V.hx}deg) rotateY(${V.ry+V.hy+(V.flipped?180:0)}deg)`}
 function flip(){V.flipped=!V.flipped;apply()}
 function step(n){V.i=(V.i+n+V.list.length)%V.list.length;showCard()}
 function closeViewer(){$("#viewer").close()}
@@ -397,15 +426,20 @@ function initViewer(){const dlg=$("#viewer"),stage=$("#stage"),card=$("#card3d")
  dlg.addEventListener("click",e=>{if(e.target===dlg||e.target.classList.contains("vw"))closeViewer()});
  dlg.addEventListener("keydown",e=>{if(e.key==="ArrowRight")step(1);else if(e.key==="ArrowLeft")step(-1);else if(e.key.toLowerCase()==="f")flip()});
  const reduced=matchMedia("(prefers-reduced-motion:reduce)").matches;let drag=null,moved=false;
- stage.addEventListener("pointerdown",e=>{drag={x:e.clientX,y:e.clientY,rx:V.rx,ry:V.ry};moved=false;card.classList.add("dragging");stage.setPointerCapture(e.pointerId)});
+ stage.addEventListener("pointerdown",e=>{if(e.button)return;V.hx=V.hy=0;drag={x:e.clientX,y:e.clientY,rx:V.rx,ry:V.ry};moved=false;card.classList.add("dragging");stage.classList.add("grabbing");stage.setPointerCapture(e.pointerId)});
+ stage.addEventListener("pointerleave",()=>{if(drag)return;V.hx=V.hy=0;apply()});
  stage.addEventListener("pointermove",e=>{const r=stage.getBoundingClientRect();stage.querySelectorAll(".sheen").forEach(s=>{s.style.setProperty("--mx",(e.clientX-r.left)/r.width*100+"%");s.style.setProperty("--my",(e.clientY-r.top)/r.height*100+"%")});
   if(V3.on)V3.pointer((e.clientX-r.left)/r.width,(e.clientY-r.top)/r.height);
-  if(!drag)return;const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(reduced)return;
+  if(!drag){if(!reduced&&e.pointerType==="mouse"){V.hy=((e.clientX-r.left)/r.width-.5)*16;V.hx=(.5-(e.clientY-r.top)/r.height)*12;apply()}return}  // hover: the card leans toward the pointer
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;if(Math.abs(dx)+Math.abs(dy)>4)moved=true;if(reduced)return;
   if(V3.on){V.ry=drag.ry+dx/2;V.rx=Math.max(-60,Math.min(60,drag.rx-dy/3));apply();return}  // 3D: spin freely
   V.ry=Math.max(-35,Math.min(35,drag.ry+dx/4));V.rx=Math.max(-25,Math.min(25,drag.rx-dy/4));apply()});
  const end=e=>{if(!drag)return;const dx=e.clientX-drag.x;card.classList.remove("dragging");
-  if(!moved)flip();else if(V3.on){}  // 3D: the card stays where it was spun; arrows or buttons change cards
-  else if(Math.abs(dx)>120&&e.pointerType==="touch")step(dx<0?1:-1);else{V.rx=0;V.ry=0;apply()}drag=null};
+  stage.classList.remove("grabbing");
+  if(!moved)flip();
+  else if(!V3.on&&Math.abs(dx)>120&&e.pointerType==="touch")step(dx<0?1:-1);
+  else{const t=Math.round((V.ry+(V.flipped?180:0))/180)*180;V.flipped=Math.abs(t/180)%2===1;V.ry=t-(V.flipped?180:0);V.rx=0;apply()}  // snap back to whichever face is nearest
+  drag=null};
  stage.addEventListener("pointerup",end);stage.addEventListener("pointercancel",end)}
 
 /* ---------- optional 3D viewer (three.js), only when the page data asks for it ---------- */
@@ -447,7 +481,7 @@ const V3={on:false,want:null,img:{},tex:{},
  size(){const w=this.cv.clientWidth||420;this.r.setSize(w,w*680/488,false)},
  pointer(px,py){this.light.position.set((px-.5)*6,(.5-py)*6,4);this.kick()},
  kick(){if(!this.loop){this.loop=true;requestAnimationFrame(()=>this.frame())}},
- frame(){const ty=(V.ry+(V.flipped?180:0))*Math.PI/180,tx=V.rx*Math.PI/180,k=this.reduced?1:.18;
+ frame(){const ty=(V.ry+V.hy+(V.flipped?180:0))*Math.PI/180,tx=(V.rx+V.hx)*Math.PI/180,k=this.reduced?1:.18;
   this.g.rotation.y+=(ty-this.g.rotation.y)*k;this.g.rotation.x+=(tx-this.g.rotation.x)*k;this.r.render(this.s,this.cam);
   const busy=Math.abs(ty-this.g.rotation.y)+Math.abs(tx-this.g.rotation.x)>.001;
   if(busy&&$("#viewer").open)requestAnimationFrame(()=>this.frame());else this.loop=false}};

@@ -26,7 +26,7 @@ Why this order: players start from very different places (a commander, colors, a
    - **Budget:** cheapest legal copy of every card; offer cheaper alternatives for expensive slots
    - **Balanced:** normal copies; offer alternatives only for the priciest cards
    - **Bling:** foils, borderless, showcase, Secret Lair. Then ask their per-card ceiling (e.g. "nothing over $30 a copy")
-9. **Collection.** If `mtgdb.py collection show` finds one, ask: prefer cards I own · owned cards only where possible · ignore it. If they have none and owning matters, offer `collection import` (Moxfield, Archidekt or ManaBox CSV).
+9. **Collection.** If `mtg_collection` `show` finds one, ask: prefer cards I own · owned cards only where possible · ignore it. If they have none and owning matters, offer to import one (the `collection` skill explains how to export from Moxfield, Archidekt or ManaBox).
 10. **Pet cards and never-plays** (free text): must-includes, and cards or effects they won't play.
 
 ## Ask only when relevant

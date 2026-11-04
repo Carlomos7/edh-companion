@@ -350,6 +350,11 @@ class LogicTest(unittest.TestCase):
         self.assertFalse(self.m.is_land_type("Sorcery // Land"))  # modal spells count as spells
         self.assertTrue(self.m.is_land_type("Basic Land — Swamp"))
 
+    def test_collection_csv_values(self):
+        self.assertEqual([self.m.csv_qty(v) for v in ("2", "2.0", "3x", "", "x", "two")], [2, 2, 3, 1, None, None])
+        self.assertEqual([self.m.csv_finish(v) for v in ("foil", "Etched", "normal", "", "TRUE")],
+                         ["foil", "etched", "", "", "foil"])
+
     def test_identity_names(self):
         self.assertEqual(self.m.parse_identity("Esper"), set("WUB"))
         self.assertEqual(self.m.parse_identity("rg"), set("RG"))

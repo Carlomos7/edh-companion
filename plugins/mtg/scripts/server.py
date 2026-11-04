@@ -61,11 +61,11 @@ def run(*argv):
 
 @contextlib.contextmanager
 def deck_file(deck):
-    """Accept a decklist as text or as a path to a .txt file."""
-    if "\n" not in deck and deck.strip().lower().endswith(".txt"):
+    """Accept a card list as text or as a path to a .txt or .csv file."""
+    if "\n" not in deck and deck.strip().lower().endswith((".txt", ".csv")):
         path = os.path.abspath(os.path.expanduser(deck.strip()))
         if not os.path.isfile(path):
-            raise ToolError(f"deck file not found: {path}. Pass the decklist text instead.")
+            raise ToolError(f"file not found: {path}. Pass the list as text instead.")
         yield path
         return
     with tempfile.TemporaryDirectory() as d:
@@ -208,6 +208,55 @@ def mtg_cheaper_alternatives(card: str, identity: str | None = None, max_price: 
         res, code = run(*args)
     if code:
         raise ToolError(res.get("error", "alternatives failed") if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=READ)
+def mtg_collection(action: Literal["show", "find", "have", "fits", "export"], card: str | None = None,
+                   query: str | None = None, identity: str | None = None, type: str | None = None,
+                   role: str | None = None, commanders: list[str] | None = None, deck: str | None = None,
+                   format: Literal["moxfield", "csv"] = "moxfield", limit: int = 50) -> dict:
+    """The player's card collection (read only).
+    show: totals, value and most valuable cards, or one card with `card`.
+    find: owned cards by name (`query`), colors (`identity`: letters or a name like Esper), `type`, or `role`
+      (ramp, draw, removal, wipe, tutor, protection, recursion).
+    have: for a `deck` (text or .txt path), which cards they own and what the rest costs (basic lands not counted).
+    fits: owned cards that are legal for the given `commanders` (their color identity), most popular first.
+    export: the collection as a Moxfield list or CSV, keeping printings and foil marks."""
+    args = ["collection", action, "--limit", limit, "--format", format]
+    for flag, val in (("--card", card), ("--query", query), ("--identity", identity), ("--type", type), ("--role", role)):
+        if val:
+            args += [flag, val]
+    if commanders:
+        args += ["--commander", *commanders]
+    if action == "have":
+        if not deck:
+            raise ToolError("have needs `deck`")
+        with deck_file(deck) as path:
+            res, code = run(*args[:2], path, *args[2:])
+    else:
+        res, code = run(*args)
+    if code:
+        raise ToolError(res.get("error", "collection command failed") if isinstance(res, dict) else str(res))
+    return res
+
+
+@mcp.tool(annotations=ToolAnnotations(read_only_hint=False, destructive_hint=True, open_world_hint=False))
+def mtg_collection_edit(action: Literal["import", "add", "remove", "restore"], cards: str | None = None,
+                        merge: bool = False) -> dict:
+    """Change the player's collection. `cards` is a CSV export (Moxfield, Archidekt, ManaBox) or a card list, as text or
+    a .csv/.txt path. import replaces the collection unless merge is true: confirm with the player before replacing.
+    add: cards gained (opened packs, trades in). remove: cards gone (traded, sold). restore: undo the last change.
+    Unrecognised names come back in `unresolved`; offer the suggestions, never guess."""
+    if action == "restore":
+        res, code = run("collection", "restore")
+    else:
+        if not cards:
+            raise ToolError(f"{action} needs `cards`")
+        with deck_file(cards) as path:
+            res, code = run("collection", action, path, *(["--merge"] if merge else []))
+    if code and not (isinstance(res, dict) and res.get("changed")):
+        raise ToolError(res.get("error", "collection change failed") if isinstance(res, dict) else str(res))
     return res
 
 

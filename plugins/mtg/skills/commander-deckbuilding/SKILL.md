@@ -22,6 +22,7 @@ Use the `mtgdb` MCP server's tools (from this plugin; full names `mcp__plugin_mt
 | Price styles, exact printings, buy links | `mtg_price_plan` |
 | Cheaper card that does the same job | `mtg_cheaper_alternatives` |
 | Share or import elsewhere | `mtg_export` |
+| What the player owns, what a deck still needs | `mtg_collection` (the `collection` skill manages it) |
 | Rules questions | `mtg_rules` |
 
 No `mtg_*` tools available? The plugin's data server needs `uv`. Tell the player in one line: "The deck tools need a small helper called uv: install it (Windows: `winget install astral-sh.uv`, macOS: `brew install uv`, Linux: see docs.astral.sh/uv), then restart Claude Code." If `uv` is installed, the same commands run as `uv run "${CLAUDE_PLUGIN_ROOT}/scripts/mtgdb.py" <command> --help`.

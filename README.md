@@ -26,6 +26,7 @@ A [Claude Code](https://code.claude.com) plugin. Claude asks what you enjoy, wha
 - **Always checked.** 100 cards, singleton, color identity, legality, bracket rules, Game Changers, combos, mana, and how often you'll have your commander out on time.
 - **Current data, your call.** Card data, rules and combos come from Scryfall, Wizards and Commander Spellbook. Claude shows how fresh they are and offers to refresh.
 - **Works with your tools.** Paste a list from Moxfield, Archidekt, MTG Arena or anywhere. Export back with exact printings, so Moxfield's and Archidekt's buy buttons pull the same copies.
+- **Your collection.** Import it from Moxfield, Archidekt or ManaBox, keep it current as you open packs or trade, see what it's worth, what a deck still needs and what fits a commander. Decks then prefer cards you own.
 - **Vaults.** Full decks for several commanders and power levels on one interactive page.
 
 ## Quick start
@@ -71,6 +72,7 @@ A build is a conversation, usually 10 to 20 minutes. You can stop, change your m
 | `/mtg:upgrade` | improve a deck you have |
 | `/mtg:cheaper` | see what a deck costs and make it cheaper |
 | `/mtg:share` | get a list ready for Moxfield, Archidekt, Arena or a spreadsheet |
+| `/mtg:collection` | import, update, value or search your card collection |
 | `/mtg:update-data` | see how fresh the card data and rules are, and refresh |
 | `/mtg:commander-vault` | build a vault (see below) |
 
@@ -81,6 +83,7 @@ You don't need the commands; plain requests work too:
 - "Is Teferi's Protection worth it in my Elesh Norn deck? What's cheaper?"
 - "Give me this list for Moxfield with the exact printings"
 - "Does deathtouch work with trample?"
+- "Here's my ManaBox export, import my collection" / "I opened these: (paste)" / "What do I still need for this deck?"
 
 ## Build your own vault
 A vault is one page with full decks for several commanders at the power levels you play, plus card rankings, cards to consider and price ladders. Any theme works, or none.
@@ -148,6 +151,7 @@ Claude checks these at the start of each deck and offers a refresh. To do it you
 | "No card index yet" | Say "download the card data" or run `/mtg:update-data` (about a minute). |
 | A brand-new card isn't found | Refresh the data. A card revealed in the last day or so may not be in Scryfall's daily file yet; Claude says so instead of guessing. |
 | A pasted deck has unrecognized lines | Claude lists them and suggests the closest real card names. Check spelling, or paste the site's export instead of copying from a web page. |
+| A collection import went wrong | Say "undo the last collection change": every import, add or remove keeps one backup. |
 | An add-on check "didn't run" | That add-on isn't installed or didn't connect; see [Optional add-ons](#optional-add-ons). Everything else still works. |
 | Card images fail on a vault page (Windows) | Update the plugin; downloads use an up-to-date certificate bundle. |
 

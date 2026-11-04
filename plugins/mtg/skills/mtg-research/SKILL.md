@@ -22,7 +22,7 @@ Facts have one authority each. Read [references/sources.md](references/sources.m
 | Card text, legality, color identity, printings, prices, Game Changer flag | `mtg_card` (Scryfall bulk) | memory, video, EDHREC |
 | What a card does (role) | Scryfall Tagger tags (in `mtg_card`), then the oracle text | regex hints, memory |
 | Price trends, vendor spread | MTGJSON via `mtg_data_sync` (prices) (TCGplayer, Card Kingdom, Cardmarket, Cardsphere) | one-day snapshot alone |
-| What the user owns | `collection show` | assumptions |
+| What the user owns | `mtg_collection` | assumptions |
 | Rulings, interactions | `mtg_card` rulings, `mtg_rules` (Comprehensive Rules with effective date) | memory |
 | Bans, Game Changers changes, bracket rules | Wizards announcements (web), confirmed in index | creators |
 | What people play (inclusion, lift, salt) | EDHREC | videos |

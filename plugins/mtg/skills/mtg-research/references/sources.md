@@ -26,7 +26,7 @@ Rules:
 - **Rulings, combos, Comprehensive Rules**: also part of `sync`, from Scryfall's rulings file, Commander Spellbook's combo file and Wizards' rules page.
 - **Art tags**: `search "e:sld art:<thing>"` finds printings by what their art shows. Good for building theme maps; still eyeball disputed ones.
 - **MTGJSON prices**: `prices-sync` maps MTGJSON's daily prices (paper vendors: TCGplayer, Card Kingdom, Cardmarket, Cardsphere; retail and buylist) to Scryfall printings. `--history` loads 90 days. Needs `pip install ijson` for the large files. Quote the vendor and date with any price.
-- **Collection**: `collection import <csv or list>` (Moxfield, Archidekt, ManaBox CSV exports, or `1 Card Name` lines). Validate then reports owned cards and cost to buy.
+- **Collection**: `mtg_collection` / `mtg_collection_edit` (the `collection` skill): import from Moxfield, Archidekt or ManaBox CSV or a list, add, remove, value, find, have vs. a deck, fits a commander, export. Validate and price-plan report owned cards and cost to buy.
 
 ## Web sources (no MCP)
 - **EDHTop16**: public GraphQL at `https://edhtop16.com/api/graphql`, no auth, introspection enabled, regenerated nightly. Commander meta share, conversion rate, top cuts, decklists, card play rates. Introspect the schema first; keep queries small. Best evidence for "is this a real cEDH commander".

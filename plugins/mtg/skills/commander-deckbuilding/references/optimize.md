@@ -42,5 +42,5 @@ Write `after.txt`, then run `mtg_deck_check` (CLI `validate --themes/--reasons` 
 - **Over target bracket**: removals to reach it come first, then upgrades.
 - **Partners or background**: pass `--commanders 2`.
 - **Proxies or "rule 0" cards**: ask once whether they play with rule 0. If not, flag them as illegal.
-- **Owned-only budget but no collection**: ask for an export (`collection import`), or treat as "suggest, don't assume owned".
+- **Owned-only budget but no collection**: offer to import their collection (the `collection` skill), or treat as "suggest, don't assume owned".
 - **Deck already optimal for the target**: say so, with evidence, and offer side-grades instead of forcing changes.

@@ -7,7 +7,8 @@ import test_mtgdb as base
 SERVER = os.path.join(os.path.dirname(base.SCRIPT), "server.py")
 DECK = "1 Darth Vader\n1 Sol Ring\n1 Demonic Tutor\n97 Swamp\n"
 TOOLS = {"mtg_card", "mtg_resolve_names", "mtg_deck_check", "mtg_deck_swap", "mtg_deck_profile", "mtg_simulate",
-         "mtg_rules", "mtg_data_status", "mtg_data_sync", "mtg_price_plan", "mtg_cheaper_alternatives", "mtg_export"}
+         "mtg_rules", "mtg_data_status", "mtg_data_sync", "mtg_price_plan", "mtg_cheaper_alternatives", "mtg_export",
+         "mtg_collection", "mtg_collection_edit"}
 
 
 class ServerTest(unittest.IsolatedAsyncioTestCase):
@@ -75,6 +76,30 @@ class ServerTest(unittest.IsolatedAsyncioTestCase):
                 self.assertIn("1 Sol Ring (SLD) 999 *F*", ex["text"])  # as-listed keeps the player's copy and finish
                 err, msg = await self.call(s, "mtg_resolve_names", names=[])
                 self.assertTrue(err)  # never falls back to reading the protocol stream
+
+                # collection: no collection yet, then add, read, remove too many, undo, refuse an empty import
+                err, msg = await self.call(s, "mtg_collection", action="show")
+                self.assertTrue(err)
+                err, res = await self.call(s, "mtg_collection_edit", action="add",
+                                           cards="Deck\n2 Sol Ring (SLD) 999 *F*\n1 Rhystic Studdy\n\nSideboard\n1 Necropotence\n")
+                self.assertFalse(err)
+                self.assertEqual(res["total_cards"], 3)  # sideboard counts in a collection
+                self.assertEqual(res["unresolved"][0]["suggestions"][0]["name"], "Rhystic Study")
+                err, show = await self.call(s, "mtg_collection", action="show")
+                self.assertGreater(show["value_usd"], 0)
+                err, have = await self.call(s, "mtg_collection", action="have", deck=DECK)
+                self.assertEqual({n["name"] for n in have["need"]}, {"Darth Vader", "Demonic Tutor"})  # Swamps assumed owned
+                err, fits = await self.call(s, "mtg_collection", action="fits", commanders=["Darth Vader"])
+                self.assertEqual({c["name"] for c in fits["cards"]}, {"Sol Ring", "Necropotence"})
+                err, ex = await self.call(s, "mtg_collection", action="export")
+                self.assertIn("2 Sol Ring (SLD) 999 *F*", ex["text"])
+                err, res = await self.call(s, "mtg_collection_edit", action="remove", cards="5 Sol Ring")
+                self.assertEqual(res["total_cards"], 1)
+                self.assertTrue(res["not_enough_to_remove"])
+                err, res = await self.call(s, "mtg_collection_edit", action="restore")
+                self.assertEqual(res["total_cards"], 3)
+                err, msg = await self.call(s, "mtg_collection_edit", action="import", cards="nothing useful here")
+                self.assertTrue(err)  # an import that finds no cards never wipes the collection
 
                 err, msg = await self.call(s, "mtg_rules", query="trample")
                 self.assertTrue(err)  # no rules synced in the fixture: clear error, not a crash

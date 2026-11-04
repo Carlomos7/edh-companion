@@ -28,7 +28,7 @@ prices, Game Changer status, images). Build it once, reuse it everywhere.
   selftest       golden facts against the live index (catches a stale or broken index)
   search         cached, rate-limited Scryfall search (any syntax, e.g. "e:sld art:lightsaber")
   tags-sync      Scryfall Tagger role tags from the daily bulk file (sync runs this)
-  collection     import (Moxfield/Archidekt/ManaBox CSV or text list) / show owned cards
+  collection     your cards: import/add/remove, show (value), find, have (vs a deck), fits (a commander), export
   prices-sync    MTGJSON multi-vendor prices (today, or --history for 90 days)
   price-history  retail price series for a card's printings
   combos         combos in a deck, from the local Commander Spellbook file (--live: API)
@@ -403,7 +403,8 @@ def cmd_printings(a):
         if vp:
             r["vendors"] = vp
         if owned:
-            r["owned_qty"] = owned["printings"].get(f"{p['set_code']}#{p['cn']}", 0)
+            r["owned_qty"] = sum(n for k, n in owned.get("printings", {}).items()
+                                 if k.split("#")[:2] == [p["set_code"], p["cn"]])
         res.append(r)
     out({"card": name, "prices_as_of": meta(c, "bulk_updated"), "owned_total": owned["qty"] if owned else 0,
          "printings": res})
@@ -443,7 +444,7 @@ def is_land_type(type_line):
     return "Land" in (type_line or "").split(" // ")[0]
 
 
-def parse_deck_sections(path):
+def parse_deck_sections(path, keep_all=False):
     """Plain lists (commander first) or Moxfield/Archidekt exports with section headers. Returns (rows, commanders):
     Commander-section cards come first; sideboard, maybeboard, companion and token sections are not part of the deck."""
     cmdrs, rows, section = [], [], "deck"
@@ -456,7 +457,7 @@ def parse_deck_sections(path):
         if h:
             section = h[1].lower()
             continue
-        if not s or s.startswith(("//", "#")) or s.endswith(":") or section.startswith(OUTSIDE_99):
+        if not s or s.startswith(("//", "#")) or s.endswith(":") or (section.startswith(OUTSIDE_99) and not keep_all):
             continue
         if s == "About" or s.startswith("Name "):  # Arena export header
             continue
@@ -597,7 +598,7 @@ def check(c, path, themes, bracket, commanders=1, budget=None, theme=None, reaso
                 own.append(x["oracle"]["name"])
             else:
                 buy += (x["printing"]["usd"] or x["printing"]["usd_foil"] or 0) * x["qty"]
-        rep["collection"] = {"owned": len(own), "cost_to_buy_usd": round(buy, 2), "collection_imported": col["imported"],
+        rep["collection"] = {"owned": len(own), "cost_to_buy_usd": round(buy, 2), "collection_updated": col.get("updated") or col.get("imported"),
                              "note": "owned = you have the card in any printing"}
     return cards, rep
 
@@ -1368,7 +1369,22 @@ def tags_for(oracle_ids):
 
 # ---------- collection ----------
 COL_KEYS = {"name": ["name", "card name", "card"], "qty": ["count", "quantity", "qty", "amount"],
-            "set": ["edition", "set code", "set", "edition code"], "cn": ["collector number", "collector_number", "cn", "number"]}
+            "set": ["edition", "set code", "set", "edition code"], "cn": ["collector number", "collector_number", "cn", "number"],
+            "foil": ["foil", "finish", "printing"]}
+
+
+def csv_qty(v):
+    """'2', '2.0', '2x', '' (means 1). Returns None for anything else so the row is reported, not guessed."""
+    v = (v or "").strip().lower()
+    if not v:
+        return 1
+    m = re.fullmatch(r"(\d+)(?:\.0+)?x?", v)
+    return int(m[1]) if m else None
+
+
+def csv_finish(v):
+    v = (v or "").strip().lower()
+    return "etched" if "etch" in v else "foil" if v in ("foil", "yes", "true", "1", "y") else ""
 
 
 def load_collection():
@@ -1377,52 +1393,244 @@ def load_collection():
     return json.load(open(COLLECTION, encoding="utf-8"))
 
 
-def cmd_collection(a):
-    if a.action == "show":
-        col = load_collection()
-        if not col:
-            out({"error": f"no collection at {COLLECTION}; run: mtgdb.py collection import <file>"}, fail=True)
-        if a.card:
-            hit = {k: v for k, v in col["cards"].items() if k.lower() == a.card.lower()}
-            out({"card": a.card, "owned": hit or None})
-        out({k: col[k] for k in ("imported", "source", "unique_cards", "total_cards")})
-    c = open_db(a.db)
-    rows, unresolved = [], []
-    text = open(a.file, encoding="utf-8-sig").read()
-    if "," in text.splitlines()[0]:
+def read_card_rows(c, text):
+    """Card rows from a CSV export (Moxfield, Archidekt, ManaBox) or deck-style lines. Returns (rows, unresolved)."""
+    rows, bad = [], []
+    first = (text.splitlines() or [""])[0]
+    header = {h.strip().strip('"').lower() for h in first.split(",")}
+    if "," in first and header & set(COL_KEYS["name"]):  # CSV export with a header row
         rd = csv.DictReader(text.splitlines())
         cols = {k: next((h for h in rd.fieldnames if h.strip().lower() in v), None) for k, v in COL_KEYS.items()}
         if not cols["name"]:
-            sys.exit(f"Can't find a name column in {rd.fieldnames}")
-        for r in rd:
-            q = r.get(cols["qty"]) if cols["qty"] else "1"
-            rows.append({"name": r[cols["name"]].strip(), "qty": int(float(q or 1)),
+            out({"error": f"can't find a card name column in {rd.fieldnames}"}, fail=True)
+        for i, r in enumerate(rd, start=2):
+            name = (r.get(cols["name"]) or "").strip()
+            q = csv_qty(r.get(cols["qty"]) if cols["qty"] else "")
+            if not name:
+                continue
+            if q is None:
+                bad.append(f"row {i}: quantity '{r.get(cols['qty'])}' isn't a number ({name})")
+                continue
+            rows.append({"name": name, "qty": q,
                          "set": (r.get(cols["set"]) or "").strip().lower() if cols["set"] else "",
-                         "cn": (r.get(cols["cn"]) or "").strip() if cols["cn"] else ""})
+                         "cn": (r.get(cols["cn"]) or "").strip() if cols["cn"] else "",
+                         "finish": csv_finish(r.get(cols["foil"])) if cols["foil"] else ""})
     else:
         tmp = tempfile.NamedTemporaryFile("w", suffix=".txt", delete=False, encoding="utf-8")
         tmp.write(text)
         tmp.close()
-        rows = [r for r in parse_deck(tmp.name) if "error" not in r]
+        parsed = parse_deck_sections(tmp.name, keep_all=True)[0]
         os.unlink(tmp.name)
-    cards = {}
+        rows = [r for r in parsed if "error" not in r]
+        bad += [r["error"] for r in parsed if "error" in r]
+    resolved, unresolved = [], []
     for r in rows:
+        if r["qty"] <= 0:
+            continue
         oid = find_oracle(c, r["name"])
         if not oid:
             unresolved.append({"name": r["name"], "suggestions": suggest(c, r["name"])})
             continue
-        nm = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]
-        e = cards.setdefault(nm, {"qty": 0, "printings": {}})
-        e["qty"] += r["qty"]
-        if r["set"]:
-            k = f"{r['set']}#{r['cn']}"
-            e["printings"][k] = e["printings"].get(k, 0) + r["qty"]
-    col = {"imported": time.strftime("%Y-%m-%d"), "source": os.path.abspath(a.file), "unique_cards": len(cards),
-           "total_cards": sum(v["qty"] for v in cards.values()), "cards": cards}
+        resolved.append({**r, "oid": oid, "name": c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0]})
+    return resolved, unresolved + [{"line": b} for b in bad]
+
+
+def save_collection(col, source=None):
+    col["updated"] = time.strftime("%Y-%m-%d")
+    if source:
+        col["source"] = source
+    col["cards"] = {k: v for k, v in col["cards"].items() if v["qty"] > 0}
+    col["unique_cards"], col["total_cards"] = len(col["cards"]), sum(v["qty"] for v in col["cards"].values())
     os.makedirs(os.path.dirname(COLLECTION) or ".", exist_ok=True)
-    json.dump(col, open(COLLECTION, "w", encoding="utf-8"), indent=1, ensure_ascii=False)
-    out({"saved": COLLECTION, "unique_cards": len(cards), "total_cards": col["total_cards"],
-         "unresolved": unresolved}, fail=bool(unresolved) and not cards)
+    tmp = COLLECTION + ".tmp"  # write then swap, so a crash never leaves a half-written collection
+    with open(tmp, "w", encoding="utf-8") as f:
+        json.dump(col, f, indent=1, ensure_ascii=False)
+    os.replace(tmp, COLLECTION)
+
+
+def owned_value(c, name, entry):
+    """Value of what's owned: listed printings at their price, the rest at the cheapest copy."""
+    oid = find_oracle(c, name)
+    total, rest = 0.0, entry["qty"]
+    for key, n in entry.get("printings", {}).items():
+        set_, cn, fin = (key.split("#") + [""])[:3]
+        r = c.execute("SELECT usd, usd_foil, usd_etched FROM printings WHERE oracle_id=? AND set_code=? AND cn=?",
+                      (oid, set_, cn)).fetchone()
+        if r:
+            usd = {"foil": r[1], "etched": r[2]}.get(fin) or r[0] or r[1]
+            if usd:
+                total += usd * n
+                rest -= n
+    if rest > 0:
+        pk = pick_printing(c, oid, "budget")
+        total += (pk[2] or 0) * rest if pk else 0
+    return total
+
+
+def need_collection():
+    col = load_collection()
+    if not col:
+        out({"error": "no collection yet: import one first (a CSV export from Moxfield, Archidekt or ManaBox, or a pasted list)"},
+            fail=True)
+    return col
+
+
+def cmd_collection(a):
+    c = open_db(a.db)
+    if a.action in ("import", "add", "remove"):
+        if not a.file:
+            out({"error": f"collection {a.action} needs a file (CSV export or card list)"}, fail=True)
+        rows, unresolved = read_card_rows(c, open(a.file, encoding="utf-8-sig").read())
+        if not rows:
+            out({"error": f"no cards recognised in {a.file}; nothing changed", "unresolved": unresolved[:20]}, fail=True)
+        if os.path.exists(COLLECTION):
+            import shutil
+            shutil.copy(COLLECTION, COLLECTION + ".bak")  # one step of undo: restore with collection restore
+        col = load_collection() if a.action != "import" or a.merge else None
+        if a.action != "import" and not col:
+            col = {"cards": {}}
+        col = col or {"cards": {}}
+        changed, missing = [], []
+        for r in rows:
+            e = col["cards"].setdefault(r["name"], {"qty": 0, "printings": {}})
+            e.setdefault("printings", {})
+            fin = r.get("finish", "")
+            key = f"{r['set']}#{r['cn']}" + (f"#{fin}" if fin else "") if r["set"] and r["cn"] else None  # a printing needs both
+            if a.action == "remove":
+                if e["qty"] < r["qty"]:
+                    missing.append(f"{r['name']}: you have {e['qty']}, asked to remove {r['qty']}")
+                take = min(e["qty"], r["qty"])
+                e["qty"] -= take
+                if key and key in e["printings"]:
+                    e["printings"][key] = max(0, e["printings"][key] - take)
+                    if not e["printings"][key]:
+                        del e["printings"][key]
+                changed.append(f"-{take} {r['name']}")
+            else:
+                e["qty"] += r["qty"]
+                if key:
+                    e["printings"][key] = e["printings"].get(key, 0) + r["qty"]
+                changed.append(f"+{r['qty']} {r['name']}")
+        save_collection(col, os.path.abspath(a.file) if a.action == "import" else None)
+        out({"action": a.action, "changed": len(changed), "examples": changed[:10], "unique_cards": col["unique_cards"],
+             "total_cards": col["total_cards"], "not_enough_to_remove": missing, "unresolved": unresolved,
+             "saved": COLLECTION}, fail=bool(unresolved) and not rows)
+
+    if a.action == "restore":
+        if not os.path.exists(COLLECTION + ".bak"):
+            out({"error": "no backup yet (one is made before every import, add or remove)"}, fail=True)
+        os.replace(COLLECTION + ".bak", COLLECTION)
+        col = load_collection()
+        out({"restored": COLLECTION, "unique_cards": len(col["cards"]), "total_cards": sum(e["qty"] for e in col["cards"].values())})
+    col = need_collection()
+    cards = col["cards"]
+    if a.action == "show":
+        if a.card:
+            hit = {k: v for k, v in cards.items() if k.lower() == a.card.lower()}
+            out({"card": a.card, "owned": hit or None})
+        values = sorted(((owned_value(c, n, e), n, e["qty"]) for n, e in cards.items()), reverse=True)
+        colors = {}
+        for n in cards:
+            ci = (c.execute("SELECT color_identity FROM oracle WHERE oracle_id=?", (find_oracle(c, n),)).fetchone() or [""])[0]
+            colors[ci or "C"] = colors.get(ci or "C", 0) + cards[n]["qty"]
+        out({"updated": col.get("updated") or col.get("imported"), "unique_cards": len(cards),
+             "total_cards": sum(e["qty"] for e in cards.values()), "value_usd": round(sum(v for v, _, _ in values), 2),
+             "prices_as_of": meta(c, "bulk_updated"),
+             "most_valuable": [{"name": n, "qty": q, "usd": round(v, 2)} for v, n, q in values[:10]],
+             "by_color_identity": dict(sorted(colors.items(), key=lambda kv: -kv[1])[:12])})
+    if a.action == "find":
+        ident = parse_identity(a.identity) if a.identity else None
+        x = open_extra() if a.role else None
+        hits = []
+        for n, e in cards.items():
+            if a.query and a.query.lower() not in n.lower():
+                continue
+            oid = find_oracle(c, n)
+            o = c.execute("SELECT * FROM oracle WHERE oracle_id=?", (oid,)).fetchone()
+            if ident is not None and not set(o["color_identity"]) <= ident:
+                continue
+            if a.type and a.type.lower() not in o["type_line"].lower():
+                continue
+            if a.role and not x.execute("SELECT 1 FROM tags WHERE oracle_id=? AND tag IN (%s)" % ",".join("?" * len(ROLE_TAGS.get(a.role, [a.role]))),
+                                        (oid, *ROLE_TAGS.get(a.role, [a.role]))).fetchone():
+                continue
+            hits.append({"name": n, "qty": e["qty"], "type_line": o["type_line"], "identity": o["color_identity"] or "C",
+                         "commander_legal": o["commander_legal"]})
+        hits.sort(key=lambda h: h["name"])
+        out({"count": len(hits), "cards": hits[:a.limit], "more": max(0, len(hits) - a.limit)})
+    if a.action == "have":
+        if not a.file:
+            out({"error": "collection have needs a deck file"}, fail=True)
+        have, need, cost, basics = [], [], 0.0, 0
+        for r in parse_deck(a.file):
+            if "error" in r:
+                continue
+            oid = find_oracle(c, r["name"])
+            name = c.execute("SELECT name FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0] if oid else r["name"]
+            if oid and "Basic Land" in (c.execute("SELECT type_line FROM oracle WHERE oracle_id=?", (oid,)).fetchone()[0] or ""):
+                basics += r["qty"]
+                continue
+            got = min(r["qty"], (cards.get(name) or {}).get("qty", 0))
+            if got:
+                have.append(f"{got} {name}")
+            if got < r["qty"]:
+                pk = pick_printing(c, oid, "budget") if oid else None
+                usd = (pk[2] or 0) if pk else None
+                need.append({"name": name, "qty": r["qty"] - got, "cheapest_usd": usd})
+                cost += (usd or 0) * (r["qty"] - got)
+        out({"deck": a.file, "owned": len(have), "need": need, "cost_to_buy_cheapest_usd": round(cost, 2),
+             "basic_lands": f"{basics} basic lands not counted (assumed you have them)" if basics else None,
+             "prices_as_of": meta(c, "bulk_updated")})
+    if a.action == "fits":
+        if not a.commander:
+            out({"error": "collection fits needs --commander"}, fail=True)
+        ids, named = set(), set()
+        for cm in a.commander:
+            oid = find_oracle(c, cm)
+            if not oid:
+                out({"error": f"unknown commander {cm}", "suggestions": suggest(c, cm)}, fail=True)
+            row = c.execute("SELECT name, color_identity FROM oracle WHERE oracle_id=?", (oid,)).fetchone()
+            named.add(row[0])
+            ids |= set(row[1])
+        tags = tags_for([find_oracle(c, n) for n in cards])
+        fit, outside = [], []
+        for n, e in cards.items():
+            oid = find_oracle(c, n)
+            o = c.execute("SELECT * FROM oracle WHERE oracle_id=?", (oid,)).fetchone()
+            row = {"name": n, "qty": e["qty"], "identity": o["color_identity"] or "C", "edhrec_rank": o["edhrec_rank"],
+                   "roles": sorted({r for r, ts in ROLE_TAGS.items() if tags.get(oid, set()) & set(ts)}), "gc": bool(o["gc"])}
+            if o["commander_legal"] != "legal" or "Basic" in o["type_line"] or n in named:
+                continue
+            (fit if set(o["color_identity"]) <= ids else outside).append(row)
+        fit.sort(key=lambda r: r["edhrec_rank"] or 1e9)
+        out({"commanders": a.commander, "identity": "".join(sorted(ids)) or "C", "fits": len(fit),
+             "cards": fit[:a.limit], "more": max(0, len(fit) - a.limit), "outside_colors": len(outside),
+             "note": "Ranked by EDHREC popularity overall, not for this commander: read each card before suggesting it."})
+    if a.action == "export":
+        lines, rows = [], []
+        for n, e in sorted(cards.items()):
+            rest = e["qty"]
+            for key, q in e.get("printings", {}).items():
+                set_, cn, fin = (key.split("#") + [""])[:3]
+                lines.append(f"{q} {n} ({set_.upper()}) {cn}" + {"foil": " *F*", "etched": " *E*"}.get(fin, ""))
+                rows.append([q, n, set_, cn, fin])
+                rest -= q
+            if rest > 0:
+                lines.append(f"{rest} {n}")
+                rows.append([rest, n, "", "", ""])
+        if a.format == "csv":
+            buf = io.StringIO()
+            w = csv.writer(buf, lineterminator=chr(10))
+            w.writerow(["Count", "Name", "Edition", "Collector Number", "Foil"])
+            w.writerows(rows)
+            text = buf.getvalue()
+        else:
+            text = chr(10).join(lines)
+        if a.out:
+            with open(a.out, "w", encoding="utf-8", newline="") as f:
+                f.write(text)
+        out({"format": a.format, "cards": sum(r[0] for r in rows), "out": a.out, "text": text if not a.out else None,
+             "import_into": "Moxfield or Archidekt: Collection, Import (CSV keeps printings)"})
 
 
 # ---------- MTGJSON prices ----------
@@ -1876,8 +2084,16 @@ def main(argv=None):
     s.add_argument("--limit", type=int, default=0); s.add_argument("--fresh", action="store_true"); s.set_defaults(f=cmd_search)
     s = sp.add_parser("tags-sync", help="role tags from the Scryfall Tagger bulk file (also part of sync)")
     s.add_argument("tags", nargs="*"); s.add_argument("--fresh", action="store_true"); s.set_defaults(f=cmd_tags_sync)
-    s = sp.add_parser("collection", help="import or show your card collection")
-    s.add_argument("action", choices=["import", "show"]); s.add_argument("file", nargs="?"); s.add_argument("--card")
+    s = sp.add_parser("collection", help="your card collection: import, add, remove, show, find, have (vs a deck), fits (a commander), export")
+    s.add_argument("action", choices=["import", "add", "remove", "restore", "show", "find", "have", "fits", "export"])
+    s.add_argument("file", nargs="?", help="import/add/remove: CSV export or card list; have: a deck file")
+    s.add_argument("--merge", action="store_true", help="import: add to the existing collection instead of replacing it")
+    s.add_argument("--card", help="show: one card"); s.add_argument("--query", help="find: name contains")
+    s.add_argument("--identity", help="find: fits these colors (WUB, Esper...)"); s.add_argument("--type", help="find: type line contains")
+    s.add_argument("--role", help="find: ramp, draw, removal, wipe, tutor, protection, recursion")
+    s.add_argument("--commander", nargs="+", help="fits: commander name(s)")
+    s.add_argument("--format", choices=["moxfield", "csv"], default="moxfield", help="export format")
+    s.add_argument("--out"); s.add_argument("--limit", type=int, default=50)
     s.set_defaults(f=cmd_collection)
     s = sp.add_parser("prices-sync", help="MTGJSON multi-vendor prices (TCGplayer, Card Kingdom, Cardmarket, Cardsphere)")
     s.add_argument("--history", action="store_true", help="90-day AllPrices instead of today only")

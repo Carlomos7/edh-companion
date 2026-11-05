@@ -2,6 +2,16 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.1.1
+Fixes from an independent review of the redesign, plus leaner skills.
+- **Reports:** switching builds or commanders no longer removes the theme button (focus returns to the switch); finding headlines state the conclusion (no label-only or mid-quote cuts) with a one-line summary visible collapsed; finding and source links are scoped per project, so showcase "Cited in" links land on the right tab; citing a finding brings only the sources it actually cites, and bare times after a named video link to that moment; filter chips match the groups (commander excluded, "Has type"); theme percentage states its denominator and exempt cards; Sources and Stats no longer leave large empty areas at 1440 px; mana pips show their letter; each build shows its own hero stats; Rule 0 is a short labelled table (bracket, Game Changers with their limit, restrictions, win turn).
+- **Privacy:** quotes of DECISIONS.md, STATE.md or PROJECT.md text inside audit or research files are hidden on shared pages ("N quoted private notes were hidden"); `--include-notes` shows them.
+- **Contrast:** palette `border` fitted to 3:1, off-theme text and hero meta text to 4.5:1 or more in every palette; textures behind text toned down. axe-core: 0 violations on every tab.
+- **Summary mode:** includes the plan sections, theme counts and how the research was done.
+- **Staleness notice:** compares the decklist files research names with the newest list (Azula: "names main-v3.txt; the newest list is main-v5.txt").
+- **Skills:** trimmed back to 7.8.0 size or smaller (detail moved to references read when needed; four reply rules inline instead of a mandatory writing.md read); brew asks or states bracket and budget before the plan again. Evals: asks-before-building 4/4 (grader aligned with "one question at a time"; under the old grader 2/4 vs 1/4 on 8.0.0), cost per run $0.149 → $0.131.
+- **Tests:** 204 unit tests.
+
 ## 8.1.0
 Reports redesigned: one component system for Interactive Report and Showcase, built from a deterministic view layer.
 - **Answer first, evidence on demand:** findings show a headline and a short body, with numbered citations that link to the exact video moment for that claim; evidence, quotes and every source stay one click away (nothing truncated or dropped). Disagreements are shown open. The audit leads with counts, fails and warnings first, passes collapsed ("27 checks passed"), the shared method shown once, plain labels (no `pass_with_warnings`).

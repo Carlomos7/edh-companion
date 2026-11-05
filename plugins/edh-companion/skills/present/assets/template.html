@@ -18,30 +18,30 @@
  --shadow-1:0 1px 2px rgb(0 0 0/.25);--shadow-2:0 8px 24px rgb(0 0 0/.35);
  --dur-1:100ms;--dur-2:200ms;--dur-3:320ms;--dur-exit:160ms;--ease:cubic-bezier(.2,0,0,1);--ease-in:cubic-bezier(.05,.7,.1,1);--ease-out:cubic-bezier(.3,0,.8,.15);
  --ctl:40px;--gutter:clamp(16px,3vw,32px);--maxw:1200px;--maxw-hero:1320px;--nav-h:48px;--sec-gap:var(--sp-7);--prose:68ch;
- --bg:var(--l-bg,#f5f6f8);--surface:var(--l-surface,#ffffff);--surface-2:var(--l-surface2,#eaecf0);--border:var(--l-border,#d3d7de);
+ --bg:var(--l-bg,#f5f6f8);--surface:var(--l-surface,#ffffff);--surface-2:var(--l-surface2,#eaecf0);--ctl-border:var(--l-border,#7d838e);--border:color-mix(in srgb,var(--ctl-border) 40%,var(--bg));
  --text:var(--l-text,#14161b);--muted:var(--l-muted,#525a66);--accent:var(--l-accent,#475569);--accent-2:var(--l-accent2,var(--accent));
- --on-accent:var(--l-on_accent,#ffffff);--focus:var(--l-focus,var(--accent));--art-wash:var(--l-art_wash,color-mix(in srgb,var(--accent) 9%,var(--bg)));
+ --on-accent:var(--l-on_accent,#ffffff);--focus:var(--l-focus,var(--accent));--hero-muted:var(--l-hero_muted,var(--muted));--art-wash:var(--l-art_wash,color-mix(in srgb,var(--accent) 9%,var(--bg)));
  --ok:#1a7346;--warn:#8a5a00;--fail:#b42318;--info:#1d5fb8;--unv:#5b6370;
  --ok-bg:#e2f2e8;--warn-bg:#faefd6;--fail-bg:#fde6e3;--info-bg:#e2edfb;--unv-bg:#eaecef;
- --gc:#5b49d0;--gc-ink:#fff;--gold:#8a5f08;--overlay:rgb(12 14 18/.86);
+ --gc:#5b49d0;--gc-ink:#fff;--gold:var(--l-gold,#8a5f08);--overlay:rgb(12 14 18/.86);
  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
  --t-S:#184f95;--t-A:#256abf;--t-B:#3987e5;--t-C:#6da7ec;--t-D:#86b6ef}
 @media (pointer:coarse){:root{--ctl:44px}}
 @media (min-width:600px){:root{--sec-gap:var(--sp-8)}body.mode-showcase{--sec-gap:var(--sp-9)}}
 @media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;
- --bg:var(--d-bg,#0f1115);--surface:var(--d-surface,#171a20);--surface-2:var(--d-surface2,#21252d);--border:var(--d-border,#323844);
+ --bg:var(--d-bg,#0f1115);--surface:var(--d-surface,#171a20);--surface-2:var(--d-surface2,#21252d);--ctl-border:var(--d-border,#6b7280);
  --text:var(--d-text,#eceef2);--muted:var(--d-muted,#a3aab6);--accent:var(--d-accent,#aab4c3);--accent-2:var(--d-accent2,var(--accent));
- --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
+ --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--hero-muted:var(--d-hero_muted,var(--muted));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
  --ok:#5fcf8c;--warn:#e8b54d;--fail:#f97a70;--info:#86b9f5;--unv:#a8afbb;--ok-bg:#11291b;--warn-bg:#30250c;--fail-bg:#3a1714;--info-bg:#122640;--unv-bg:#252930;
- --gc:#9a8ff0;--gc-ink:#0f1115;--gold:#e3b04b;
+ --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95}}
 :root[data-theme="dark"]{color-scheme:dark;
- --bg:var(--d-bg,#0f1115);--surface:var(--d-surface,#171a20);--surface-2:var(--d-surface2,#21252d);--border:var(--d-border,#323844);
+ --bg:var(--d-bg,#0f1115);--surface:var(--d-surface,#171a20);--surface-2:var(--d-surface2,#21252d);--ctl-border:var(--d-border,#6b7280);
  --text:var(--d-text,#eceef2);--muted:var(--d-muted,#a3aab6);--accent:var(--d-accent,#aab4c3);--accent-2:var(--d-accent2,var(--accent));
- --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
+ --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--hero-muted:var(--d-hero_muted,var(--muted));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
  --ok:#5fcf8c;--warn:#e8b54d;--fail:#f97a70;--info:#86b9f5;--unv:#a8afbb;--ok-bg:#11291b;--warn-bg:#30250c;--fail-bg:#3a1714;--info-bg:#122640;--unv-bg:#252930;
- --gc:#9a8ff0;--gc-ink:#0f1115;--gold:#e3b04b;
+ --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95}
 
@@ -93,14 +93,14 @@ body.herotitle header.mast{display:none}
 .fanbox.on3d .fan{display:none}
 @media (min-width:960px){header.mast .wrap{grid-template-columns:minmax(0,7fr) minmax(0,5fr)}header.mast h1{padding-right:0}
  .fanbox{display:flex;height:220px;position:relative;align-items:center;justify-content:center}}
-.themebtn{font:500 16px/1 var(--body);background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-pill);width:var(--ctl);height:var(--ctl);cursor:pointer;flex:none}
+.themebtn{font:500 16px/1 var(--body);background:var(--surface);color:var(--text);border:1px solid var(--ctl-border);border-radius:var(--r-pill);width:var(--ctl);height:var(--ctl);cursor:pointer;flex:none}
 header.mast>.themebtn{position:absolute;top:var(--sp-4);right:max(var(--gutter),env(safe-area-inset-right,0px));z-index:2}
 /* saved-theme textures: decorative, faint, drawn from the accent so they follow any palette */
-body[data-look="comic"] :is(header.mast,.hero)::before{background:radial-gradient(color-mix(in srgb,var(--accent) 28%,transparent) 1.3px,transparent 1.8px) 0 0/9px 9px;
+body[data-look="comic"] :is(header.mast,.hero)::before{background:radial-gradient(color-mix(in srgb,var(--accent) 16%,transparent) 1.3px,transparent 1.8px) 0 0/9px 9px;
  -webkit-mask-image:linear-gradient(90deg,transparent 35%,#000);mask-image:linear-gradient(90deg,transparent 35%,#000)}
-body[data-look="gothic"] :is(header.mast,.hero)::before{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 14%,transparent),color-mix(in srgb,var(--accent-2) 8%,transparent)),
- repeating-linear-gradient(90deg,color-mix(in srgb,var(--accent) 7%,transparent) 0 2px,transparent 2px 24px)}
-body[data-look="flames"] :is(header.mast,.hero)::before{background:linear-gradient(0deg,color-mix(in srgb,var(--accent) 20%,transparent),color-mix(in srgb,var(--accent-2) 8%,transparent) 40%,transparent 70%)}
+body[data-look="gothic"] :is(header.mast,.hero)::before{background:linear-gradient(160deg,color-mix(in srgb,var(--accent) 8%,transparent),color-mix(in srgb,var(--accent-2) 4%,transparent)),
+ repeating-linear-gradient(90deg,color-mix(in srgb,var(--accent) 4%,transparent) 0 2px,transparent 2px 24px)}
+body[data-look="flames"] :is(header.mast,.hero)::before{background:linear-gradient(0deg,color-mix(in srgb,var(--accent) 12%,transparent),color-mix(in srgb,var(--accent-2) 5%,transparent) 40%,transparent 70%)}
 
 /* page tabs (only when the report has several pages) and the sticky section nav */
 nav.tabs{background:var(--bg);border-bottom:1px solid var(--border)}
@@ -116,8 +116,9 @@ nav.tabs button:focus-visible,.secnav a:focus-visible{outline-offset:-3px}
 
 /* hero: the commander on a colour field taken from its art; text never sits on raw art */
 .hero{position:relative;isolation:isolate;overflow:hidden;background:var(--art-wash)}
+header.mast,.hero-in{--muted:var(--hero-muted)}
 .hero-bg{position:absolute;inset:0;z-index:-2;background-size:cover;background-position:center 25%;opacity:.42;filter:saturate(1.1) blur(1px);
- -webkit-mask-image:linear-gradient(180deg,#000 0,rgb(0 0 0/.5) 30%,transparent 52%);mask-image:linear-gradient(180deg,#000 0,rgb(0 0 0/.5) 30%,transparent 52%)}
+ -webkit-mask-image:linear-gradient(180deg,#000 0,rgb(0 0 0/.5) 200px,transparent 400px);mask-image:linear-gradient(180deg,#000 0,rgb(0 0 0/.5) 200px,transparent 400px)}
 .hero-in{max-width:var(--maxw);margin:0 auto;padding:var(--sp-6) var(--gutter);display:grid;gap:var(--sp-4) var(--sp-5);grid-template-columns:minmax(0,1fr);grid-template-areas:"art" "head" "body"}
 .hero-in.noart{grid-template-areas:"head" "body"}
 .hero-art{grid-area:art;justify-self:center;width:min(100%,260px);min-width:0}
@@ -131,7 +132,7 @@ body.mode-interactive .hero-art{width:88px}
  .hero-in{grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-template-areas:"art head" "art body";column-gap:var(--sp-8);row-gap:var(--sp-4)}
  .hero-art{width:min(100%,380px);justify-self:end;align-self:center}
  .hero-head{align-self:end}.hero-body{align-self:start}
- .hero-bg{-webkit-mask-image:linear-gradient(90deg,#000 0,rgb(0 0 0/.55) 34%,transparent 58%);mask-image:linear-gradient(90deg,#000 0,rgb(0 0 0/.55) 34%,transparent 58%)}
+ .hero-bg{-webkit-mask-image:linear-gradient(90deg,#000 0,rgb(0 0 0/.55) 26%,transparent 42%);mask-image:linear-gradient(90deg,#000 0,rgb(0 0 0/.55) 26%,transparent 42%)}
  body.mode-interactive .hero-in{grid-template-columns:184px minmax(0,1fr);grid-template-areas:"art head" "art body";column-gap:var(--sp-6)}
  body.mode-interactive .hero-art{width:184px;align-self:start}
  .hero-in.noart,body.mode-interactive .hero-in.noart{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "body"}}
@@ -150,9 +151,9 @@ body.mode-interactive .verdict{font-size:var(--fs-base)}
 .hstatus a{color:var(--text)}
 .hactions{display:flex;flex-wrap:wrap;gap:var(--sp-2);align-items:stretch;margin-top:var(--sp-5)}
 .rule0{margin-top:var(--sp-4);font-size:var(--fs-sm);max-width:var(--prose)}
-.rule0 ul{display:inline;list-style:none;margin:0;padding:0}
-.rule0 li{display:inline}.rule0 li:not(:last-child)::after{content:";";margin-right:.4em}
-.rule0 .lbl{margin-right:var(--sp-2)}
+.rule0 .lbl{font:600 var(--fs-sm)/1.4 var(--body);color:var(--muted);margin:0 0 var(--sp-2)}
+.rule0 dl{display:grid;grid-template-columns:max-content 1fr;gap:var(--sp-1) var(--sp-4);margin:0}
+.rule0 dt{color:var(--muted);font-weight:500}.rule0 dd{margin:0}
 
 /* stat tiles */
 .tiles{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2);margin:var(--sp-5) 0 0;padding:0}
@@ -177,18 +178,18 @@ a.stat{text-decoration:none;color:inherit}a.stat:hover{border-color:var(--accent
 .conf{font-size:var(--fs-xs);color:var(--muted)}
 
 /* buttons and inputs */
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);font:500 var(--fs-sm)/1.2 var(--body);cursor:pointer;background:var(--surface);color:var(--text);border:1px solid var(--border);border-radius:var(--r-tile);padding:0 var(--sp-4);min-height:var(--ctl);text-decoration:none}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:var(--sp-2);font:500 var(--fs-sm)/1.2 var(--body);cursor:pointer;background:var(--surface);color:var(--text);border:1px solid var(--ctl-border);border-radius:var(--r-tile);padding:0 var(--sp-4);min-height:var(--ctl);text-decoration:none}
 .btn:hover{border-color:var(--accent)}
 .btn.primary,.copy{background:var(--accent);color:var(--on-accent);border-color:var(--accent)}
 .btn.primary:hover,.copy:hover{filter:brightness(1.08)}
 .btn.ghost{background:transparent}
-select,input[type=search]{font:400 var(--fs-sm) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-tile);padding:0 var(--sp-3);min-height:var(--ctl);min-width:0;width:100%}
+select,input[type=search]{font:400 var(--fs-sm) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--ctl-border);border-radius:var(--r-tile);padding:0 var(--sp-3);min-height:var(--ctl);min-width:0;width:100%}
 @media (min-width:600px){select{width:auto}}
 .seg{display:flex;gap:var(--sp-1);flex-wrap:wrap}
 .seg .btn{display:grid;align-content:center;text-align:left;padding:var(--sp-1) var(--sp-3);line-height:1.25;min-width:96px}
 .seg .btn b{font-weight:600}.seg .btn small{color:var(--muted);font-size:var(--fs-xs);white-space:nowrap}
 .seg .btn[aria-pressed="true"]{border-color:var(--accent);box-shadow:inset 0 0 0 1px var(--accent)}
-.viewtog{display:inline-flex;border:1px solid var(--border);border-radius:var(--r-tile);overflow:hidden;background:var(--surface);flex:none}
+.viewtog{display:inline-flex;border:1px solid var(--ctl-border);border-radius:var(--r-tile);overflow:hidden;background:var(--surface);flex:none}
 .viewtog button{flex:1;font:500 var(--fs-sm) var(--body);border:0;background:none;color:var(--muted);min-height:calc(var(--ctl) - 2px);padding:0 var(--sp-3);cursor:pointer}
 .viewtog button[aria-pressed="true"]{background:var(--text);color:var(--bg)}
 .ctrl{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2);margin:0 0 var(--sp-3)}
@@ -207,7 +208,7 @@ abbr.gc{font:600 10.5px/1.5 var(--body);padding:0 5px;border-radius:var(--r-tag)
 .tp.mdfc{background:transparent;border:1px solid var(--muted);color:var(--muted);padding:2px 4px;font-weight:500}
 .swp{display:inline-block;margin-left:var(--sp-1);font:600 var(--fs-xs)/1 var(--body);color:var(--accent)}
 .flag{font-size:var(--fs-xs);padding:1px 6px;border-radius:var(--r-tag);background:var(--warn-bg);color:var(--text)}
-.pip{display:inline-block;width:15px;height:15px;border-radius:50%;font:600 9px/15px var(--body);text-align:center;margin-left:1px;color:#111;background:#cbc2bf;vertical-align:-2px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
+.pip{display:inline-block;min-width:15px;height:15px;padding:0 2px;border-radius:8px;font:700 10px/15px var(--body);text-align:center;margin-left:1px;color:#111;background:#cbc2bf;vertical-align:-2px;box-shadow:0 0 0 1px rgba(0,0,0,.25)}
 .pip.W{background:#f8f6d8}.pip.U{background:#c1d7e9}.pip.B{background:#bab1ab}.pip.R{background:#e49977}.pip.G{background:#a3c095}
 .pips{white-space:nowrap}
 
@@ -284,7 +285,7 @@ summary>h3,summary>h4{margin:0!important}
  -webkit-mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent);mask-image:linear-gradient(90deg,#000 calc(100% - 24px),transparent)}
 .cg>:last-child{margin-right:24px}
 .cgl{font:500 var(--fs-sm) var(--body);color:var(--muted);min-width:84px;white-space:nowrap;flex:none}
-.chip{display:inline-flex;flex:none;align-items:center;gap:6px;font:500 var(--fs-sm) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--border);border-radius:var(--r-pill);padding:0 var(--sp-3);min-height:36px;cursor:pointer;white-space:nowrap}
+.chip{display:inline-flex;flex:none;align-items:center;gap:6px;font:500 var(--fs-sm) var(--body);color:var(--text);background:var(--surface);border:1px solid var(--ctl-border);border-radius:var(--r-pill);padding:0 var(--sp-3);min-height:36px;cursor:pointer;white-space:nowrap}
 @media (pointer:coarse){.chip{min-height:var(--ctl)}}
 .chip:hover:not(:disabled){border-color:var(--accent)}
 .chip[aria-pressed="true"]{background:var(--text);color:var(--bg);border-color:var(--text)}
@@ -419,7 +420,6 @@ a.ts{font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
 .srcgroup[open]{padding-bottom:var(--sp-4)}.srcgroup>summary h3{font-size:var(--fs-md)}
 .srcwrap{display:grid;grid-template-columns:minmax(0,1fr);gap:var(--sp-5) var(--sp-7);align-items:start}
 .acc>h3:first-child{margin-top:var(--sp-4)}
-@media (min-width:1280px){.srcwrap{grid-template-columns:minmax(0,1fr) 340px}.acc>h3:first-child{margin-top:0}.acc .tiles.three{grid-template-columns:repeat(2,minmax(0,1fr))}}
 a.ts,.src .moments a{text-decoration-thickness:1px;text-decoration-color:color-mix(in srgb,currentColor 45%,transparent)}
 a.ts:hover,.src .moments a:hover{text-decoration-color:currentColor}
 .srclist{list-style:none;margin:0;padding:0}
@@ -542,7 +542,7 @@ function stateTag(state){return statusTag(STATE_ST[state]||"unverified",STATE_TX
 
 /* ---------- theme pills: only exceptions and off-theme cards are marked ---------- */
 const THEME_PAL=["#2a6fc9","#1f8f63","#c4532a","#5b49d0","#b8467a","#8a5f08"];  // used when a theme label has no color
-function themeColor(label){const t=D.theme;if(!t)return"var(--muted)";const i=t.labels.findIndex(l=>l.label===label);return i<0?"#8a5f08":t.labels[i].color||THEME_PAL[i%THEME_PAL.length]}
+function themeColor(label){const t=D.theme;if(!t)return"var(--muted)";const i=t.labels.findIndex(l=>l.label===label);return i<0?"var(--gold)":t.labels[i].color||THEME_PAL[i%THEME_PAL.length]}
 const isDefaultTheme=l=>/^on[ -]?theme$/i.test(String(l||""));
 function pill(label){if(!D.theme||!label)return null;return el("span",{class:"pill",style:`--c:${themeColor(label)}`},el("i"),label==="off-theme"?"Off-theme":label)}
 
@@ -554,20 +554,22 @@ function tabsList(){const t=[];if((D.overview||[]).length)t.push({id:"overview",
  D.rankings.forEach(r=>t.push({id:"rank-"+r.id,title:r.title,render:h=>renderRanking(r,h)}));
  if(SHOW.sources&&!IN_DECK)t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
 let TABS=[],secObs=null;
-function go(id,push=true){hideTip();hidePop();const tab=TABS.find(t=>t.id===id)||TABS[0];
+function go(id,push=true){hideTip();hidePop();const tab=TABS.find(t=>t.id===id)||TABS.find(t=>t.id===anchorTab(id))||TABS[0];
  document.querySelectorAll("#tabs button").forEach(b=>b.dataset.id===tab.id?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
  charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}
  document.body.classList.remove("herotitle","has-secnav");placeTheme(null);
  const m=$("#main");m.replaceChildren();applyLook(D.look);tab.render(m);store.set("tab",tab.id);
- if(push)history.replaceState(null,"","#"+tab.id);
- if(id&&id!==tab.id){const t=document.getElementById(id);if(t)requestAnimationFrame(()=>{openTo(t);t.scrollIntoView();if(t.classList.contains("src"))t.classList.add("hl")})}}
+ const t=id&&id!==tab.id?document.getElementById(id):null;
+ if(push)history.replaceState(null,"","#"+(t?id:tab.id));
+ if(t)requestAnimationFrame(()=>jumpTo(t))}
+function jumpTo(t){document.querySelectorAll(".src.hl").forEach(x=>x.classList.remove("hl"));openTo(t);t.scrollIntoView();if(t.tabIndex===-1)t.focus({preventScroll:true});if(t.classList.contains("src"))t.classList.add("hl")}
 function buildTabs(){TABS=tabsList();const bar=$("#tabs");bar.replaceChildren(...TABS.map(t=>el("li",{},el("button",{type:"button","data-id":t.id,onclick:()=>{go(t.id);scrollTo(0,0)}},t.title))));
  $("#tabsNav").hidden=TABS.length<2}
 // the theme button sits in the sticky section nav when there is one, else in the masthead
-function placeTheme(host){const b=$("#themeBtn");(host||$("#mast")).append(b)}
+function placeTheme(host){const b=$("#themeBtn");if(b)(host||$("#mast")).append(b)}
 
 /* ---------- report look: palette roles per commander (or a saved theme), neutral where several commanders show ---------- */
-const ROLES=["bg","surface","surface2","border","text","muted","accent","accent2","on_accent","focus","art_wash"];
+const ROLES=["bg","surface","surface2","border","text","muted","accent","accent2","on_accent","focus","art_wash","gold","hero_muted"];
 function applyLook(L){L=L||D.look;const r=document.documentElement.style,P=(L||{}).palette;
  for(const m of["l","d"])ROLES.forEach(k=>{r.removeProperty(`--${m}-${k}`);if(P&&P[m]&&P[m][k])r.setProperty(`--${m}-${k}`,P[m][k])});
  document.body.dataset.look=(L&&L.style)||"";document.body.dataset.lookSource=(P&&P.source)||""}
@@ -672,7 +674,10 @@ function renderOverview(host){const O=D.overview||[];
 
 /* ---------- deck tabs ---------- */
 const BR={1:"Exhibition",2:"Core",3:"Upgraded",4:"Optimized",5:"cEDH"};
-function pips(cost){const out=el("span",{class:"pips"});String(cost||"").replace(/\{([^}]+)\}/g,(_,s)=>{const k=/^[WUBRG]$/.test(s)?s:"";out.append(el("span",{class:"pip "+k,title:s},k?"":s.replace("/","")))});return out}
+const PIP_NM={W:"white",U:"blue",B:"black",R:"red",G:"green",C:"colorless",S:"snow",P:"Phyrexian"};
+function pips(cost){const syms=[...String(cost||"").matchAll(/\{([^}]+)\}/g)].map(m=>m[1]);if(!syms.length)return el("span",{class:"pips"});
+ return el("span",{class:"pips"},el("span",{class:"sr-only"},"Mana cost: "+syms.map(s=>s.split("/").map(x=>PIP_NM[x]||x).join(" or ")).join(", ")),
+  el("span",{"aria-hidden":"true"},...syms.map(s=>el("span",{class:"pip "+(/^[WUBRG]$/.test(s)?s:""),title:s},s.replace("/","")))))}
 const enc=encodeURIComponent;
 function cardLinks(c){const n=c.card||c.name,front=n.split(" // ")[0];
  const slug=front.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g,"").replace(/['’,.!?:"]/g,"").replace(/[^a-z0-9]+/g,"-").replace(/^-|-$/g,"");
@@ -685,7 +690,10 @@ function inkFor(c){const v=/^var\((--[\w-]+)\)$/.exec(String(c).trim());if(v)c=c
  const L=.2126*lin(n>>16)+.7152*lin(n>>8&255)+.0722*lin(n&255),dark=(L+.05)/.056,white=1.05/(L+.05);
  return dark>=4.5&&dark>=white?{ink:"#0d111a"}:white>=4.5?{ink:"#fff"}:{ink:"#fff",bg:`color-mix(in srgb,${c} 72%,#000)`}}  // mid tones: darken the tag until white text reaches 4.5:1
 function tag(label){if(!D.theme||!label)return null;const c=themeColor(label),k=inkFor(c);return label==="off-theme"?el("span",{class:"tp off"},"Off-theme"):el("span",{class:"tp",style:`--c:${k.bg||c};--ink:${k.ink}`},label)}
-const mark=label=>label&&!isDefaultTheme(label)?tag(label):null;  // "On theme" on 89 of 100 cards is noise; the theme filter still has it
+const mark=label=>label&&!isDefaultTheme(label)?tag(label):null;
+// "32 of 35 themed cards on theme; 64 exempt (lands, utility) unmarked" from theme_stats; null without it
+function themeLine(d){const t=d.theme_stats;if(!t)return null;const n=(t.on||0)+(t.exception||0)+(t.off||0);
+ return `${t.on||0} of ${n} themed cards on theme`+(t.exception?`, ${plural(t.exception,"exception")}`:"")+(t.off?`, ${t.off} off-theme`:"")+(t.exempt?`; ${t.exempt} exempt (lands, utility) unmarked`:"")}  // "On theme" on 89 of 100 cards is noise; the theme filter still has it
 const did=d=>d.id||"b"+d.bracket;  // a deck is a build variant (b3, b4-budget...)
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
 function renderGroup(G,host){const key="grp:"+G.id,st=store.get(key,{});
@@ -693,12 +701,13 @@ function renderGroup(G,host){const key="grp:"+G.id,st=store.get(key,{});
  const defB=D.default_bracket;
  if(cmdrs.length>1){const rows=cmdrs.map(c=>{const d=c.decks.find(x=>x.bracket===defB)||c.decks[0];const s=d.stats||{};
    return el("tr",{},el("th",{scope:"row"},c.name+(c.project&&D.multi?` (${c.project})`:"")),el("td",{class:"n"},"B"+d.bracket),SHOW.prices?el("td",{class:"n"},money(s.price)):null,el("td",{class:"n"},s.avg_mv??"—"),el("td",{class:"n"},(s.game_changers||[]).length),el("td",{},stateTag(d.audit_view.verdict)))});
-  const pick=el("div",{class:"cmdrs",role:"group","aria-label":"Choose a commander"},...cmdrs.map(c=>el("button",{type:"button",class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));redraw()}},art(c.img,"",c.name),el("div",{class:"nm"},c.name),c.project&&D.multi?el("div",{class:"meta"},c.project):null)));
+  const pick=el("div",{class:"cmdrs",role:"group","aria-label":"Choose a commander"},...cmdrs.map(c=>el("button",{type:"button",class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));redraw('.cmdr[aria-pressed="true"]')}},art(c.img,"",c.name),el("div",{class:"nm"},c.name),c.project&&D.multi?el("div",{class:"meta"},c.project):null)));
   host.append(el("section",{class:"panel"},el("h2",{},G.title+": compare commanders"),el("div",{class:"strip",tabindex:0,role:"region","aria-label":"Compare commanders"},el("table",{},el("thead",{},el("tr",{},el("th",{scope:"col"},"Commander"),el("th",{scope:"col",class:"n"},"Bracket"),SHOW.prices?el("th",{scope:"col",class:"n"},"Price"):null,el("th",{scope:"col",class:"n"},"Avg mana value"),el("th",{scope:"col",class:"n"},"Game Changers"),el("th",{scope:"col"},"Audit"))),el("tbody",{},rows))),
    el("h3",{},"Choose a commander"),pick))}
  const body=el("div");host.append(body);
- const redraw=()=>{const y=scrollY;drawC();scrollTo(0,y)};  // switching build or commander keeps the reading position
- function drawC(){charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}hidePop();body.replaceChildren();applyLook(cur.look);
+ // switching build or commander keeps the reading position and puts focus back on the control that was used
+ const redraw=sel=>{const y=scrollY;drawC();scrollTo(0,y);const f=sel&&host.querySelector(sel);if(f)f.focus({preventScroll:true})};
+ function drawC(){charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}hidePop();placeTheme(null);body.replaceChildren();applyLook(cur.look);
   const b=store.get(key+":"+cur.slug,did(cur.decks.find(d=>d.bracket===defB)||cur.decks[0]));
   const deck=cur.decks.find(d=>did(d)===b)||cur.decks[0];
   const flat=orderedCards(deck);CUR={G,slug:cur.slug,b:did(deck),deck};
@@ -743,11 +752,11 @@ function heroStats(deck){const s=deck.stats||{},out=[];
  return out.slice(0,4)}
 const heroOwnsTitle=G=>IN_DECK&&D.groups.length===1&&G.commanders.length===1;
 function hero(cur,deck,flat,asTitle,redraw,key){const hTag=asTitle?"h1":"h2";const H=cur.hero||{},n=deck.cards.reduce((a,c)=>a+c.qty,0),AV=deck.audit_view;
- const single=cur.decks.length===1;  // P's hero describes one build; with several builds the per-build facts come from the selected deck
- const meta=single&&H.meta?H.meta:[`Bracket ${deck.bracket}${BR[deck.bracket]?", "+BR[deck.bracket]:""}`,plural(n,"card"),deck.version?`Version ${deck.version}`:null,deck.project&&D.multi?deck.project:null].filter(Boolean);
- const stats=single&&H.stats&&H.stats.length?H.stats:heroStats(deck);
+ const B=deck.hero||(cur.decks.length===1?H:{});  // the selected build's facts (meta, stats, verdict); H keeps the commander's name and art
+ const meta=B.meta?B.meta:[`Bracket ${deck.bracket}${BR[deck.bracket]?", "+BR[deck.bracket]:""}`,plural(n,"card"),deck.version?`Version ${deck.version}`:null,deck.project&&D.multi?deck.project:null].filter(Boolean);
+ const stats=B.stats&&B.stats.length?B.stats:heroStats(deck);
  const vl=AV.verdict_label,pitch=deck.summary.pitch||null;
- const verdict=single&&H.verdict&&!(vl&&String(H.verdict).startsWith(vl))?H.verdict:pitch;  // a verdict that only repeats the audit label + counts is already the status row
+ const verdict=B.verdict&&!(vl&&String(B.verdict).startsWith(vl))?B.verdict:pitch;  // a verdict that only repeats the audit label + counts is already the status row
  const cmd=deck.cards.find(c=>c.commander),artKey=H.art||cur.img||(cmd||{}).img,cname=H.name||cur.name,name=asTitle&&D.title?D.title:cname;
  const sub=asTitle?[norm(D.title).includes(norm(cname))?null:"Commander: "+cname,D.subtitle&&!meta.some(m=>norm(D.subtitle).includes(norm(m)))?D.subtitle:null].filter(Boolean):[];
  const crop=MODE==="showcase"&&H.art_crop&&(IMG==="cdn"||!/^https?:/i.test(H.art_crop))?H.art_crop:null;  // artifact pages block outside images: a remote crop only in cdn mode
@@ -756,17 +765,17 @@ function hero(cur,deck,flat,asTitle,redraw,key){const hTag=asTitle?"h1":"h2";con
  const status=el("div",{class:"hstatus"},el("span",{class:"lbl"},"Audit"),stateTag(AV.verdict),
   counts?el("span",{},[counts.fail?plural(counts.fail,"fail"):null,counts.warning?plural(counts.warning,"warning"):null,counts.unverified?`${counts.unverified} unverified`:null].filter(Boolean).join(", ")||"no issues"):null,
   el("a",{href:"#sec-audit"},"See the audit"));
- const seg=cur.decks.length>1?el("div",{class:"seg",role:"group","aria-label":"Choose a build"},...cur.decks.map(d=>el("button",{type:"button",class:"btn","aria-pressed":d===deck,onclick:()=>{store.set(key+":"+cur.slug,did(d));redraw()}},
+ const seg=cur.decks.length>1?el("div",{class:"seg",role:"group","aria-label":"Choose a build"},...cur.decks.map(d=>el("button",{type:"button",class:"btn","aria-pressed":d===deck,onclick:()=>{store.set(key+":"+cur.slug,did(d));redraw('.seg .btn[aria-pressed="true"]')}},
    el("b",{},d.label||"B"+d.bracket),el("small",{},`${BR[d.bracket]||""}${SHOW.prices?", "+money((d.stats||{}).price):""}`)))):null;
  const copy=el("button",{type:"button",class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
- const r0=deck.rule0?String(deck.rule0).split(/;\s*/).filter(Boolean):[];
+ const r0=deck.rule0_items||[];
  return el("section",{class:"hero",id:"sec-overview","aria-labelledby":"hero-name"},crop?el("div",{class:"hero-bg",style:`background-image:url("${crop.replace(/"/g,"%22")}")`}):null,
   el("div",{class:"hero-in"+(artBox?"":" noart")},artBox,
    el("div",{class:"hero-head"},el(hTag,{class:"hname",id:"hero-name"},name),...sub.map(x=>el("p",{class:"hsub"},x)),el("ul",{class:"meta"},...meta.map(m=>el("li",{},m)))),
    el("div",{class:"hero-body"},verdict?el("p",{class:"verdict"},verdict):null,status,
     el("dl",{class:"tiles"},...stats.map(x=>el("div",{class:"stat"},el("dt",{},x.label),el("dd",{class:"v"},x.value==null||x.value===""?"—":String(x.value)),x.value==null||x.value===""?el("dd",{class:"ctx"},"Not recorded"+(x.context?": "+x.context:"")):x.context?el("dd",{class:"ctx"},x.context):null))),
     el("div",{class:"hactions"},seg,copy),
-    r0.length?el("div",{class:"rule0"},el("span",{class:"lbl"},"Rule 0"),el("ul",{},...r0.map(x=>el("li",{},x)))):null)))}
+    r0.length?el("div",{class:"rule0"},el(asTitle?"h2":"h3",{class:"lbl"},"Rule 0"),el("dl",{},...r0.flatMap((x,i)=>[el("dt",{},i&&r0[i-1].label===x.label?"":x.label),el("dd",{},x.value)]))):null)))}
 
 /* ---------- notices: research older than the deck, stale data, notes left out ---------- */
 function noticesNode(deck,proj){if(proj===undefined&&deck)proj=deck.project||null;
@@ -791,7 +800,7 @@ function planSection(d){const s=d.summary;
  const sec=section("sec-plan","Game plan",null);sec.append(el("div",{class:"plan"},col,rail));return sec}
 /* ---------- stats: composition, price, charts (near the deck they describe) ---------- */
 function statsSection(d){const s=d.stats||{},sec=section("sec-stats","Stats","Counts and prices come from deck_check (Scryfall data); nothing here is estimated.");
- const grid=el("div",{class:"statgrid"}),comp=el("div"),price=el("div");grid.append(comp,price);sec.append(grid);
+ const grid=el("div",{class:"statgrid"}),comp=el("div"),price=el("div"),side=el("div");grid.append(comp,side);sec.append(grid);  // left: roles and theme; right: price, Game Changers, rule roles
  if(s.template){const rows=Object.entries(s.template),off=rows.filter(([,[h,lo,hi]])=>h<lo||h>hi);
   comp.append(el("h3",{},"Against a typical deck"),el("p",{class:"take"},off.length?off.map(([r,[h,lo,hi]])=>`${cap(r)} ${h<lo?"below":"above"} the typical ${lo}–${hi} (${h})`).join("; ")+"; the rest in range.":"Every role is inside the typical range."),
    ...rows.map(([role,[have,lo,hi]])=>{const mx=Math.max(hi*1.4,have,1),cls=have<lo?"short":have>hi?"over":"ok";
@@ -800,13 +809,13 @@ function statsSection(d){const s=d.stats||{},sec=section("sec-stats","Stats","Co
    el("div",{class:"legend"},el("span",{},"Bar: this deck"),el("span",{},"Green band: typical range"),el("span",{class:"ok"},"✓ in range"),el("span",{class:"short"},"▼ low"),el("span",{class:"over"},"▲ above (fine: one card can fill several roles)")),
    el("p",{class:"note"},s.template_source||"Starting ranges, not laws."))}
  else comp.append(el("h3",{},"Against a typical deck"),el("div",{class:"empty"},el("p",{},el("b",{},"No role counts for this build.")),el("p",{},"deck_check gave no Oracle-text roles, so ramp, draw and removal are not counted. Rebuild the page after deck_check runs on this list.")));
- if(d.theme){const c=d.theme.counts||{};comp.append(el("h3",{},"Theme"),el("p",{},el("b",{},`${d.theme.on_theme_pct??"—"}% on theme`),el("span",{class:"muted"}," (commander excluded)")),
-  el("div",{class:"row note"},...Object.entries(c).map(([k,v])=>el("span",{},isDefaultTheme(k)?el("span",{class:"pill",style:`--c:${themeColor(k)}`},el("i"),k):tag(k)," ",el("b",{class:"num"},v)))))}
+ if(d.theme){const c=d.theme.counts||{},TL=themeLine(d);comp.append(el("h3",{},"Theme"),el("p",{},el("b",{},TL?cap(TL):`${d.theme.on_theme_pct??"—"}% on theme`),el("span",{class:"muted"},TL?"; commander excluded.":" (commander excluded)")),
+  TL?"":el("div",{class:"row note"},...Object.entries(c).map(([k,v])=>el("span",{},isDefaultTheme(k)?el("span",{class:"pill",style:`--c:${themeColor(k)}`},el("i"),k):tag(k)," ",el("b",{class:"num"},v)))))}  // label counts include exempt cards: theme_stats replaces them
  const gcs=s.game_changers||[];const byN=Object.fromEntries(d.cards.map(c=>[c.name.toLowerCase(),c]));
- comp.append(el("h3",{},"Game Changers"),gcs.length?el("div",{class:"cardrow"},...gcs.map(g=>cardChip(byN[g.toLowerCase()]||{name:g},orderedCards(d)))):el("p",{class:"note"},"None in this list."));
+ if(SHOW.prices)side.append(price);side.append(el("h3",{},"Game Changers"),gcs.length?el("div",{class:"cardrow"},...gcs.map(g=>cardChip(byN[g.toLowerCase()]||{name:g},orderedCards(d)))):el("p",{class:"note"},"None in this list."));
  const R=Object.entries(s.roles||{}).filter(([r])=>r!=="land");
- if(R.length)comp.append(el("p",{class:"note"},el("b",{},"Roles from Oracle-text rules: "),R.sort((a,b)=>b[1]-a[1]).map(([r,n])=>`${r} ${n}`).join(", "),". A card can count in several roles; open a card to see the rule that matched."));
- if((s.label_diff||[]).length)comp.append(el("details",{class:"more"},el("summary",{},`${s.label_diff.length} builder's label${s.label_diff.length>1?"s differ":" differs"} from the rule-based roles`),
+ if(R.length)side.append(el("p",{class:"note"},el("b",{},"Roles from Oracle-text rules: "),R.sort((a,b)=>b[1]-a[1]).map(([r,n])=>`${r} ${n}`).join(", "),". A card can count in several roles; open a card to see the rule that matched."));
+ if((s.label_diff||[]).length)side.append(el("details",{class:"more"},el("summary",{},`${s.label_diff.length} builder's label${s.label_diff.length>1?"s differ":" differs"} from the rule-based roles`),
   el("ul",{class:"note"},...s.label_diff.map(x=>el("li",{},`${x.name}: builder's label "${x.label}"; rules: ${x.rules.length?x.rules.join(", "):"none matched"}`)))));
  if(SHOW.prices){price.append(el("h3",{},"Price"));const L=s.price_ladder,tl=[];
   tl.push(["Listed printings",money(s.price),s.price==null?"No price data from Scryfall":s.unpriced&&s.unpriced.length?`excludes ${plural(s.unpriced.length,"unpriced card")}`:"the printings in this list"]);
@@ -873,9 +882,9 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
  const srt=el("select",{"aria-label":"Sort"},...[["mv","Sort: mana value"],["name","Sort: name"],["price","Sort: price (high first)"]].filter(([v])=>v!=="price"||SHOW.prices).map(([v,t])=>el("option",{value:v,selected:st.sort===v},t)));
  const isGC=c=>c.gc||gcs.has(c.name.toLowerCase());
  const MVS=["0","1","2","3","4","5","6+"];
- const presentTypes=[...TYPE_ORDER,"Other"].filter(t=>d.cards.some(c=>typeInfo(c).types.includes(t)));
- const groups=[{id:"type",label:"Type",min:1,get:c=>typeInfo(c).types,opts:presentTypes.map(t=>({v:t,label:t,dot:TYPE_COLOR[t]}))},
-  {id:"mv",label:"Mana value",get:c=>mainType(c)==="Land"?null:MVS[Math.min(c.mv||0,6)],opts:MVS.map(v=>({v,label:v}))},
+ const presentTypes=[...TYPE_ORDER,"Other"].filter(t=>d.cards.some(c=>!c.commander&&typeInfo(c).types.includes(t)));
+ const groups=[{id:"type",label:"Has type",min:1,get:c=>c.commander?[]:typeInfo(c).types,opts:presentTypes.map(t=>({v:t,label:t,dot:TYPE_COLOR[t]}))},  // an Artifact Creature counts under both
+  {id:"mv",label:"Mana value",get:c=>c.commander||mainType(c)==="Land"?null:MVS[Math.min(c.mv||0,6)],opts:MVS.map(v=>({v,label:v}))},
   {id:"role",label:"Role (rules)",get:c=>Object.keys(c.roles||{}),opts:[...new Set(d.cards.flatMap(c=>Object.keys(c.roles||{})))].sort().map(r=>({v:r,label:cap(r)}))},
   {id:"status",label:"Status",min:1,get:c=>c.status,opts:Object.keys(ST_LABEL).map(k=>({v:k,label:ST_LABEL[k]}))},
   themeChips(),
@@ -891,7 +900,8 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
  const den=canGrid?tgl("Card size",[["dense","Dense"],["comfy","Comfortable"]],()=>dens,v=>dens=v):null;
  sec.append(el("div",{class:"ctrl"},q,tog,den,grp,srt,count),chips);const out=el("div",{class:"cols"});sec.append(out);
  const marked=D.theme?D.theme.labels.filter(l=>!isDefaultTheme(l.label)):[];
- sec.append(el("div",{class:"legend"},D.theme?el("span",{},...marked.map(l=>tag(l.label)),tag("off-theme"),D.theme.labels.some(l=>isDefaultTheme(l.label))?" marked; unmarked cards are on theme":" printing theme"):null,
+ const TL=themeLine(d);
+ sec.append(el("div",{class:"legend"},D.theme?el("span",{},...marked.map(l=>tag(l.label)),tag("off-theme")," marked"+(TL?". "+cap(TL):"")):null,
   el("span",{},el("span",{class:"tp mdfc"},"MDFC")," spell with a land back"),el("span",{},el("abbr",{class:"gc",title:"Game Changer"},"GC")," Game Changer"),
   d.recs_view.proposed.some(r=>r.cut)?el("span",{},el("span",{class:"swp"},"⇄")," a proposed change would cut it"):null,el("span",{},VIEW()?"Hover a name to preview, click to enlarge; the price links to a shop":"The name opens Scryfall; the price links to a shop")));
  [grp,srt,q].forEach(i=>i.addEventListener("input",draw));
@@ -955,16 +965,18 @@ function SRC_I(){if(SRC)return SRC;const groups=D.sources_view.map(g=>({kind:g.k
 function sourcesSection(){const S=SRC_I();if(!S.total&&!Object.keys(D.data_dates||{}).length)return null;
  const sec=section("sec-sources","Sources",S.total?`${plural(S.total,"source")}, numbered as in the research markers. Card facts and prices come from Scryfall's data.`:"Card facts and prices come from Scryfall's data.");
  const b=sourcesBlock();sec.append(el("div",{class:"srcwrap"},b||el("div"),el("div",{class:"acc"},...accuracyBlock())));return sec}
-function sourcesBlock(){const S=SRC_I();if(!S.total)return null;const HL=headlines();
+function sourcesBlock(){const S=SRC_I();if(!S.total)return null;const FI=findIndex();
  return el("div",{},...S.groups.map(g=>el("details",{class:"srcgroup more",id:"sg-"+slugify(g.kind)},el("summary",{},el("h3",{},g.label),el("span",{class:"cn"},plural(g.items.length,"source"))),
-  el("ol",{class:"srclist"},...g.items.map(x=>el("li",{class:"src",id:"src-"+x.n,tabindex:-1},el("span",{class:"n"},x.n+"."),el("div",{},
+  el("ol",{class:"srclist"},...g.items.map(x=>el("li",{class:"src",id:srcAnchor(x),tabindex:-1},el("span",{class:"n"},x.n+"."),el("div",{},
    el("p",{},x.url?ext(x.url,`${x.title} (opens in a new tab)`,"",x.title):x.title),
    el("p",{class:"sm"},[x.creator,x.date?niceDate(x.date):null,x.sample_size?Number(x.sample_size).toLocaleString()+" decks":null,x.primary?"primary source":null,x.project&&D.multi?"project "+x.project:null].filter(Boolean).join(", ")||g.label),
    x.moments.length?el("p",{class:"moments"},el("span",{class:"lbl"},"Moments cited"),...x.moments.map(m=>ext(m.url,`${x.title} at ${m.t} (opens in a new tab)`,"ts",m.t))):null,
-   x.cited_by.length?el("p",{class:"back"},el("span",{class:"lbl"},"↩ Cited in"),...x.cited_by.map((id,i)=>el("a",{href:"#f-"+id,"aria-label":`Back to finding ${i+1}${HL[id]?": "+HL[id]:""}`,title:HL[id]||null},String(i+1)))):null)))))))}
+   x.cited_by.length?el("p",{class:"back"},el("span",{class:"lbl"},"↩ Cited in"),...x.cited_by.map((c,i)=>{const f=typeof c==="string"?FI[(x.project||"")+"|"+c]||{a:"f-"+c}:{a:c.anchor||fAnchor(c.project,c.id),h:c.headline};  // older data: finding ids
+    return el("a",{href:"#"+f.a,"aria-label":`Back to finding ${i+1}${f.h?": "+f.h:""}`,title:f.h||null},String(i+1))})):null)))))))}
 function accuracyBlock(){const dd=D.data_dates||{},U=D.accuracy.unverified||[],out=[];
  if(Object.keys(dd).length)out.push(el("h3",{},"Data freshness"),el("div",{class:"strip"},el("table",{style:"max-width:640px"},el("tbody",{},...Object.entries(dd).map(([k,v])=>el("tr",{},el("th",{scope:"row"},cap(k.replace(/_/g," "))),el("td",{class:"num"},v?(/^\d{4}-\d\d-\d\dT/.test(String(v))?niceDate(v):String(v)):"Not recorded")))))));
- if(U.length)out.push(el("h3",{},"Still unverified"),el("p",{class:"note"},"Gaps the research and card data could not close. They limit the conclusions above."),el("ul",{style:"max-width:var(--prose);display:grid;gap:var(--sp-2);padding-left:1.25em"},...U.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," ("+u.where+")"):""))));
+ if(U.length)out.push(el("details",{class:"more",style:"margin-top:var(--sp-5)"},el("summary",{},el("h3",{},"Still unverified"),el("span",{class:"cn"},U.length)),el("p",{class:"note"},"Gaps the research and card data could not close. They limit the conclusions above."),
+  el("ul",{style:"max-width:var(--prose);display:grid;gap:var(--sp-2);padding-left:1.25em;margin:var(--sp-2) 0 var(--sp-4)"},...U.map(u=>el("li",{},u.text,u.where?el("span",{class:"muted"}," ("+u.where+")"):"")))));
  return out}
 function renderSources(host){const S=SRC_I();
  const nn=noticesNode(null,undefined);if(nn)host.append(nn);
@@ -975,10 +987,18 @@ function renderSources(host){const S=SRC_I();
 /* ---------- research findings: headline, tag, short body, numbered markers, evidence in <details> ---------- */
 const findingsView=()=>D.findings_view;
 const disagreementsView=()=>D.disagreements_view;
-let HEADS=null;
-function headlines(){if(HEADS)return HEADS;HEADS={};D.findings_view.forEach(t=>t.items.forEach(i=>HEADS[i.id]=i.headline));return HEADS}
+// anchors: f-<project>-<finding id>, s-<project>-<source id> from the data (older data: f-<id>, src-<n>)
+let FIND=null;
+function findIndex(){if(FIND)return FIND;FIND={};D.findings_view.forEach(t=>t.items.forEach(i=>{const x={a:i.anchor||"f-"+i.id,h:i.headline,p:t.project||null};FIND[(x.p||"")+"|"+i.id]=x;FIND[x.a]=FIND[x.a]||x}));return FIND}
+const fAnchor=(p,id)=>(findIndex()[(p||"")+"|"+id]||{a:"f-"+id}).a;
+const srcAnchor=x=>x.anchor||"src-"+x.n;
+// the tab showing an anchor: a finding's project research tab (else the deck page or the sources tab); sources: their list
+function anchorTab(id){const has=t=>TABS.some(x=>x.id===t),deckTab=IN_DECK&&(TABS.find(t=>/^decks-/.test(t.id))||{}).id;
+ if(/^(s|src)-/.test(id))return has("sources")?"sources":deckTab||null;
+ const f=/^f-/.test(id)&&findIndex()[id];if(!f)return null;
+ const r=D.research.find(x=>(x.project||null)===f.p)||(!IN_DECK&&researchTabFor(f.p));return r?r.id:deckTab||(has("sources")?"sources":null)}
 function citeA(c){const S=SRC_I(),t=c.title||c.label||"",label=`Source ${c.n??""}: ${t}`.trim();
- if(c.n!=null&&SHOW.sources)return el("a",{class:"cite",href:"#src-"+c.n,"aria-label":label,"data-n":c.n},String(c.n));
+ if(c.n!=null&&SHOW.sources)return el("a",{class:"cite",href:"#"+(c.anchor||(S.byN[c.n]?srcAnchor(S.byN[c.n]):"src-"+c.n)),"aria-label":label,"data-n":c.n},String(c.n));
  const u=c.url||(c.n!=null&&S.byN[c.n]?S.byN[c.n].url:null);
  return u?ext(u,`${t||"Source"} (opens in a new tab)`,"cite",c.n!=null?String(c.n):"↗"):el("span",{class:"cite"},c.n!=null?String(c.n):"?")}
 function citeRow(cites){if(!cites||!cites.length)return null;
@@ -990,12 +1010,14 @@ const SHORT_BODY=200,OPEN_TOPICS=3;  // a body up to ~2 sentences shows under th
 function claimRest(h,b){h=String(h||"");b=String(b||"").trim();if(!b||b===h)return{rest:"",cut:false};const hh=h.replace(/…$/,"");
  if(hh&&b.startsWith(hh)){const r=b.slice(hh.length).replace(/^[\s:;,—–-]+/,"");return{rest:r,cut:h.endsWith("…")||/^[:;—–]/.test(b.slice(hh.length).trim())}}
  return{rest:b,cut:false}}
+const firstSentence=s=>(/^[\s\S]*?[.!?](?=\s|$)/.exec(s)||[s])[0];
 function findingNode(it,deck,sameClass){const S=SRC_I(),n=(it.cites||[]).length,{rest,cut}=claimRest(it.headline,it.body);
- const showRest=rest&&!cut&&rest.length<=SHORT_BODY,extra=[...(rest&&!showRest?[["Full claim",it.body]]:[]),...(it.explanation?[["Reasoning",it.explanation]]:[]),...(it.limitations?[["Limits",it.limitations]]:[])];
+ const shown=rest&&!cut&&rest.length<=SHORT_BODY?rest:it.summary!==undefined?it.summary:rest?firstSentence(rest):null;  // summary: from the data when present
+ const extra=[...(rest&&shown!==rest?[["Full claim",it.body]]:[]),...(it.explanation?[["Reasoning",it.explanation]]:[]),...(it.limitations?[["Limits",it.limitations]]:[])];
  const sum=[extra.length?"Details":null,n?plural(n,"source"):null,(it.cards||[]).length?plural(it.cards.length,"card"):null].filter(Boolean).join(", ");
- return el("li",{class:"finding",id:"f-"+it.id,tabindex:-1},
+ return el("li",{class:"finding",id:it.anchor||"f-"+it.id,tabindex:-1},
   el("div",{class:"ftags"},it.class_label&&!sameClass?el("span",{class:"ctag"},it.class_label):null,it.confidence?el("span",{class:"conf"},CONF_TXT[it.confidence]||it.confidence+" confidence"):null,it.disputed?statusTag("warning","Sources disagree"):null),
-  el("h4",{},it.headline),showRest?el("p",{class:"fbody"},rest):null,citeRow(it.cites),
+  el("h4",{},it.headline),shown?el("p",{class:"fbody"},shown):null,citeRow(it.cites),
   sum?el("details",{class:"ev"},el("summary",{},sum),
    ...extra.map(([k,v])=>el("p",{class:"fbody",style:"margin:0 0 var(--sp-3)"},el("b",{},k+". "),v)),
    n?el("ol",{class:"evlist"},...it.cites.map(c=>{const x=c.n!=null?S.byN[c.n]:null,t=c.title||(x&&x.title)||c.label||"",u=(x&&x.url)||c.url;return el("li",{},citeA(c),el("div",{},
@@ -1003,8 +1025,8 @@ function findingNode(it,deck,sameClass){const S=SRC_I(),n=(it.cites||[]).length,
     el("div",{class:"sm"},[x&&x.kind_label,(x&&x.creator)||(c.label!==t?c.label:null),x&&x.date?niceDate(x.date):null].filter(Boolean).join(", ")),
     (c.at||[]).length?el("div",{class:"sm"},"At ",...c.at.flatMap((a,i)=>[i?", ":"",ext(a.url,`${t}, at ${a.t} (opens in a new tab)`,"ts",a.t),a.note?" ("+a.note+")":""])):null))})):null,
    cardsIn(it.cards,deck)):null)}
-function disNode(d){const HL=headlines();return el("div",{class:"dis"},el("div",{class:"ftags"},statusTag("warning","Sources disagree")),el("h4",{},d.topic),
- el("ul",{},...(d.positions||[]).map(p=>el("li",{},el("p",{},p.text),citeRow(p.cites),(p.findings||[]).length?el("p",{class:"fsrc"},el("span",{class:"lbl"},"Findings"),...p.findings.map((id,i)=>el("a",{href:"#f-"+id,title:HL[id]||null,"aria-label":`Finding ${i+1}${HL[id]?": "+HL[id]:""}`},"↓ "+(i+1)))):null))),
+function disNode(d){const FI=findIndex();return el("div",{class:"dis"},el("div",{class:"ftags"},statusTag("warning","Sources disagree")),el("h4",{},d.topic),
+ el("ul",{},...(d.positions||[]).map(p=>el("li",{},el("p",{},p.text),citeRow(p.cites),(p.findings||[]).length?el("p",{class:"fsrc"},el("span",{class:"lbl"},"Findings"),...p.findings.map((id,i)=>{const f=FI[(d.project||"")+"|"+id]||{a:"f-"+id};return el("a",{href:"#"+f.a,title:f.h||null,"aria-label":`Finding ${i+1}${f.h?": "+f.h:""}`},"↓ "+(i+1))})):null))),
  d.explanation?el("p",{class:"note",style:"margin-top:var(--sp-3)"},d.explanation):null)}
 function researchBlock(deck,keep,T){keep=keep||(()=>true);const FV=findingsView().filter(t=>(t.items||[]).length&&keep(t)),DV=disagreementsView().filter(keep);
  const X=researchExtras(T,deck);if(!FV.length&&!DV.length&&!X.length)return null;
@@ -1230,8 +1252,10 @@ async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-d
  matchMedia("(prefers-color-scheme:dark)").addEventListener("change",()=>{setThemeLabel();rerender()});
  // a link to something on another page of the report (a source marker in a research tab) opens that page first
  document.addEventListener("click",e=>{const a=e.target.closest&&e.target.closest('a[href^="#"]');if(!a)return;const id=decodeURIComponent(a.getAttribute("href").slice(1));if(!id)return;
-  const t=document.getElementById(id);if(t){document.querySelectorAll(".src.hl").forEach(x=>x.classList.remove("hl"));openTo(t);return}
-  if(/^src-/.test(id)&&TABS.some(x=>x.id==="sources")){e.preventDefault();go("sources",false);const n=document.getElementById(id);if(n){n.scrollIntoView();n.focus({preventScroll:true})}}});
+  const t=document.getElementById(id);if(t&&!/^(f|s|src)-/.test(id)){openTo(t);return}  // section links: the browser scrolls
+  if(!t&&!anchorTab(id))return;
+  e.preventDefault();if(!t){go(id);return}history.replaceState(null,"","#"+id);jumpTo(t)});
+ addEventListener("hashchange",()=>{const id=decodeURIComponent(location.hash.slice(1));if(id&&!document.getElementById(id))go(id)});  // typed or back/forward hashes route too
  addEventListener("beforeprint",()=>document.querySelectorAll("details:not([open])").forEach(d=>{d.open=true;d.dataset.printOpened="1"}));
  addEventListener("afterprint",()=>document.querySelectorAll("details[data-print-opened]").forEach(d=>{d.open=false;delete d.dataset.printOpened}));
  buildTabs();initViewer();V3.init();go(location.hash.slice(1)||store.get("tab",""),true)}

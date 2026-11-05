@@ -108,14 +108,59 @@ def strip_refs(text, default, known):
 # ---------- sentences and headlines ----------
 _ABBR = re.compile(r"(?:\b(?:e\.g|i\.e|etc|vs|cf|approx|incl|esp|mr|mrs|dr|jr|sr|st|al)|(?<![\w.])[A-Z])\.$", re.I)
 _END = re.compile(r"[.!?][\"'”’)\]]*(?=\s+[\"'“‘(\[]?\w)")  # lowercase starts too ("deck_check on v4: ...")
+HEAD_MAX, LABEL_MAX = 140, 60  # a headline is a whole sentence up to HEAD_MAX; "Label: ..." under LABEL_MAX is no headline
+SHORT_BODY = 200  # same as the template's: a summary up to this shows under the headline
+_PAIR = {")": "(", "]": "[", "}": "{", "”": "“"}
+
+
+def _pairs(text):
+    """(open, close) index pairs of brackets and quotations; unclosed ones don't count. A straight ' or " (or ‘’) opens
+    after a space or bracket and closes before a non-letter; an apostrophe inside a word (Azula's, can't) is neither."""
+    stack, out = [], []
+
+    def close(i, opener):
+        for k in range(len(stack) - 1, -1, -1):
+            if stack[k][1] == opener:
+                out.append((stack[k][0], i))
+                del stack[k:]
+                return True
+        return False
+    for i, ch in enumerate(text):
+        prev, nxt = text[i - 1] if i else " ", text[i + 1] if i + 1 < len(text) else " "
+        if ch in "([{“":
+            stack.append((i, ch))
+        elif ch in ")]}”":
+            close(i, _PAIR[ch])
+        elif ch in "'\"‘’":
+            opener = "‘" if ch == "’" else ch
+            if not prev.isspace() and not nxt.isalnum() and close(i, opener):
+                continue
+            if ch != "’" and (prev.isspace() or prev in "([{—–/") and not nxt.isspace():
+                stack.append((i, ch))
+    return out
+
+
+def _inside(text):
+    """Per character: True inside brackets or a quotation (the marks included)."""
+    d = [0] * (len(text) + 1)
+    for a, b in _pairs(text):
+        d[a] += 1
+        d[b + 1] -= 1
+    out, n = [], 0
+    for x in d[:-1]:
+        n += x
+        out.append(n > 0)
+    return out
 
 
 def sentences(text):
-    """Split prose into sentences (abbreviations like e.g. and initials don't end one)."""
+    """Split prose into sentences. Abbreviations (e.g.), initials, an ellipsis and full stops inside brackets or
+    quotations don't end one."""
     out, start = [], 0
     text = (text or "").strip()
+    ins = _inside(text)
     for m in _END.finditer(text):
-        if m.group(0)[0] == "." and _ABBR.search(text[start:m.start() + 1]):
+        if ins[m.end()] or text[m.start() - 1:m.start()] == "." or (m.group(0)[0] == "." and _ABBR.search(text[start:m.start() + 1])):
             continue
         out.append(text[start:m.end()].strip())
         start = m.end()
@@ -123,21 +168,49 @@ def sentences(text):
     return out + ([tail] if tail else [])
 
 
-def headline(text, limit=100):
-    """The claim's first sentence. A long one ends at its last clause break (colon, semicolon, dash) that fits, or else
-    at a word boundary with an ellipsis; never mid-word. The full claim always stays in the item's body."""
-    first = (sentences(text) or [""])[0]
+def _cut(s, limit):
+    """s shortened at the last word boundary outside brackets and quotations that fits, plus an ellipsis -> (head, rest).
+    When a quotation opens too early to cut before it, the head runs to its end instead."""
+    ins = _inside(s)
+    spaces = [i for i, ch in enumerate(s) if ch == " " and not ins[i]]
+    cut = max((i for i in spaces if i <= limit), default=0)
+    if cut < 40:
+        cut = min((i for i in spaces if i > limit), default=len(s))
+    head = s[:cut].rstrip(" ,;:—–-")
+    return (head + "…" if cut < len(s) else head), s[cut:].strip()
+
+
+def headline_parts(text, limit=HEAD_MAX):
+    """(headline, rest). The headline is the claim's first sentence. A longer one: "Label: conclusion" with a short label
+    gives the conclusion; else it ends at a clause break (semicolon, dash, a colon after 60+ characters) or a word
+    boundary with an ellipsis. Never mid-word, never inside brackets or quotations; the full claim stays in the body."""
+    ss = sentences(text)
+    if not ss:
+        return "", ""
+    first, rest = ss[0], " ".join(ss[1:])
     if len(first) <= limit:
-        return first
+        return first, rest
+    ins = _inside(first)
+    colon = next((m.start() for m in re.finditer(r":(?=\s)", first) if not ins[m.start()]), None)
+    tail = first[colon + 1:].strip() if colon is not None and colon < LABEL_MAX else ""
+    if tail and len(tail) <= limit and tail[0] not in "'\"‘“([":  # a quote or list after the colon: the left part is the point
+        return (tail[0].upper() + tail[1:] if re.match(r"[a-z]+\b(?![-\w])", tail) else tail), rest
     cuts = [m.start() for m in re.finditer(r"[:;](?=\s)|\s[—–]\s", first)
-            if 30 <= m.start() <= limit and first[:m.start()].count("(") == first[:m.start()].count(")")]  # not inside brackets
+            if not ins[m.start()] and (LABEL_MAX if first[m.start()] == ":" else 30) <= m.start() <= limit]
     if cuts:
-        return first[:cuts[-1]].rstrip(" ,")
-    cut = first.rfind(" ", 0, limit)
-    head = first[:cut if cut > 0 else limit]
-    if head.count("(") > head.count(")") and head.rfind("(") >= 30:
-        head = head[:head.rfind("(")]
-    return head.rstrip(" ,;:—–(") + "…"
+        return first[:cuts[-1]].rstrip(" ,"), " ".join(x for x in (first[cuts[-1] + 1:].strip(" —–"), rest) if x)
+    head, more = _cut(first, limit)
+    return head, " ".join(x for x in ("…" + more if more else "", rest) if x)
+
+
+def headline(text, limit=HEAD_MAX):
+    return headline_parts(text, limit)[0]
+
+
+def summary_of(rest):
+    """The sentence after the headline, at most SHORT_BODY characters, so the conclusion shows without opening Details."""
+    s = (sentences(rest) or [None])[0]
+    return s if not s or len(s) <= SHORT_BODY else _cut(s, SHORT_BODY)[0]
 
 
 # ---------- research: findings, disagreements, sources ----------
@@ -147,12 +220,42 @@ def _host(url):
     return HOST_LABEL.get(h, h or None)
 
 
+def _slug(s):
+    return re.sub(r"[^a-z0-9]+", "-", (s or "").lower()).strip("-")
+
+
+def _times(entries):
+    """[(source id, time, note)] -> {source id: [{t, note?}]}, each time once per source."""
+    at = {}
+    for sid, t, note in entries:
+        lst = at.setdefault(sid, [])
+        if all(x["t"] != t for x in lst):
+            lst.append({"t": t, **({"note": note} if note else {})})
+    return at
+
+
+def _aliases(author, sid):
+    """How a text names a source: its id, the creator's name, each bracketed part ('JoeyDH (EDHRECast)' -> EDHRECast)
+    and leading runs of two or more words ('Muscles & Magic The Gathering' -> 'Muscles & Magic')."""
+    out = {sid}
+    for part in [author or ""] + [x.strip() for x in re.split(r"[()]", author or "") if x.strip()]:
+        w = re.sub(r"\s*\([^)]*\)", "", part).split() if part == author else part.split()
+        out.update(" ".join(w[:k]) for k in range(2, len(w) + 1))
+        if len(w) == 1:
+            out.add(w[0])
+    return {a for a in out if len(a) >= 4}
+
+
+BARE = re.compile(rf"\(\s*({TS}(?:\s*[-–]\s*{TS})?(?:\s*,\s*{TS}(?:\s*[-–]\s*{TS})?)*)\s*\)")  # "(2:17, 2:39)", "(17:47-18:15)"
+
+
 class Research:
-    """Views over one or more research.json files (several in a showcase). items: [(project or None, research)].
+    """Views over one or more research.json files (several in a showcase). items: [(project or None, research)];
+    slugs: {project: folder name} for anchors ("f-<folder>-<finding id>", "s-<folder>-<source id>"), unique per page.
     Sources are numbered once for the whole page, grouped by kind, so every cite's n matches the Sources list."""
 
-    def __init__(self, items):
-        self.items = list(items)
+    def __init__(self, items, slugs=None):
+        self.items, self.slugs, self._names, self._heads = list(items), slugs or {}, {}, {}
         self.src, self.fnd, self.parsed = {}, {}, {}
         srcs = [(p, s) for p, r in self.items for s in r.get("sources", [])]
         rank = {k: i for i, k in enumerate(KIND_ORDER)}
@@ -170,17 +273,47 @@ class Research:
                 default = vid or (ev[0] if ev else None)
                 claim, a = strip_refs(f["claim"], default, known)
                 expl, b = strip_refs(f.get("explanation"), default, known)
-                at = {}
-                for sid, t, note in a + b + [(l["source"], t, None) for l in f.get("locators") or [] if l.get("source") in known for t in l.get("at", [])]:
-                    lst = at.setdefault(sid, [])
-                    if all(x["t"] != t for x in lst):
-                        lst.append({"t": t, **({"note": note} if note else {})})
-                self.parsed[(p, f["id"])] = (claim, expl or None, at)
+                loc = [(l["source"], t, None) for l in f.get("locators") or [] if l.get("source") in known for t in l.get("at", [])]
+                named = self._named(p, claim)
+                # at: every time the finding cites; sup: the sources its own claim cites with times (the explanation
+                # may name the other side of a disagreement, which must not come along when the finding is cited)
+                self.parsed[(p, f["id"])] = (claim, expl or None, _times(a + b + loc + named + self._named(p, expl)), _times(a + loc + named))
+
+    def anchor(self, kind, p, i):
+        s = _slug(self.slugs.get(p) or p)
+        return f"{kind}-{s}-{_slug(i)}" if s else f"{kind}-{_slug(i)}"
+
+    def _named(self, p, text):
+        """Bare times in brackets ("Planeswalker Project ... (2:17, 2:39)") -> [(source id, time, None)] for the video
+        named last before them in the same sentence (by creator name or source id). Times with no named video stay text."""
+        if p not in self._names:
+            self._names[p] = [(re.compile(rf"(?<!\w){re.escape(a)}(?!\w)"), sid) for (q, sid), s in self.src.items()
+                              if q == p and s.get("type") == "video" for a in _aliases(s.get("author"), sid)]
+        out = []
+        for m in BARE.finditer(text or ""):
+            before = text[:m.start()]
+            seg = before[before.rfind(". ") + 1:]
+            hits = [(x.end(), sid) for rx, sid in self._names[p] for x in rx.finditer(seg)]
+            if hits:
+                out += [(max(hits)[1], re.sub(r"\s*[-–]\s*", "-", t), None) for t in AT.findall(m.group(1))]
+        return out
+
+    def text_at(self, p, text):
+        """Times in free text (candidates, recommendations, disagreement positions) -> {source id: [{t}]} for cites()."""
+        return _times(self._named(p, text))
+
+    def head(self, p, fid):
+        """(headline, summary) of a finding: research.json's headline or the claim's first sentence, and the next one."""
+        if (p, fid) not in self._heads:
+            f, claim = self.fnd[(p, fid)], self.parsed[(p, fid)][0]
+            h, rest = (f["headline"], claim if claim != f["headline"] else "") if f.get("headline") else headline_parts(claim)
+            self._heads[(p, fid)] = (h, summary_of(rest))
+        return self._heads[(p, fid)]
 
     def _cite(self, p, sid, at):
         s = self.src[(p, sid)]
-        return {"n": self.n[(p, sid)], "source_id": sid, "label": s.get("author") or s["title"], "kind": s.get("type"),
-                "title": s["title"], "url": s["url"], "at": [dict(a, url=time_url(s["url"], a["t"])) for a in at]}
+        return {"n": self.n[(p, sid)], "source_id": sid, "anchor": self.anchor("s", p, sid), "label": s.get("author") or s["title"],
+                "kind": s.get("type"), "title": s["title"], "url": s["url"], "at": [dict(a, url=time_url(s["url"], a["t"])) for a in at]}
 
     def _sources_of(self, p, f):
         """Source ids a finding rests on: its evidence (a finding id stands for that finding's sources), then any
@@ -194,8 +327,8 @@ class Research:
         return list(dict.fromkeys(out + list(self.parsed[(p, f["id"])][2])))
 
     def cites(self, p, refs, at=None):
-        """Evidence ids -> cites. Source ids keep the times given in `at`; a finding id brings its own sources with
-        the times that finding cites. Every source is listed once, in evidence order."""
+        """Evidence ids -> cites. Source ids keep the times given in `at`; a finding id brings only the sources its
+        claim cites with times (locators, inline times), else its first source. Every source once, in evidence order."""
         merged = {}
 
         def add(sid, times):
@@ -205,9 +338,9 @@ class Research:
             if (p, r) in self.src:
                 add(r, (at or {}).get(r, []))
             elif (p, r) in self.fnd:
-                f_at = self.parsed[(p, r)][2]
-                for sid in self._sources_of(p, self.fnd[(p, r)]):
-                    add(sid, f_at.get(sid, []))
+                sup = self.parsed[(p, r)][3] or {sid: [] for sid in self._sources_of(p, self.fnd[(p, r)])[:1]}
+                for sid, times in sup.items():
+                    add(sid, times)
         for sid, times in (at or {}).items():
             add(sid, times)
         return [self._cite(p, sid, times) for sid, times in merged.items()]
@@ -234,12 +367,13 @@ class Research:
         for p, r in self.items:
             groups = {}
             for i, f in enumerate(r.get("findings", [])):
-                claim, expl, _ = self.parsed[(p, f["id"])]
+                claim, expl = self.parsed[(p, f["id"])][:2]
                 kind, title = ("creator", self._creator(p, f)) if f["class"] == "community_opinion" else ("class", CLASS_LABEL[f["class"]])
                 g = groups.setdefault((kind, title), {"id": re.sub(r"[^a-z0-9]+", "-", f"{p or ''} {kind} {title}".lower()).strip("-"),
                                                       "title": title, "kind": kind, "project": p, "items": [], "_k": (CLASS_ORDER.index(f["class"]), i)})
-                g["items"].append({"id": f["id"], "headline": f.get("headline") or headline(claim), "body": claim, "class": f["class"],
-                                   "class_label": CLASS_LABEL[f["class"]], "confidence": f["confidence"], "cards": f.get("cards") or [],
+                h, summary = self.head(p, f["id"])
+                g["items"].append({"id": f["id"], "anchor": self.anchor("f", p, f["id"]), "headline": h, "summary": summary, "body": claim,
+                                   "class": f["class"], "class_label": CLASS_LABEL[f["class"]], "confidence": f["confidence"], "cards": f.get("cards") or [],
                                    "cites": self.finding_cites(p, f), "disputed": (p, f["id"]) in disputed, "explanation": expl,
                                    "limitations": f.get("limitations"), "_r": (CONF_RANK.get(f["confidence"], 3), i)})
             for g in groups.values():
@@ -256,13 +390,14 @@ class Research:
         for p, r in self.items:
             for d in r.get("disagreements", []):
                 out.append({"topic": d["topic"], "explanation": d.get("explanation"), "project": p,
-                            "positions": [{"text": pos["position"], "cites": self.cites(p, pos.get("evidence", [])),
+                            "positions": [{"text": pos["position"], "cites": self.cites(p, pos.get("evidence", []), self.text_at(p, pos["position"])),
                                            "findings": [e for e in pos.get("evidence", []) if (p, e) in self.fnd]} for pos in d["positions"]]})
         return out
 
     def sources_view(self):
-        """Every source, numbered like the cites and grouped by kind; cited_by = finding ids; moments = the times
-        findings cite (each with those findings), plus the source's own listed timestamps no finding names."""
+        """Every source, numbered like the cites and grouped by kind; cited_by = [{id, anchor, project, headline}] of the
+        citing findings (same project); moments = the times findings cite (each with those finding ids), plus the
+        source's own listed timestamps no finding names."""
         cited, moments = collections.defaultdict(list), collections.defaultdict(dict)
         for (p, fid), f in self.fnd.items():
             for c in self.finding_cites(p, f):
@@ -279,9 +414,11 @@ class Research:
                     ms[t] = {"t": t, "url": time_url(s["url"], t), "findings": []}
             k = s.get("type")
             g = groups.setdefault(k, {"kind": k, "kind_label": KIND_LABEL.get(k, (k or "Other").replace("_", " ").capitalize()), "items": []})
-            g["items"].append({"n": self.n[key], "id": s["id"], "project": p, "title": s["title"], "creator": s.get("author"),
-                               "date": s.get("published") or s.get("accessed"), "url": s["url"], "primary": bool(s.get("primary")),
-                               "sample_size": s.get("sample_size"), "cited_by": list(dict.fromkeys(cited.get(key, []))),
+            g["items"].append({"n": self.n[key], "id": s["id"], "anchor": self.anchor("s", p, s["id"]), "project": p, "title": s["title"],
+                               "creator": s.get("author"), "date": s.get("published") or s.get("accessed"), "url": s["url"],
+                               "primary": bool(s.get("primary")), "sample_size": s.get("sample_size"),
+                               "cited_by": [{"id": fid, "anchor": self.anchor("f", p, fid), "project": p, "headline": self.head(p, fid)[0]}
+                                            for fid in dict.fromkeys(cited.get(key, []))],
                                "moments": sorted(ms.values(), key=lambda m: seconds(m["t"]))})
         return list(groups.values())
 
@@ -376,10 +513,12 @@ def recs_view(recs, deck_names, cites=lambda refs: []):
 
 
 # ---------- notices ----------
-def research_notices(research, brew, label=None):
+def research_notices(research, brew, label=None, lists=()):
     """Honest staleness notes for research next to a deck. research.json scope.deck (the deck it was written for)
-    decides when present; older files fall back to: research dated before the deck's last change, or research that
-    names only earlier deck versions (e.g. 'main-v3' for a v4 deck). Also: a deck built from older research."""
+    decides when present; older files fall back to: research whose newest named decklist file (lists: the build's
+    files in decklists/, e.g. main-v3.txt) is older than the newest one, or research dated strictly before the deck's
+    last change. File numbers are never compared with brew versions (main-v5.txt can be version 4). Also: a deck built
+    from older research."""
     out, pre = [], f"{label}: " if label else ""
     scope = research.get("scope") or {}
     ver, why = brew.get("version"), []
@@ -390,12 +529,14 @@ def research_notices(research, brew, label=None):
         elif sd.get("deck_hash") and brew.get("deck_hash") and sd["deck_hash"] != brew["deck_hash"]:
             why.append("the card list changed after it was written")
     else:
-        text = " ".join([scope.get("question") or ""] + [f"{f['claim']} {f.get('explanation') or ''}" for f in research.get("findings", [])])
-        found = re.findall(r"\b((?:[a-z]+-)?v(\d+))\b", text, re.I)
-        if found and ver and max(int(n) for _, n in found) < ver:
-            why.append(f"it refers to {collections.Counter(t for t, _ in found).most_common(1)[0][0]}")
-        if research.get("created") and brew.get("updated") and research["created"] < brew["updated"]:
-            why.append(f"it is dated {research['created']} and the deck changed on {brew['updated']}")
+        text = " ".join([scope.get("question") or ""] + [f"{f['claim']} {f.get('explanation') or ''}" for f in research.get("findings", [])]).lower()
+        files = {m.group(1).lower(): int(m.group(2)) for m in (re.fullmatch(r"(.+-v(\d+))\.txt", os.path.basename(x), re.I) for x in lists) if m}
+        named = [s for s in files if re.search(rf"(?<![\w-]){re.escape(s)}(?![\w-])", text)]
+        newest = max(files, key=files.get) if files else None
+        if named and files[max(named, key=files.get)] < files[newest]:
+            why.append(f"it names {max(named, key=files.get)}.txt; the newest list is {newest}.txt")
+        if research.get("created") and brew.get("updated") and research["created"][:10] < brew["updated"][:10]:
+            why.append(f"it is dated {research['created'][:10]} and the deck changed on {brew['updated'][:10]}")
     if why:
         out.append({"level": "warn", "text": f"{pre}Research was written for an earlier version of this deck ({'; '.join(why)}); the deck is now "
                                              f"version {ver}. Findings that name specific cards may describe the older list."})
@@ -403,6 +544,96 @@ def research_notices(research, brew, label=None):
         out.append({"level": "info", "text": f"{pre}The deck was built from research version {brew['research_version']}; research.json is now "
                                              f"version {research['version']}, so newer findings may not be in the list yet."})
     return out
+
+
+# ---------- private notes ----------
+PRIVATE_MIN = 20
+_STRAIGHT = str.maketrans("‘’“”", "''\"\"")
+
+
+def _norm_map(s):
+    """s lowercased, whitespace runs as one space, curly quotes straight; plus each kept character's index in s."""
+    out, idx = [], []
+    for i, ch in enumerate(s):
+        if ch.isspace():
+            if out and out[-1] != " ":
+                out.append(" ")
+                idx.append(i)
+            continue
+        out.append((ch.lower()[:1] or ch).translate(_STRAIGHT))
+        idx.append(i)
+    return "".join(out), idx
+
+
+class Redactor:
+    """Hides quotes of private notes in page text. A span of PRIVATE_MIN+ characters (case and spacing ignored) shared
+    with a private line becomes "[private note]", widened to whole words, or to the quotation it sits in. Card names,
+    small words and text also in a public file (brew.json, source titles) don't count as private: the span is hidden
+    only when the rest has 4+ letters inside quotation marks (a quote), 12+ outside (a shared phrase). count = spans hidden."""
+    SMALL = {"and", "or", "plus", "with", "then", "vs", "the", "of", "a", "an", "to", "in", "on", "at", "for", "as", "by", "is"}
+
+    def __init__(self, private_lines, public_texts=(), names=()):
+        k, self.count = PRIVATE_MIN, 0
+        grams = lambda t: (n[i:i + k] for n in [_norm_map(t)[0]] for i in range(len(n) - k + 1))
+        self.public = {g for t in public_texts for g in grams(t)}
+        self.grams = {g for t in private_lines for g in grams(t)} - self.public
+        self.vocab = {w for x in names if x for w in re.findall(r"[a-z]+", _norm_map(x)[0])} | self.SMALL  # words of card names
+
+    def __call__(self, text):
+        k = PRIVATE_MIN
+        if not self.grams or not isinstance(text, str) or len(text) < k:
+            return text
+        n, idx = _norm_map(text)
+        hit, pub = [False] * (len(n) + 1), [False] * len(n)
+        for i in range(len(n) - k + 1):
+            if n[i:i + k] in self.grams:
+                hit[i:i + k] = [True] * k
+        if not any(hit):
+            return text
+        for i in range(len(n) - k + 1):
+            if n[i:i + k] in self.public:
+                pub[i:i + k] = [True] * k
+        pairs = _pairs(text)
+        quotes = [(a, b) for a, b in pairs if text[a] in "'\"‘“"]
+        spans, i = [], 0
+        while i < len(n):
+            if not hit[i]:
+                i += 1
+                continue
+            j = i
+            while hit[j]:
+                j += 1
+            while i > 0 and n[i - 1].isalnum():  # whole words
+                i -= 1
+            while j < len(n) and n[j].isalnum():
+                j += 1
+            a, b = idx[i], idx[j - 1] + 1
+            while a < b and not text[a].isalnum():
+                a += 1
+            while b > a and not text[b - 1].isalnum() and text[b - 1] not in ")'\"’”":
+                b -= 1
+            q = min(((x, y) for x, y in quotes if x <= a and b <= y + 1), key=lambda p: p[1] - p[0], default=None)
+            own = sum(len(w.group()) for w in re.finditer(r"[a-z]+", n[i:j])
+                      if w.group() not in self.vocab and not all(pub[i + w.start():i + w.end()]))
+            if own >= (4 if q else 12):
+                if q:
+                    a, b = q[0], q[1] + 1
+                for x, y in pairs:  # a span that crosses a bracket takes the whole bracket, so none is left open
+                    a, b = (x if x < a <= y < b else a), (y + 1 if a < x < b <= y else b)
+                spans.append([a, b])
+            i = j
+        if not spans:
+            return text
+        merged = []
+        for a, b in sorted(spans):
+            if merged and a <= merged[-1][1]:
+                merged[-1][1] = max(merged[-1][1], b)
+            else:
+                merged.append([a, b])
+        self.count += len(merged)
+        for a, b in reversed(merged):
+            text = text[:a] + "[private note]" + text[b:]
+        return text
 
 
 # ---------- hero ----------

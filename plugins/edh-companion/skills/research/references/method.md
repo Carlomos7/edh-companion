@@ -35,6 +35,7 @@ Each finding is one claim the player could act on or dispute, written so a page 
 - **Popularity ≠ power.** EDHREC inclusion says what people play; tournament data says what wins; neither says what's fun at a bracket 3 table. Say which one you mean.
 - **Conflicts:** data beats opinion for "what's played"; tournament data beats both for "what wins"; newer beats older for "what's good now". Record the conflict in `disagreements` when it matters to the player's choice.
 - **Primary vs commentary:** a decklist, Scryfall record, Spellbook combo or tournament result is primary (`primary: true`); a video or thread about it is commentary.
+- **Creators:** smaller creators count when the big ones haven't covered something; subscriber counts prove nothing.
 - **Model assessment** is allowed and useful, labelled as such. Never dress it up as a community consensus.
 - **Rules:** an interaction not confirmed by Commander Spellbook needs a Comprehensive Rules citation and a step-by-step walk listing every required piece. Don't credit one card with what needs three.
 
@@ -51,6 +52,9 @@ Each finding is one claim the player could act on or dispute, written so a page 
 - Eligibility is the player's definition (PROJECT.md, Theme section), not yours. When it's ambiguous ("does Venom count as Spider-Man?"), record it in `gaps`/open questions for brew to ask.
 - Printings matter: a card can be on theme only in one printing (Secret Lair art, a Universes Beyond reprint). Use Scryfall `unique:prints` searches with `e:`, `art:` and `ft:` and record printing IDs.
 - Search both ways: cards the franchise printed (set codes), and older cards with matching art or flavor. Name/flavor matches are leads; only the art (or the player's rule) decides.
+
+## Theme rankings
+Best cards per theme or group (e.g. heroes vs villains) go in research.json `rankings`: each with its method ("EDHREC inclusion among Spider-Man commanders, n decks"), date, and per card the rank, numbers with sample sizes, why, and evidence. Popularity is labelled as popularity. Research-only reports can be shown before any deck exists.
 
 ## YouTube
 - Search "<commander> deck tech", "<commander> upgrade", "<strategy> commander". Prefer the last 12 months and anything after the latest bans/Game Changers update.

@@ -98,7 +98,7 @@ Use the strongest tool for each job, not every tool for every job:
 - **Reddit, forums and keyword searches, reading pages:** web search + fetch (e.g. Parallel, or the built-in tools).
 - **What a creator actually said:** transcripts, quoted with mm:ss.
 - **Real lists:** read known deck links; find links with web search when the deck tool's search doesn't filter.
-Don't repeat a search with a second engine unless the first came back empty or wrong, and don't refetch a page already read this session. When a tool fails mid-research, switch to its fallback, note it in `methodology.tools_failed`, and keep going.
+Don't run a second tool for the same job unless the first came back empty or wrong or you're cross-checking a key fact, and don't refetch a page already read this session. When a tool fails mid-research, switch to its fallback, note it in `methodology.tools_failed`, and keep going.
 
 Tested 2026-11-04 with the j4th MTG MCP (claude.ai connector), Parallel Search, Exa and jkawamoto YouTube Transcript:
 

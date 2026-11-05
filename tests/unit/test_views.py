@@ -97,18 +97,41 @@ class Citations(unittest.TestCase):
 
 class Headlines(unittest.TestCase):
     def test_never_cut_mid_word_and_body_keeps_everything(self):
-        long = "Planeswalker Project builds Azula around spells that already have flash and deliberately skips flash enablers (Leyline of Anticipation, Vedalken Orrery), calling it fragile. Second."
+        long = ("Planeswalker Project builds Azula around spells that already have flash and deliberately skips flash enablers such as "
+                "Leyline of Anticipation and Vedalken Orrery, calling it fragile. Second.")
         for claim in (long, "Short claim. Second sentence.", "Budgetario names her biggest weakness: the list has few ways to give her haste, so a removal spell costs two or three turns of tempo."):
             R = views.Research([(None, research([fnd("fnd-001", claim, ["src-100"])], [src("src-100")]))])
             it = R.findings_view()[0]["items"][0]
             self.assertEqual(it["body"], claim)
             h = it["headline"].rstrip("…")
-            self.assertTrue(claim.startswith(h) and len(it["headline"]) <= 101, it["headline"])
+            self.assertTrue(claim.startswith(h) and len(h) <= views.HEAD_MAX, it["headline"])
             self.assertTrue(len(claim) == len(h) or not claim[len(h)].isalnum(), it["headline"])  # ends on a word boundary
         self.assertEqual(views.headline("Short claim. Second sentence."), "Short claim.")
-        self.assertEqual(views.headline("Budgetario names her biggest weakness: the list has few ways to give her haste, so a removal spell costs two or three turns."),
-                         "Budgetario names her biggest weakness")
         self.assertEqual(views.sentences("Use e.g. Big Score here. Then attack."), ["Use e.g. Big Score here.", "Then attack."])
+
+    def test_label_quotes_and_summary(self):
+        """Review of a real project: 20 headlines were a bare "Label" cut at its colon and 6 were cut inside a quotation."""
+        label = ("Verdict on optimisation (model assessment): main-v3 is a coherent, protected, fair bracket-3 Avatar build with healthy "
+                 "rocks and fixing. It is well below the community's engine power.")
+        self.assertEqual(views.headline(label), label.split(". ")[0] + ".")  # the whole first sentence, not the label
+        longer = ("Timing trap that applies to the accepted deck: Azula only copies spells cast while she is attacking, and Sozin's Comet "
+                  "must resolve before attackers are declared, so it is not copied. More.")
+        h, rest = views.headline_parts(longer)
+        self.assertTrue(h.startswith("Azula only copies") and len(h) <= views.HEAD_MAX and rest == "More.", h)  # the conclusion after a short label
+        quoted = ("Players overwhelmingly call Azula kill-on-sight: 'You can't even let them attack a single time with her' (r/EDH B3 thread), "
+                  "'It's in the table's best interest not to let her attack. Ever.' and more quotes follow here, one after another.")
+        inq = ("EDHRECast cuts the firebending 'family' from the average list because 'Ozai, Ashling and Electro want to keep mana "
+               "whereas Azula wants to spend it': Ozai and Zuko are cut.")
+        for claim, start in ((quoted, "Players overwhelmingly call Azula kill-on-sight: 'You"), (inq, "EDHRECast cuts")):
+            h = views.headline(claim)
+            cut = len(h.rstrip("…"))
+            self.assertTrue(h.startswith(start) and claim.startswith(h.rstrip("…")), h)  # a quote after the colon: the left part is the point
+            self.assertFalse(cut < len(claim) and views._inside(claim)[cut], h)  # never cut inside a quotation or brackets
+        self.assertEqual(views.sentences("EDHRECast cuts Agni Kai ('not the card to copy ... fighting twice is a tall order'), and Comet. Next."),
+                         ["EDHRECast cuts Agni Kai ('not the card to copy ... fighting twice is a tall order'), and Comet.", "Next."])
+        R = views.Research([(None, research([fnd("fnd-001", longer, ["src-100"])], [src("src-100")]))])
+        self.assertEqual(R.findings_view()[0]["items"][0]["summary"], "More.")  # the conclusion shows without opening Details
+        self.assertLessEqual(len(views.summary_of("word " * 300)), views.SHORT_BODY + 1)
 
     def test_explicit_headline_wins(self):
         f = fnd("fnd-001", "Long claim text.", ["src-100"], headline="Flash enablers are a trap")
@@ -135,6 +158,47 @@ class Groups(unittest.TestCase):
         self.assertEqual(set(views.CLASS_LABEL.values()), {"Verified fact", "Calculated", "Popularity data", "Community opinion", "Claude's judgment", "Unresolved"})
 
 
+class AnchorsAndCites(unittest.TestCase):
+    def test_ids_shared_by_two_projects_get_their_own_anchors(self):
+        """A showcase: both projects have fnd-001 and src-001; anchors, cited_by and headlines stay per project."""
+        a = research([fnd("fnd-001", "Alpha claim.", ["src-001"])], [src("src-001")])
+        b = research([fnd("fnd-001", "Beta claim.", ["src-001"])], [src("src-001", "article", "https://example.com/b")])
+        R = views.Research([("krenko", a), ("spider-research", b)], {"krenko": "krenko", "spider-research": "spider-research"})
+        items = [i for g in R.findings_view() for i in g["items"]]
+        self.assertEqual([i["anchor"] for i in items], ["f-krenko-fnd-001", "f-spider-research-fnd-001"])
+        srcs = {s["anchor"]: s for g in R.sources_view() for s in g["items"]}
+        self.assertEqual(set(srcs), {"s-krenko-src-001", "s-spider-research-src-001"})
+        self.assertEqual(srcs["s-spider-research-src-001"]["cited_by"],
+                         [{"id": "fnd-001", "anchor": "f-spider-research-fnd-001", "project": "spider-research", "headline": "Beta claim."}])
+        self.assertEqual(items[0]["cites"][0]["anchor"], "s-krenko-src-001")
+        single = views.Research([(None, a)], {None: "Fire Lord Azula (Avatar)"})  # one project: still the folder's slug
+        self.assertEqual(single.findings_view()[0]["items"][0]["anchor"], "f-fire-lord-azula-avatar-fnd-001")
+
+    def test_citing_a_finding_brings_only_its_own_sources(self):
+        """fnd-140 on a real project: its claim is EDHRECast's (src-106), its explanation names the other side
+        (src-100, src-104). A disagreement that cites fnd-140 must not list the other side's videos."""
+        S = [src("src-106", author="JoeyDH (EDHRECast)"), src("src-100", author="Planeswalker Project"),
+             src("src-104", author="Muscles & Magic The Gathering (Bobby Maximus)"), src("src-103", author="Slam Hammer")]
+        f140 = fnd("fnd-140", "EDHRECast cuts the firebending family. [video 8:00-8:35]", ["src-106", "src-100", "src-104"],
+                   explanation="Direct conflict with Planeswalker Project, who praises Ozai and Zuko, Firebending Master (2:17, 2:39) "
+                               "and Muscles & Magic, who praises Ozai (4:59).")
+        f143 = fnd("fnd-143", "EDHRECast explains an attack-step rule. [video 4:40-5:20]", ["src-106", "src-103"],
+                   explanation="Slam Hammer reached the same conclusion on Chain Assassination after combat damage (17:47-18:15).")
+        plain = fnd("fnd-150", "No times here.", ["src-104", "src-100"])
+        r = research([f140, f143, plain], S, disagreements=[{"topic": "T", "positions": [{"position": "cut them", "evidence": ["fnd-140"]},
+                                                                                           {"position": "x", "evidence": ["fnd-150"]}]}])
+        R = views.Research([(None, r)])
+        times = lambda cites: [(c["source_id"], [a["t"] for a in c["at"]]) for c in cites]
+        pos = R.disagreements_view()[0]["positions"]
+        self.assertEqual(times(pos[0]["cites"]), [("src-106", ["8:00-8:35"])])
+        self.assertEqual(times(pos[1]["cites"]), [("src-104", [])])  # no cited times: its first source
+        items = {i["id"]: i for g in R.findings_view() for i in g["items"]}
+        self.assertEqual(times(items["fnd-140"]["cites"]), [("src-106", ["8:00-8:35"]), ("src-100", ["2:17", "2:39"]), ("src-104", ["4:59"])])
+        self.assertEqual(times(items["fnd-143"]["cites"]), [("src-106", ["4:40-5:20"]), ("src-103", ["17:47-18:15"])])
+        self.assertIn("?v=src-103&t=1067s", items["fnd-143"]["cites"][1]["at"][0]["url"])  # the right video at the right moment
+        self.assertEqual(R.text_at(None, "Named by Lab Man (25:00), and Slam Hammer (3:08, 3:12)."), {"src-103": [{"t": "3:08"}, {"t": "3:12"}]})
+
+
 class Completeness(unittest.TestCase):
     """Every finding, source, disagreement and gap of every research fixture appears in the views exactly once."""
 
@@ -150,8 +214,8 @@ class Completeness(unittest.TestCase):
             for it in g["items"]:
                 for c in it["cites"]:
                     item = next(i for x in sv for i in x["items"] if i["id"] == c["source_id"])
-                    self.assertEqual(c["n"], item["n"])
-                    self.assertIn(it["id"], item["cited_by"])
+                    self.assertEqual((c["n"], c["anchor"]), (item["n"], item["anchor"]))
+                    self.assertIn({"id": it["id"], "anchor": it["anchor"], "project": None, "headline": it["headline"]}, item["cited_by"])
                     for a in c["at"]:
                         self.assertIn(it["id"], next(m for m in item["moments"] if m["t"] == a["t"])["findings"])
         return R
@@ -173,9 +237,13 @@ class Completeness(unittest.TestCase):
             for f in r["findings"]:
                 clean = R.parsed[(None, f["id"])][0]
                 self.assertNotRegex(clean, r"\[(?:src-|video)[^\]]*\d:\d\d", f["id"])  # every legacy reference parsed out
-                refs = " ".join(m.group(0) for m in views.REF.finditer(f["claim"]))
-                times = [a["t"] for c in R.finding_cites(None, f) for a in c["at"]]
-                self.assertEqual(sorted(set(times)), sorted({re.sub(r"\s*[-–]\s*", "-", t) for t in views.AT.findall(refs)}), f["id"])
+                norm = lambda s: {re.sub(r"\s*[-–]\s*", "-", t) for t in views.AT.findall(s)}
+                text = f["claim"] + " " + (f.get("explanation") or "")
+                legacy = norm(" ".join(m.group(0) for m in views.REF.finditer(text)))
+                named = norm(" ".join(m.group(1) for m in views.BARE.finditer(text)))  # "Slam Hammer ... (17:47-18:15)"
+                times = {a["t"] for c in R.finding_cites(None, f) for a in c["at"]}
+                self.assertLessEqual(legacy, times, f["id"])  # every legacy time reaches a cite
+                self.assertLessEqual(times, legacy | named | {t for l in f.get("locators") or [] for t in l.get("at", [])}, f["id"])
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
@@ -232,8 +300,12 @@ class RecsAndNotices(unittest.TestCase):
 
     def test_research_notices(self):
         r = research([fnd("fnd-1", "main-v3 runs Ozai. main-v3 is fair.", [])], [])
-        self.assertIn("refers to main-v3", views.research_notices(r, {"version": 4})[0]["text"])
-        self.assertEqual(views.research_notices(r, {"version": 3}), [])
+        lists = ["decklists/main-v1.txt", "decklists/main-v3.txt", "decklists/main-v4.txt"]
+        self.assertIn("names main-v3.txt; the newest list is main-v4.txt", views.research_notices(r, {"version": 4}, lists=lists)[0]["text"])
+        # file numbers are not versions: main-v4.txt is version 3 here, and research about main-v4 is current
+        self.assertEqual(views.research_notices(research([fnd("fnd-1", "main-v4 is fair.", [])], []), {"version": 3}, lists=lists), [])
+        self.assertEqual(views.research_notices(r, {"version": 4}), [])  # no decklists folder: nothing to compare
+        self.assertEqual(views.research_notices(research([], [], created="2026-11-04"), {"version": 2, "updated": "2026-11-04T16:35:00"}), [])  # same day
         r["scope"]["deck"] = {"version": 4, "deck_hash": "aaaaaaaaaaaa"}  # scope.deck decides when present
         self.assertEqual(views.research_notices(r, {"version": 4, "deck_hash": "aaaaaaaaaaaa"}), [])
         self.assertIn("written for version 3", views.research_notices(dict(r, scope={"question": "q", "deck": {"version": 3, "deck_hash": "a" * 12}}), {"version": 4})[0]["text"])
@@ -346,6 +418,12 @@ class Palette(unittest.TestCase):
                     self.assertGreaterEqual(palette.contrast(r[k], r[bg]), 3, (why, mode, k, bg))
             self.assertGreaterEqual(palette.contrast(r["on_accent"], r["accent"]), 4.5, (why, mode))
             self.assertRegex(r["art_wash"], r"^#[0-9a-f]{8}$")
+            for bg in ("bg", "surface"):
+                self.assertGreaterEqual(palette.contrast(r["border"], r[bg]), 3, (why, mode, "border", bg))  # control outlines
+                self.assertGreaterEqual(palette.contrast(r["gold"], r[bg]), 4.5, (why, mode, "gold", bg))  # exception text
+            hero = palette.over(r["art_wash"], r["bg"])  # template .hero: art_wash over the page bg
+            self.assertGreaterEqual(palette.contrast(r["hero_muted"], hero), 4.8, (why, mode, "hero_muted"))
+            self.assertGreaterEqual(palette.contrast(r["hero_muted"], r["bg"]), 4.8, (why, mode, "hero_muted on bg"))
 
     def image(self, colors, tmp, name):
         """A 64x64 image painted with (rgb, share) bands."""
@@ -412,17 +490,83 @@ class Privacy(unittest.TestCase):
         stats = {"price_usd": 1, "average_mv": 1, "lands": 0, "game_changers": [], "curve": {}, "types": {"Instant": 99}}
         return {"cards": cards, "checks": [], "stats": stats, "deck_hash": brew["deck_hash"], "checked": "2026-11-04", "unavailable": [], "data": {}}
 
-    def page(self, **kw):
+    def page(self, *projects, multi=False, **kw):
+        """page-data.json (or summary.md text with mode="summary") for the projects (default krenko)."""
         tmp = tempfile.mkdtemp()
         try:
-            site = site_data.Site(args(out=os.path.join(tmp, "page-data.json"), **kw), multi=False)
+            site = site_data.Site(args(out=os.path.join(tmp, "page-data.json"), **kw), multi=multi)
             site.D["look"] = site_data.look_for([])
             with mock.patch.object(site_data, "deck_check", side_effect=self.fake_deck_check), contextlib.redirect_stdout(io.StringIO()):
-                site_data.add_project(site, KRENKO)
+                for ws in projects or (KRENKO,):
+                    site_data.add_project(site, ws)
                 site_data.finish(site, tmp)
+            if kw.get("mode") == "summary":
+                with open(os.path.join(tmp, "summary.md"), encoding="utf-8") as h:
+                    return h.read()
             return load(os.path.join(tmp, "page-data.json"))
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_quoted_private_notes_are_hidden(self):
+        """Research and audit text that quotes STATE.md or DECISIONS.md is hidden unless --include-notes; the notice
+        counts it; card names and brew.json's own words are never hidden."""
+        tmp = tempfile.mkdtemp()
+        try:
+            ws = os.path.join(tmp, "krenko")
+            shutil.copytree(KRENKO, ws)
+            with open(os.path.join(ws, "STATE.md"), "w", encoding="utf-8") as h:
+                h.write("# State\n- 2026-11-04: b3 audit = FAIL (unpinned printings). Fixed in b4 by pinning every line.\n")
+            r = load(os.path.join(ws, "research.json"))
+            r["findings"][0]["explanation"] = ("STATE.md says 'b3 audit = FAIL (unpinned printings). Fixed in b4 by pinning every line' and "
+                                               "DECISIONS.md keeps 'Rejected Cyclonic Rift (rec-002): off-color' for Coat of Arms.")
+            with open(os.path.join(ws, "research.json"), "w", encoding="utf-8") as h:
+                json.dump(r, h)
+            shared = json.dumps(self.page(ws), ensure_ascii=False)
+            for quote in ("b3 audit = FAIL", "Fixed in b4 by pinning", "Rejected Cyclonic Rift"):
+                self.assertNotIn(quote, shared)
+            self.assertIn("STATE.md says [private note] and DECISIONS.md keeps [private note] for Coat of Arms.", shared)
+            n = re.search(r"(\d+) quoted private notes were hidden", shared)
+            self.assertTrue(n and int(n.group(1)) >= 2, "the privacy notice gives the count")
+            self.assertIn("Goblin creatures and cards that make Goblins", shared)  # brew.json's theme rule = PROJECT.md text, shown anyway
+            own = json.dumps(self.page(ws, include_notes=True), ensure_ascii=False)
+            self.assertTrue(all(q in own for q in ("b3 audit = FAIL", "Rejected Cyclonic Rift")) and "[private note]" not in own)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+        R = views.Redactor(["- Never add Hellkite Charger, Aggravated Assault or Underworld Breach"], names=["Hellkite Charger", "Aggravated Assault", "Underworld Breach"])
+        self.assertEqual(R("Near-misses: Hellkite Charger, Aggravated Assault or Underworld Breach."), "Near-misses: Hellkite Charger, Aggravated Assault or Underworld Breach.")
+        self.assertEqual(R.count, 0)  # card names alone are not a private note
+
+    def test_theme_rule0_and_summary(self):
+        D = self.page()
+        b3 = next(d for c in D["groups"][0]["commanders"] for d in c["decks"] if d["id"] == "b3")
+        brew = load(os.path.join(KRENKO, "brew-b3.json"))
+        qty = lambda t: sum(c["qty"] for c in brew["deck"] if c.get("theme") == t)
+        ts = b3["theme_stats"]
+        self.assertEqual(ts, {"on": qty("on_theme"), "exception": qty("exception"), "off": qty("off_theme"), "exempt": qty("n/a"),
+                              "total": qty("on_theme") + qty("exception") + qty("off_theme")})
+        self.assertEqual(b3["theme"]["on_theme_pct"], round(100 * ts["on"] / ts["total"], 1))
+        self.assertEqual(b3["rule0_items"][1], {"label": "Game Changers", "value": "None"})  # the bare "no Game Changers" is dropped
+        self.assertNotIn("rule0", b3)
+        rows = lambda r, gcs: {x["label"]: x["value"] for x in site_data.rule0_rows(dict({"bracket": 3}, restrictions=r), gcs)}
+        self.assertEqual(rows(["no extra turns", "max 3 Game Changers"], ["Fierce Guardianship", "Mystical Tutor"]),
+                         {"Bracket": "3 (Upgraded)", "Game Changers": "Fierce Guardianship, Mystical Tutor (max 3)", "Restrictions": "no extra turns"})
+        self.assertEqual(rows(["Game Changers allowed"], ["Rhystic Study"])["Game Changers"], "Rhystic Study (allowed)")
+        self.assertEqual(rows(["no Game Changers"], ["Rhystic Study"])["Game Changers"], "Rhystic Study (no Game Changers)")  # never dropped silently
+        md = self.page(mode="summary")
+        rule0 = next(l for l in md.splitlines() if l.startswith("**Rule 0.**") and "Bracket: 3" in l)
+        self.assertEqual(rule0, "**Rule 0.** Bracket: 3 (Upgraded); Game Changers: None; Restrictions: no extra turns, no mass land denial; Win turn: 7-9")
+        for part in ("**Why this commander.**", "**Theme exceptions.**", "**Theme rules.**", f"Theme: {ts['on']} of {ts['total']} cards on theme",
+                     "**Scope.** Theme: Goblins · depth: quick", "### How it was researched", "- Tools used: Scryfall API",
+                     "- Failed: Commander Spellbook: not queried in this quick pass"):
+            self.assertIn(part, md)
+        self.assertNotIn("Player decisions", md)
+        self.assertIn("**Player decisions (DECISIONS.md).**", self.page(mode="summary", include_notes=True))
+
+    def test_showcase_subtitle_and_methodology(self):
+        D = self.page(KRENKO, os.path.join(FIX, "showcase", "projects", "talrand"), multi=True)
+        self.assertNotIn("Goblin tokens", D["subtitle"])  # the first project's archetype doesn't speak for the page
+        t = D["research_tab"][0]
+        self.assertEqual((t["scope"], sorted(t["methodology"])), ({"theme": "Goblins", "depth": "quick"}, ["approach", "tools_failed", "tools_used"]))
 
     def test_notes_only_on_request(self):
         with open(os.path.join(KRENKO, "DECISIONS.md"), encoding="utf-8") as h:

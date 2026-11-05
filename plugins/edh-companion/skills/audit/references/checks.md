@@ -6,6 +6,10 @@ Every check in audit.json has `kind`: **deterministic** (script/tool result with
 - `fail`: not met.
 - `unverified`: couldn't be checked (tool down, image not inspectable, source unreachable, rule ambiguous). Say why.
 
+## Deterministic checks (deck_check.py)
+- Covers real cards, printings matching their names, finishes that exist, count, singleton, commander eligibility, color identity, bans, playable printings, Game Changer count, Commander Spellbook combos (commander + 2 counts as two-card) and stats. Add `--cheapest --budget X --aesthetic-budget Y --per-card-max Z` when PROJECT.md sets budgets ("Budgets and prices").
+- `--fresh` re-reads legality, Game Changers and prices instead of serving them from the shared cache (brew's own self-checks may use the cache). Read the result's `data` block: `stale` (the refresh failed and an older copy was used) or `unavailable` turns the affected checks `unverified`, and the audit says how old the data was.
+
 ## Theme eligibility
 1. Read the Theme section of PROJECT.md (mode, what counts as on theme, whether artwork matters, allowed exceptions and limits) and the exceptions in DECISIONS.md. The player's words define eligibility; don't widen or narrow them.
 2. For each non-exempt card, decide on-theme by the rule that applies:

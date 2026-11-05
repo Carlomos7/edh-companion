@@ -3,17 +3,20 @@
 Extraction (needs Pillow): the art crop downsampled to 64 px, quantized to 16 colours, each scored by chroma and the
 share of pixels near its hue (Material's colour scoring, with OKLCH standing in for HCT). Roles for light and dark
 mode keep the seed hue and change lightness only; every text role is pushed until it has 4.5:1 on bg, surface and
-surface2 (UI roles therefore 3:1+), and on_accent is black or white, whichever reads on the accent. Status colours
-are fixed in the template, never derived. Pure Python maths (OKLab, Ottosson); no network unless art_file is asked to
+surface2 (UI roles therefore 3:1+), border until it has 3:1 on bg and surface (it outlines controls), gold (exception and
+off-theme text, a fixed gold hue) 4.5:1, hero_muted 4.8:1 on the hero's wash (art_wash over bg, 0.3 margin for the faded
+art behind it), and on_accent is black or white, whichever reads on the accent. Status colours are fixed in the
+template, never derived. Pure Python maths (OKLab, Ottosson); no network unless art_file is asked to
 fetch, and a missing or unreadable image is a fallback, never an error.
 """
 import math, os
 
-ROLES = ("bg", "surface", "surface2", "border", "text", "muted", "accent", "accent2", "on_accent", "focus", "art_wash")
+ROLES = ("bg", "surface", "surface2", "border", "text", "muted", "accent", "accent2", "on_accent", "focus", "art_wash", "gold", "hero_muted")
 # lightness per role (light mode, dark mode); chroma is a faint tint of the seed except accents
-L_LIGHT = {"bg": .98, "surface": .955, "surface2": .92, "border": .86, "text": .22, "muted": .44, "accent": .52}
-L_DARK = {"bg": .17, "surface": .215, "surface2": .26, "border": .36, "text": .95, "muted": .76, "accent": .74}
-WASH_ALPHA = "26"  # ~15%: decoration behind the hero, never under text
+L_LIGHT = {"bg": .98, "surface": .955, "surface2": .92, "border": .62, "text": .22, "muted": .44, "accent": .52, "gold": .56}
+L_DARK = {"bg": .17, "surface": .215, "surface2": .26, "border": .52, "text": .95, "muted": .76, "accent": .74, "gold": .8}
+WASH_ALPHA = "26"  # ~15%: the hero's colour field (template .hero background) over bg
+GOLD_HUE, GOLD_C = 80, .13
 
 
 def _lin(c):
@@ -70,6 +73,12 @@ def contrast(a, b):
     return (hi + .05) / (lo + .05)
 
 
+def over(fg_alpha_hex, bg):
+    """#rrggbbaa composited on an opaque bg (sRGB, as browsers blend)."""
+    a = int(fg_alpha_hex[7:9], 16) / 255
+    return "#" + "".join(f"{round(f * a + b * (1 - a)):02x}" for f, b in zip(hex_rgb(fg_alpha_hex[:7]), hex_rgb(bg)))
+
+
 def fit(L, C, h, against, ratio, dark):
     """Move lightness (darker in light mode, lighter in dark mode) until the colour has `ratio` on every background."""
     step = .005 if dark else -.005
@@ -87,8 +96,9 @@ def roles(seed, seed2=None, dark=False):
     _, C1, h1 = rgb_to_oklch(hex_rgb(seed))
     _, C2, h2 = rgb_to_oklch(hex_rgb(seed2 or seed))
     Ls, tint = (L_DARK if dark else L_LIGHT), min(C1 * .25, .02)
-    r = {k: oklch_hex(Ls[k], tint, h1) for k in ("bg", "surface", "surface2", "border")}
+    r = {k: oklch_hex(Ls[k], tint, h1) for k in ("bg", "surface", "surface2")}
     bgs = [r["bg"], r["surface"], r["surface2"]]
+    r["border"] = fit(Ls["border"], tint, h1, bgs[:2], 3, dark)
     r["text"] = fit(Ls["text"], min(tint, .01), h1, bgs, 4.5, dark)
     r["muted"] = fit(Ls["muted"], tint, h1, bgs, 4.5, dark)
     r["accent"] = fit(Ls["accent"], C1, h1, bgs, 4.5, dark)
@@ -96,6 +106,8 @@ def roles(seed, seed2=None, dark=False):
     r["on_accent"] = max(("#ffffff", "#000000"), key=lambda c: contrast(c, r["accent"]))
     r["focus"] = r["accent"]
     r["art_wash"] = oklch_hex(Ls["accent"], C1, h1) + WASH_ALPHA
+    r["gold"] = fit(Ls["gold"], GOLD_C, GOLD_HUE, bgs, 4.5, dark)
+    r["hero_muted"] = fit(Ls["muted"], tint, h1, [r["bg"], over(r["art_wash"], r["bg"])], 4.8, dark)
     return {k: r[k] for k in ROLES}
 
 

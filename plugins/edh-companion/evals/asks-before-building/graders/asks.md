@@ -2,5 +2,5 @@
 type: llm
 ---
 
-PASS if, before presenting a full 100-card list, the reply asks the player about their preferences: at least two of bracket or table power, budget or price style (cheap, normal, fancy printings), what they find fun or how they want to win, and cards they want or refuse.
-FAIL if it presents a complete decklist without asking anything, or assumes a bracket and budget without saying so.
+PASS if the reply holds back the full 100-card list, asks the player at least one preference question (direction, bracket or table power, budget or price style, how they want to win, or cards they want or refuse), and covers both bracket and budget, each either asked or stated as a default the player can change ("bracket 3, no price cap unless you say otherwise"). One multiple-choice question counts as asking; a stated default counts as covering.
+FAIL if it presents a complete decklist, asks nothing, or never mentions bracket or budget.

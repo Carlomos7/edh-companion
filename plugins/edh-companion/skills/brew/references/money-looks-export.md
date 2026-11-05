@@ -44,4 +44,4 @@ uv run --script "${CLAUDE_SKILL_DIR}/scripts/export_deck.py" <project>/brew.json
 | `deck.archidekt.txt` | Archidekt: `1x Sol Ring (c21) 263 *F* [Commander]` (the tag sets the commander) | yes / yes |
 | `deck.txt` | anything else, names only (Arena-style tools reject paper-only printings) | no |
 | `deck.csv` | spreadsheets and CSV importers: quantity, name, set, collector_number, finish, section, scryfall_id | yes / yes |
-Moxfield can't mark the commander from a paste: pick it in the New Deck dialog. Changing a deck on someone's Moxfield or Archidekt account directly needs an installed, authorized integration and the player's explicit yes; otherwise hand them the file.
+Moxfield can't mark the commander from a paste: pick it in the New Deck dialog. Archidekt also takes the Moxfield text. Changing a deck on someone's Moxfield or Archidekt account directly needs an installed, authorized integration and the player's explicit yes; otherwise hand them the file.

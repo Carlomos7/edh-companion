@@ -21,7 +21,7 @@ For missing capabilities that would clearly help, suggest options in one line ea
 - uv (`winget install astral-sh.uv` / `brew install uv`), needed for the deck checker and pages
 
 ## 2. Ask, one question at a time, only what they want to set
-Each question is multiple choice with the recommended option first; any can be skipped.
+Any can be skipped.
 1. Deck platform: Moxfield (Recommended) · Archidekt · other.
 2. Defaults for new projects (optional): bracket, money style (no limit / cheap / budget, as a hard limit or a flexible target / drippy / no expense spared), and for looks: preferred treatments (foil, etched, borderless, showcase, Secret Lair) and an aesthetic budget or per-card max.
 3. Shopping (optional): currency/region (USD default, EUR for Cardmarket) and preferred stores, used only when they ask how to get cards.
@@ -43,14 +43,9 @@ defaults:
 shopping:
   currency: USD
   stores: [TCGplayer]
-research:
-  approved: {card_data: MTG MCP (j4th), transcripts: YouTube Transcript, semantic_search: Exa, web_search: Parallel Search}
-  excluded: []
-  approval: on_change       # every_time | on_change | automatic
-  depth: comprehensive      # quick | comprehensive | deep | custom | skip
-  prefer: [EDHREC, Reddit]
+research: …              # research's sources.md, "Saved form"
 ```
-Step 1's check never calls an unapproved tool; once tools are approved, their test results go in `status` and `checked`. Format and meaning: research's sources.md, "Research approval".
-Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back), and finish with what was saved and where. Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
+Step 1's check never calls an unapproved tool; once tools are approved, their test results go in `status` and `checked` ("Research approval").
+Then confirm with `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" where` (or by reading the file back). Never store credentials or API keys here; MCP keys belong in Claude Code's own MCP config.
 
 Project defaults from this file are suggestions for new projects only; a project's PROJECT.md always wins.

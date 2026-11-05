@@ -251,6 +251,7 @@ class Showcase(unittest.TestCase):
         self.assertEqual([d["id"] for d in g["Villains"]["commanders"][0]["decks"]], ["b3", "b4"])  # variant switch
         self.assertTrue(all(d["project"] for x in g.values() for c in x["commanders"] for d in c["decks"]))
         self.assertEqual(self.D["title"], "Test Showcase")
+        self.assertNotIn("Goblin tokens", self.D["subtitle"])  # krenko's archetype doesn't speak for a showcase
         self.assertEqual({r["project"] for r in self.D["overview"]}, {"krenko", "spider-gwen", "talrand"})
         self.assertEqual([a["name"] for a in g["Villains"]["alts"]], ["Krenko, Mob Boss"])
         self.assertTrue(g["Villains"]["alts"][0]["built"])
@@ -305,13 +306,26 @@ class Showcase(unittest.TestCase):
                 self.assertNotIn("youtube", c)
                 self.assertFalse(any("swaps" in g for g in self.D["groups"]))
                 for d in c["decks"]:
-                    for k in ("summary", "moxfield", "rule0", "stats", "cards", "audit_view", "recs_view", "hero"):
+                    for k in ("summary", "moxfield", "rule0_items", "stats", "cards", "audit_view", "recs_view", "hero"):
                         self.assertIn(k, d)
-                    for k in ("validation", "errors", "archetype"):
+                    for k in ("validation", "errors", "archetype", "rule0"):  # rule0 is summary.md's one-line form
                         self.assertNotIn(k, d)
                     self.assertEqual(d["hero"]["stats"][2]["value"].split()[0], str(d["stats"]["lands"]))  # each build's own hero stats
                     self.assertEqual(sum(d["stats"]["type_counts"].values()), sum(x["qty"] for x in d["cards"]))
                     self.assertEqual(d["stats"]["lands"], d["stats"]["type_counts"].get("Land", 0))
+
+    def test_anchors_unique_across_projects(self):
+        """krenko and spider-research both have fnd-001 and src-001: every anchor is unique and cited_by stays in its project."""
+        items = [(g["project"], i) for g in self.D["findings_view"] for i in g["items"]]
+        srcs = [s for g in self.D["sources_view"] for s in g["items"]]
+        anchors = [i["anchor"] for _, i in items] + [s["anchor"] for s in srcs]
+        self.assertEqual(len(anchors), len(set(anchors)))
+        self.assertIn("f-spider-research-fnd-001", anchors)
+        heads = {(p, i["id"]): i["headline"] for p, i in items}
+        for s in srcs:
+            for c in s["cited_by"]:
+                self.assertEqual((c["project"], c["anchor"], c["headline"]), (s["project"], f"f-{s['project']}-{c['id']}", heads[(s["project"], c["id"])]))
+        self.assertIn('"anchor":"s-krenko-src-001"', self.html.replace(" ", ""))
 
     def test_future_and_showcase_mode(self):
         tal = next(d for g in self.D["groups"] for c in g["commanders"] for d in c["decks"] if d["project"] == "talrand")
@@ -361,7 +375,7 @@ class Modes(unittest.TestCase):
             self.assertFalse(os.path.exists(os.path.join(tmp, "page-data.json")))  # summary mode writes Markdown only
             with open(os.path.join(tmp, "summary.md"), encoding="utf-8") as h:
                 md = h.read()
-            for part in ("# Talrand spells", "**Plan.**", "**Rule 0.** Bracket 2 (Core); no Game Changers", "**Audit.** Not audited",
+            for part in ("# Talrand spells", "**Plan.**", "**Rule 0.** Bracket: 2 (Core); Game Changers: None\n", "**Audit.** Not audited",
                          "Roles (from fixed Oracle-text rules", "### Decklist", "1 Talrand, Sky Summoner", "**Planned for release.**", "Price ladder"):
                 self.assertIn(part, md)
             self.assertNotIn("weak", md.lower())

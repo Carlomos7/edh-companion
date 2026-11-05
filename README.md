@@ -128,6 +128,8 @@ Everything works with Claude Code's built-in web search. These make research ric
 | [Exa](https://exa.ai) | semantic search and discovery | `claude mcp add exa --scope user --transport http https://mcp.exa.ai/mcp` |
 | [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | creator deck techs with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |
 
+The MTG MCP command pins `selectolax<1.0`: mtg-mcp-server 3.0.0 doesn't cap that dependency, and selectolax 1.0 (Oct 2026) breaks its import, so an unpinned install crashes on startup. Drop the pin once mtg-mcp-server supports selectolax 1.x. Already added it without the pin? Run `claude mcp remove mtg --scope user`, then the command above.
+
 Known limits we hit while testing (Nov 2026): the MTG MCP's deck validator was down and its bracket estimator missed Game Changers, so decks are checked with the plugin's own `deck_check.py` against Scryfall and Commander Spellbook. YouTube sometimes blocks transcripts; a web fetch of the video often works instead.
 
 ## Updating

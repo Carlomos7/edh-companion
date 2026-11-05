@@ -150,9 +150,11 @@ def decision_lines(ws):
 
 
 def private_lines(ws):
-    """Every non-heading line of STATE.md, DECISIONS.md and PROJECT.md (what page text must not quote without --include-notes)."""
+    """Every non-heading line of DECISIONS.md and PROJECT.md (what page text must not quote without --include-notes).
+    STATE.md isn't scanned: it's a progress log that restates the audit and research, so its overlap with them is
+    those files' own public facts, not a leak (STATE.md itself is still never put on the page)."""
     out = []
-    for f in ("STATE.md", "DECISIONS.md", "PROJECT.md"):
+    for f in ("DECISIONS.md", "PROJECT.md"):
         p = os.path.join(ws, f)
         if os.path.exists(p):
             out += [l.strip().lstrip("-*").strip() for l in open(p, encoding="utf-8") if l.strip() and not l.lstrip().startswith("#")]
@@ -722,7 +724,7 @@ def finish(site, default_dir):
     R = views.Research(site.researches, site.rslug)
     D["findings_view"], D["disagreements_view"], D["sources_view"] = R.findings_view(), R.disagreements_view(), R.sources_view()
     for deck, recs, proj, names in site.recs:
-        deck["recs_view"] = views.recs_view(recs, names, lambda refs, p=proj: R.cites(p, refs))
+        deck["recs_view"] = views.recs_view(recs, names, lambda refs, text="", p=proj: R.cites(p, refs, R.text_at(p, text)))
         in_deck = {c["name"].lower(): c for c in deck["cards"]}
         for item in [x for k in ("proposed", "applied", "rejected") for x in deck["recs_view"][k] if x.get("add")]:
             c = found.get(item["add"].lower())

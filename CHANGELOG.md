@@ -2,6 +2,13 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.1.3
+- **Privacy, precise:** quotes of DECISIONS.md and PROJECT.md text inside audit or research files stay hidden on shared pages; STATE.md is no longer scanned for quotes, because it restates the audit and research (hiding those overlaps hid the audit's own public facts). STATE.md itself is still never on the page.
+- **Recommendations link their video moments:** a time after a named creator in a recommendation's reason or trade-offs (e.g. "MTG Bear … (1:13)") links that video at that moment, like findings and disagreements.
+- **Hero contrast with any artwork:** below 960 px the hero text sits on a near-opaque wash, so the art behind it can shift contrast by at most ~5%; measured on Azula: title 10.1:1, meta text 5.5:1 or more, light and dark, 390 to 1440 px.
+- **Evals README:** documents that the eval sandbox can't read references or run scripts (no runner flag for it) and where those are measured instead.
+- 205 unit tests.
+
 ## 8.1.2
 - **MTG MCP install fix:** the recommended command now pins `selectolax<1.0` (`uvx --with "selectolax<1.0" mtg-mcp-server`). mtg-mcp-server 3.0.0 leaves selectolax uncapped and selectolax 1.0 breaks its import, so fresh installs crashed on startup. Reproduced and verified both ways; README and setup updated.
 

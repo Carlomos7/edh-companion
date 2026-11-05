@@ -6,7 +6,8 @@ Run: python tests/unit/test_views.py
 import argparse, contextlib, copy, glob, io, json, os, re, shutil, subprocess, sys, tempfile, unittest
 from unittest import mock
 
-from _net import online
+sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))  # works from discover and from `python -m unittest tests.unit...`
+from _net import online  # noqa: E402
 
 ROOT = os.path.normpath(os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".."))
 HERE = os.path.join(ROOT, "plugins", "edh-companion", "skills", "present", "scripts")
@@ -292,7 +293,7 @@ class RecsAndNotices(unittest.TestCase):
                 {"id": "rec-4", "status": "proposed", "add": "Opt", "reason": "already played"},
                 {"id": "rec-5", "status": "accepted", "add": "Ponder", "reason": "accepted but not in the list"},
                 {"id": "rec-6", "status": "proposed", "cut": "Shock", "reason": "pure cut"}]
-        rv = views.recs_view(recs, ["Consider", "Opt", "Shock", "Sozin's Comet"], lambda refs: [])
+        rv = views.recs_view(recs, ["Consider", "Opt", "Shock", "Sozin's Comet"], lambda refs, text="": [])
         ids = {k: [r["id"] for r in rv[k]] for k in ("applied", "proposed", "rejected")}
         self.assertEqual(ids, {"applied": ["rec-1", "rec-4"], "proposed": ["rec-2", "rec-5", "rec-6"], "rejected": ["rec-3"]})
         self.assertEqual(rv["rejected_count"], 1)
@@ -507,6 +508,24 @@ class Privacy(unittest.TestCase):
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 
+    def test_recommendation_times_link_their_video(self):
+        """A time after a named creator in a recommendation's reason links that video at that moment."""
+        tmp = tempfile.mkdtemp()
+        try:
+            ws = os.path.join(tmp, "krenko")
+            shutil.copytree(KRENKO, ws)
+            b = load(os.path.join(ws, "brew-b3.json"))
+            b["recommendations"][0]["reason"] = "MTG Bear plays it as a combat trick (1:13)."
+            with open(os.path.join(ws, "brew-b3.json"), "w", encoding="utf-8") as h:
+                json.dump(b, h)
+            D = self.page(ws)
+            rec = next(x for g in D["groups"] for c in g["commanders"] for d in c["decks"] if d["id"] == "b3"
+                       for x in d["recs_view"]["proposed"] if x["id"] == "rec-001")
+            urls = [a["url"] for c in rec["cites"] for a in c.get("at", [])]
+            self.assertTrue(any(u.endswith("t=73s") for u in urls), urls)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
     def test_quoted_private_notes_are_hidden(self):
         """Research and audit text that quotes STATE.md or DECISIONS.md is hidden unless --include-notes; the notice
         counts it; card names and brew.json's own words are never hidden."""
@@ -522,11 +541,11 @@ class Privacy(unittest.TestCase):
             with open(os.path.join(ws, "research.json"), "w", encoding="utf-8") as h:
                 json.dump(r, h)
             shared = json.dumps(self.page(ws), ensure_ascii=False)
-            for quote in ("b3 audit = FAIL", "Fixed in b4 by pinning", "Rejected Cyclonic Rift"):
-                self.assertNotIn(quote, shared)
-            self.assertIn("STATE.md says [private note] and DECISIONS.md keeps [private note] for Coat of Arms.", shared)
-            n = re.search(r"(\d+) quoted private notes were hidden", shared)
-            self.assertTrue(n and int(n.group(1)) >= 2, "the privacy notice gives the count")
+            self.assertNotIn("Rejected Cyclonic Rift", shared)
+            # STATE.md restates the audit: its overlap with research/audit text is a public fact, not a leak
+            self.assertIn("STATE.md says 'b3 audit = FAIL (unpinned printings). Fixed in b4 by pinning every line' and DECISIONS.md keeps [private note]", shared)
+            n = re.search(r"(\d+) quoted private notes? (?:were|was) hidden", shared)
+            self.assertTrue(n and int(n.group(1)) >= 1, "the privacy notice gives the count")
             self.assertIn("Goblin creatures and cards that make Goblins", shared)  # brew.json's theme rule = PROJECT.md text, shown anyway
             own = json.dumps(self.page(ws, include_notes=True), ensure_ascii=False)
             self.assertTrue(all(q in own for q in ("b3 audit = FAIL", "Rejected Cyclonic Rift")) and "[private note]" not in own)

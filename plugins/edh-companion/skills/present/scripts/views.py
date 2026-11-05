@@ -491,7 +491,7 @@ def counts_text(counts):
 
 
 # ---------- recommendations ----------
-def recs_view(recs, deck_names, cites=lambda refs: []):
+def recs_view(recs, deck_names, cites=lambda refs, text="": []):
     """Applied = what the current list shows (its add is in the deck; a pure cut is gone from it), whatever the status
     says; rejected ones are counted and listed apart; the rest are proposals."""
     names = {n.lower() for n in deck_names} | {n.split(" // ")[0].lower() for n in deck_names}
@@ -501,7 +501,8 @@ def recs_view(recs, deck_names, cites=lambda refs: []):
         cut_in = bool(r.get("cut")) and r["cut"].lower() in names
         item = {"id": r.get("id"), "status": r["status"], "status_label": r["status"].replace("_", " ").capitalize(), "kind": r.get("kind"),
                 "add": r.get("add"), "cut": r.get("cut"), "reason": r.get("reason"), "tradeoffs": r.get("tradeoffs"), "theme": r.get("theme"),
-                "add_in_deck": add_in, "cut_in_deck": cut_in, "cites": cites(r.get("evidence") or [])}
+                "add_in_deck": add_in, "cut_in_deck": cut_in,
+                "cites": cites(r.get("evidence") or [], " ".join(x for x in (r.get("reason"), r.get("tradeoffs")) if x))}  # times in the reason link their video
         if r["status"] == "rejected":
             out["rejected"].append(item)
         elif add_in if r.get("add") else (not cut_in if r.get("cut") else r["status"] == "accepted"):

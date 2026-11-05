@@ -123,6 +123,8 @@ header.mast,.hero-in{--muted:var(--hero-muted)}
 .hero-in.noart{grid-template-areas:"head" "body"}
 .hero-art{grid-area:art;justify-self:center;width:min(100%,260px);min-width:0}
 .hero-head{grid-area:head;min-width:0}.hero-body{grid-area:body;min-width:0}
+/* below 960px the art sits behind the text: a near-opaque wash keeps text contrast whatever the artwork (art adds ≤5%) */
+@media (max-width:959.98px){.hero-head,.hero-body{background:color-mix(in srgb,var(--art-wash) 90%,transparent);border-radius:var(--r-tile);padding:var(--sp-2) var(--sp-3)}}
 body.mode-showcase .hero-in{max-width:var(--maxw-hero);padding-block:var(--sp-7)}
 body.mode-interactive .hero-in{grid-template-columns:88px minmax(0,1fr);grid-template-areas:"art head" "body body";align-items:center}
 body.mode-interactive .hero-in.noart{grid-template-columns:minmax(0,1fr);grid-template-areas:"head" "body"}

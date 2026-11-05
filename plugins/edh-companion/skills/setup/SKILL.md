@@ -15,7 +15,7 @@ Request: $ARGUMENTS
 Check capabilities by calling, not by reading tool names (one cheap call each; list in [research's sources.md](../research/references/sources.md)): card data (Scryfall), EDHREC stats, combos (Commander Spellbook), deck links (Moxfield/Archidekt), web search, YouTube transcripts, a browser for page testing (Playwright/Chrome), Bash + uv (for the deck checker and page builder). Report answer-first: one line on what works and what's missing ("Card data, combos and web search work; no YouTube transcripts, so no creator deck techs"), then a table: capability · available or missing · what's lost without it.
 
 For missing capabilities that would clearly help, suggest options in one line each (never install anything yourself):
-- MTG data: j4th MTG MCP (`claude mcp add mtg --scope user -- uvx mtg-mcp-server`) or its hosted connector
+- MTG data: j4th MTG MCP (`claude mcp add mtg --scope user -- uvx --with "selectolax<1.0" mtg-mcp-server`) or its hosted connector
 - Search: Parallel (`claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp`) or Exa (`claude mcp add exa --scope user --transport http https://mcp.exa.ai/mcp`); built-in web search also works
 - Video: jkawamoto YouTube transcripts (`claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript`)
 - uv (`winget install astral-sh.uv` / `brew install uv`), needed for the deck checker and pages

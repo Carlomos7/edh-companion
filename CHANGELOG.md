@@ -2,6 +2,9 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.1.2
+- **MTG MCP install fix:** the recommended command now pins `selectolax<1.0` (`uvx --with "selectolax<1.0" mtg-mcp-server`). mtg-mcp-server 3.0.0 leaves selectolax uncapped and selectolax 1.0 breaks its import, so fresh installs crashed on startup. Reproduced and verified both ways; README and setup updated.
+
 ## 8.1.1
 Fixes from an independent review of the redesign, plus leaner skills.
 - **Reports:** switching builds or commanders no longer removes the theme button (focus returns to the switch); finding headlines state the conclusion (no label-only or mid-quote cuts) with a one-line summary visible collapsed; finding and source links are scoped per project, so showcase "Cited in" links land on the right tab; citing a finding brings only the sources it actually cites, and bare times after a named video link to that moment; filter chips match the groups (commander excluded, "Has type"); theme percentage states its denominator and exempt cards; Sources and Stats no longer leave large empty areas at 1440 px; mana pips show their letter; each build shows its own hero stats; Rule 0 is a short labelled table (bracket, Game Changers with their limit, restrictions, win turn).

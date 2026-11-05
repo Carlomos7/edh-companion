@@ -123,7 +123,7 @@ Everything works with Claude Code's built-in web search. These make research ric
 
 | Add-on | Adds | Install |
 |---|---|---|
-| [j4th MTG MCP](https://github.com/j4th/mtg-mcp-server) | Scryfall, EDHREC, Commander Spellbook, Moxfield | `claude mcp add mtg --scope user -- uvx mtg-mcp-server` |
+| [j4th MTG MCP](https://github.com/j4th/mtg-mcp-server) | Scryfall, EDHREC, Commander Spellbook, Moxfield | `claude mcp add mtg --scope user -- uvx --with "selectolax<1.0" mtg-mcp-server` |
 | [Parallel Search](https://parallel.ai) | web, Reddit and article search | `claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp` |
 | [Exa](https://exa.ai) | semantic search and discovery | `claude mcp add exa --scope user --transport http https://mcp.exa.ai/mcp` |
 | [YouTube transcripts](https://github.com/jkawamoto/mcp-youtube-transcript) | creator deck techs with timestamps | `claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript` |

@@ -1,0 +1,51 @@
+{
+ "files": 6,
+ "subagents": 5,
+ "wall_minutes": 150.9,
+ "tokens": {
+  "input_tokens": 724,
+  "output_tokens": 387620,
+  "cache_read_input_tokens": 57902879,
+  "cache_creation_input_tokens": 1636316
+ },
+ "peak_context_tokens": 386719,
+ "api_messages": 323,
+ "tool_calls": 387,
+ "by_tool": {
+  "Bash": 193,
+  "Read": 46,
+  "mcp__youtube-transcript__get_timed_transcript": 20,
+  "mcp__parallel-search__web_fetch": 15,
+  "Write": 14,
+  "mcp__claude_ai_Exa__web_search_exa": 13,
+  "ToolSearch": 9,
+  "mcp__parallel-search__web_search": 9,
+  "mcp__youtube-transcript__get_video_info": 9,
+  "AskUserQuestion": 7,
+  "mcp__mtg-commander__get_archidekt_deck": 7,
+  "mcp__claude_ai_mtg-mcp__scryfall_search_cards": 6,
+  "mcp__claude_ai_mtg-mcp__bulk_card_lookup": 5,
+  "Agent": 5,
+  "SendMessage": 5,
+  "mcp__mtg-commander__search_archidekt_decks": 4,
+  "Skill": 3,
+  "SubagentHandback": 3,
+  "PowerShell": 2,
+  "mcp__claude_ai_mtg-mcp__spellbook_find_decklist_combos": 2,
+  "Edit": 2,
+  "mcp__claude_ai_mtg-mcp__commander_overview": 1,
+  "mcp__mtg-commander__search_moxfield_decks": 1,
+  "mcp__claude-in-chrome__tabs_context_mcp": 1,
+  "mcp__youtube-transcript__get_transcript": 1,
+  "mcp__claude_ai_mtg-mcp__edhrec_commander_staples": 1,
+  "mcp__mtg-commander__get_moxfield_deck": 1,
+  "Monitor": 1,
+  "mcp__claude_ai_Exa__web_fetch_exa": 1
+ },
+ "duplicate_tool_calls": 16,
+ "tool_errors": 25,
+ "http_errors_seen": {
+  "502": 7,
+  "429": 1
+ }
+}

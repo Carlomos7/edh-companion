@@ -11,14 +11,16 @@ read and sleep are always called. Logs URLs and code lines only, never response 
 import os
 
 if os.environ.get("EDHC_BENCH_LOG"):
-    import hashlib, json, linecache, sys, time, urllib.request
+    import hashlib, json, linecache, sys, threading, time, urllib.request
 
     _real, _sleep = urllib.request.urlopen, time.sleep
     _log = os.environ["EDHC_BENCH_LOG"]
+    _lock = threading.Lock()  # atlas downloads in 8 threads; unlocked appends tore lines on Windows
 
     def _write(row):
-        with open(_log, "a", encoding="utf-8") as h:
-            h.write(json.dumps(dict(row, pid=os.getpid())) + "\n")
+        line = json.dumps(dict(row, pid=os.getpid())) + "\n"
+        with _lock, open(_log, "a", encoding="utf-8") as h:
+            h.write(line)
 
     def _row(req, status, t0):
         url = req.full_url if hasattr(req, "full_url") else str(req)

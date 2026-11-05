@@ -1,0 +1,214 @@
+{
+ "note": "Each deck is clean.txt (tests/fixtures/krenko b3-v1 with Skirk Prospector swapped for a Mountain) plus the planted problems listed. A problem counts as detected when deck_check reports the check id with one of the statuses and names the card (or count). Facts verified on Scryfall/Commander Spellbook on 2026-11-04: Jeweled Lotus banned; C21 Sol Ring 263 is nonfoil only; CMR 1 is The Prismatic Piper; Jeska's Will, Gamble, Ancient Tomb, Mana Vault are Game Changers; Krenko + Skirk Prospector + Goblin Warchief is Spellbook combo 38-659-1288; Rise from the Nether releases 2027-04-09 (this plant stops being 'unreleased' then: replace it with a newer card).",
+ "decks": {
+  "clean-b2": {
+   "file": "clean.txt",
+   "bracket": 2,
+   "planted": []
+  },
+  "clean": {
+   "file": "clean.txt",
+   "bracket": 3,
+   "planted": []
+  },
+  "banned": {
+   "file": "banned.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-legality-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Jeweled Lotus"
+    }
+   ]
+  },
+  "off-identity": {
+   "file": "off-identity.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-identity-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Counterspell"
+    }
+   ]
+  },
+  "duplicate": {
+   "file": "duplicate.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-singleton-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Goblin Matron"
+    }
+   ]
+  },
+  "wrong-printing": {
+   "file": "wrong-printing.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-printing-2",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Sol Ring"
+    }
+   ]
+  },
+  "count-99": {
+   "file": "count-99.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-count-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "99"
+    }
+   ]
+  },
+  "fake-card": {
+   "file": "fake-card.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-cards-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Grumblewick, Goblin of Many Hats"
+    }
+   ]
+  },
+  "game-changers-4": {
+   "file": "game-changers-4.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-game-changers-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Mana Vault"
+    }
+   ]
+  },
+  "combo-b2": {
+   "file": "combo-b2.txt",
+   "bracket": 2,
+   "planted": [
+    {
+     "check": "chk-combos-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Skirk Prospector"
+    }
+   ]
+  },
+  "unreleased": {
+   "file": "unreleased.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-legality-4",
+     "status": [
+      "warning"
+     ],
+     "mentions": "Rise from the Nether"
+    }
+   ]
+  },
+  "foil-finish": {
+   "file": "foil-finish.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-printing-3",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Sol Ring"
+    }
+   ]
+  },
+  "all-in-one": {
+   "file": "all-in-one.txt",
+   "bracket": 3,
+   "planted": [
+    {
+     "check": "chk-legality-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Jeweled Lotus"
+    },
+    {
+     "check": "chk-identity-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Counterspell"
+    },
+    {
+     "check": "chk-singleton-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Goblin Matron"
+    },
+    {
+     "check": "chk-printing-2",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Arcane Signet"
+    },
+    {
+     "check": "chk-count-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "99"
+    },
+    {
+     "check": "chk-cards-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Grumblewick, Goblin of Many Hats"
+    },
+    {
+     "check": "chk-game-changers-1",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Mana Vault"
+    },
+    {
+     "check": "chk-legality-4",
+     "status": [
+      "warning"
+     ],
+     "mentions": "Rise from the Nether"
+    },
+    {
+     "check": "chk-printing-3",
+     "status": [
+      "fail"
+     ],
+     "mentions": "Sol Ring"
+    }
+   ]
+  }
+ }
+}

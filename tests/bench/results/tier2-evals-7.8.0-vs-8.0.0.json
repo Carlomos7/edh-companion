@@ -1,0 +1,1858 @@
+[
+ {
+  "case": "act-lookup-banned",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1786201,
+  "judge_cost_usd": 0.00029370000000000004,
+  "duration_s": 30,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13342,
+    "cache_creation": 8352,
+    "cache_read": 33012,
+    "output": 2077
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.17274140000000002,
+  "judge_cost_usd": 0.00024360000000000007,
+  "duration_s": 25,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13170,
+    "cache_creation": 8375,
+    "cache_read": 32989,
+    "output": 1811
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "no-present": true,
+   "has-list": false
+  },
+  "error": null,
+  "cost_usd": 0.12876300000000002,
+  "judge_cost_usd": 0,
+  "duration_s": 18,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11789,
+    "cache_read": 64515,
+    "output": 1075
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Grep": 1,
+    "Glob": 1,
+    "Skill": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "no-present": true,
+   "has-list": false
+  },
+  "error": null,
+  "cost_usd": 0.1329072,
+  "judge_cost_usd": 0,
+  "duration_s": 20,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 12147,
+    "cache_read": 65216,
+    "output": 1132
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Glob": 2,
+    "Grep": 1,
+    "Skill": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 4,
+   "permission_denials": 4,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.13723760000000002,
+  "judge_cost_usd": 0.0003514,
+  "duration_s": 27,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 12540,
+    "cache_read": 54791,
+    "output": 1278
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1246373,
+  "judge_cost_usd": 0.0002749,
+  "duration_s": 24,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 11616,
+    "cache_read": 36712,
+    "output": 1203
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "asks": false,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.14608960000000001,
+  "judge_cost_usd": 0.0003556000000000001,
+  "duration_s": 35,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11865,
+    "cache_read": 54670,
+    "output": 1992
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Skill": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "asks": false,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.1553559,
+  "judge_cost_usd": 0.0003021,
+  "duration_s": 41,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11896,
+    "cache_read": 54729,
+    "output": 2445
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Skill": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.1220252,
+  "judge_cost_usd": 0.0001854,
+  "duration_s": 26,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11701,
+    "cache_read": 54359,
+    "output": 866
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "new-version-written": true,
+   "no-reask": true
+  },
+  "error": null,
+  "cost_usd": 0.2126154,
+  "judge_cost_usd": 0.00024540000000000006,
+  "duration_s": 42,
+  "turns": 14,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 15727,
+    "cache_read": 73830,
+    "output": 3587
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 12,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 6,
+    "Write": 3,
+    "Skill": 1,
+    "Glob": 1,
+    "Edit": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.267631,
+  "judge_cost_usd": 0.0009057000000000002,
+  "duration_s": 84,
+  "turns": 14,
+  "trace": {
+   "tokens": {
+    "input_uncached": 41781,
+    "cache_creation": 16776,
+    "cache_read": 136001,
+    "output": 8994
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 12,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 6,
+    "Read": 3,
+    "Skill": 1,
+    "ToolSearch": 1,
+    "Write": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.18423030000000004,
+  "judge_cost_usd": 0.0009781,
+  "duration_s": 57,
+  "turns": 11,
+  "trace": {
+   "tokens": {
+    "input_uncached": 33633,
+    "cache_creation": 13718,
+    "cache_read": 91260,
+    "output": 5420
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 9,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 5,
+    "Read": 2,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.17297930000000003,
+  "judge_cost_usd": 0.0005361000000000001,
+  "duration_s": 33,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13311,
+    "cache_creation": 8331,
+    "cache_read": 32956,
+    "output": 1798
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1783451,
+  "judge_cost_usd": 0.0004511,
+  "duration_s": 32,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13565,
+    "cache_creation": 8434,
+    "cache_read": 33010,
+    "output": 1978
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "no-present": true,
+   "has-list": false
+  },
+  "error": null,
+  "cost_usd": 0.12472300000000001,
+  "judge_cost_usd": 0,
+  "duration_s": 24,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11802,
+    "cache_read": 54535,
+    "output": 968
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "no-present": true,
+   "has-list": true
+  },
+  "error": null,
+  "cost_usd": 0.0988884,
+  "judge_cost_usd": 0,
+  "duration_s": 25,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 8513,
+    "cache_read": 46562,
+    "output": 1072
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Grep": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1296808,
+  "judge_cost_usd": 0.0004068000000000001,
+  "duration_s": 28,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 11695,
+    "cache_read": 36710,
+    "output": 1417
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1324045,
+  "judge_cost_usd": 0.0003407,
+  "duration_s": 30,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 11674,
+    "cache_read": 36699,
+    "output": 1565
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "asks": false,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.14108099999999998,
+  "judge_cost_usd": 0.0003888,
+  "duration_s": 32,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 11831,
+    "cache_read": 36461,
+    "output": 1936
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "asks": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.15179959999999998,
+  "judge_cost_usd": 0.0006148000000000001,
+  "duration_s": 38,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11856,
+    "cache_read": 54684,
+    "output": 2268
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Skill": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.1216676,
+  "judge_cost_usd": 0.00029820000000000004,
+  "duration_s": 24,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11734,
+    "cache_read": 54387,
+    "output": 829
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.1237464,
+  "judge_cost_usd": 0.00036420000000000007,
+  "duration_s": 24,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11697,
+    "cache_read": 54331,
+    "output": 945
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.15767430000000002,
+  "judge_cost_usd": 0.0009041,
+  "duration_s": 43,
+  "turns": 8,
+  "trace": {
+   "tokens": {
+    "input_uncached": 14,
+    "cache_creation": 11777,
+    "cache_read": 71091,
+    "output": 2414
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 6,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "WebFetch": 2,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "8.0.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.202809,
+  "judge_cost_usd": 0.0008712999999999999,
+  "duration_s": 67,
+  "turns": 12,
+  "trace": {
+   "tokens": {
+    "input_uncached": 41752,
+    "cache_creation": 14290,
+    "cache_read": 110804,
+    "output": 6749
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 10,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 6,
+    "Read": 2,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1776068,
+  "judge_cost_usd": 0.00024900000000000004,
+  "duration_s": 26,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13730,
+    "cache_creation": 8404,
+    "cache_read": 32929,
+    "output": 1931
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1812401,
+  "judge_cost_usd": 0.00027810000000000004,
+  "duration_s": 32,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13723,
+    "cache_creation": 8438,
+    "cache_read": 32930,
+    "output": 2099
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "no-present": true,
+   "has-list": false
+  },
+  "error": null,
+  "cost_usd": 0.12825219999999998,
+  "judge_cost_usd": 0,
+  "duration_s": 23,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11612,
+    "cache_read": 64741,
+    "output": 1118
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Glob": 2,
+    "Grep": 1,
+    "Skill": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 4,
+   "permission_denials": 4,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.5,
+  "graders": {
+   "no-present": true,
+   "has-list": false
+  },
+  "error": null,
+  "cost_usd": 0.12333300000000001,
+  "judge_cost_usd": 0,
+  "duration_s": 23,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11261,
+    "cache_read": 67285,
+    "output": 987
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Grep": 1,
+    "Skill": 1,
+    "Read": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1254631,
+  "judge_cost_usd": 0.0003961000000000001,
+  "duration_s": 25,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11060,
+    "cache_read": 53235,
+    "output": 1295
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Grep": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.12252909999999999,
+  "judge_cost_usd": 0.00031590000000000003,
+  "duration_s": 25,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 10970,
+    "cache_read": 53066,
+    "output": 1190
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Grep": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "asks": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.13336130000000002,
+  "judge_cost_usd": 0.0011121,
+  "duration_s": 34,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 10873,
+    "cache_read": 35866,
+    "output": 1903
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Grep": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "asks": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.13511179999999998,
+  "judge_cost_usd": 0.0013306,
+  "duration_s": 35,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 8,
+    "cache_creation": 10872,
+    "cache_read": 35866,
+    "output": 1980
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.1209596,
+  "judge_cost_usd": 0.000243,
+  "duration_s": 21,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11120,
+    "cache_read": 53183,
+    "output": 1054
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "new-version-written": true,
+   "no-reask": true
+  },
+  "error": null,
+  "cost_usd": 0.2523,
+  "judge_cost_usd": 0.0002910000000000001,
+  "duration_s": 51,
+  "turns": 18,
+  "trace": {
+   "tokens": {
+    "input_uncached": 22,
+    "cache_creation": 16587,
+    "cache_read": 153025,
+    "output": 4431
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 16,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 6,
+    "Write": 3,
+    "WebFetch": 2,
+    "Skill": 1,
+    "Grep": 1,
+    "Glob": 1,
+    "ToolSearch": 1,
+    "Edit": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.19598420000000003,
+  "judge_cost_usd": 0.0010684000000000004,
+  "duration_s": 68,
+  "turns": 11,
+  "trace": {
+   "tokens": {
+    "input_uncached": 38616,
+    "cache_creation": 13253,
+    "cache_read": 90054,
+    "output": 5955
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 9,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 6,
+    "Skill": 1,
+    "ToolSearch": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.16294540000000002,
+  "judge_cost_usd": 0.0011296,
+  "duration_s": 51,
+  "turns": 9,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11665,
+    "cache_read": 52439,
+    "output": 2898
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 7,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 4,
+    "Skill": 1,
+    "ToolSearch": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1786702,
+  "judge_cost_usd": 0.0005626,
+  "duration_s": 26,
+  "turns": 3,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13332,
+    "cache_creation": 8444,
+    "cache_read": 32938,
+    "output": 2032
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 2,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "ToolSearch": 1,
+    "WebSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-lookup-banned",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "correct": true,
+   "not-deckbuilding": true
+  },
+  "error": null,
+  "cost_usd": 0.1006347,
+  "judge_cost_usd": 0.0012441000000000002,
+  "duration_s": 36,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 13676,
+    "cache_creation": 8280,
+    "cache_read": 61021,
+    "output": 2365
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 3,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "no-present": true,
+   "has-list": true
+  },
+  "error": null,
+  "cost_usd": 0.09948080000000001,
+  "judge_cost_usd": 0,
+  "duration_s": 19,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 8474,
+    "cache_read": 60544,
+    "output": 977
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Grep": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-present-not-for-text",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "no-present": true,
+   "has-list": true
+  },
+  "error": null,
+  "cost_usd": 0.10021699999999999,
+  "judge_cost_usd": 0,
+  "duration_s": 25,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 8472,
+    "cache_read": 60505,
+    "output": 1015
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 3,
+    "Grep": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 1,
+   "permission_denials": 1,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1251265,
+  "judge_cost_usd": 0.00035709999999999995,
+  "duration_s": 23,
+  "turns": 5,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 11008,
+    "cache_read": 53127,
+    "output": 1302
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 3,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Grep": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "act-research-anti-venom",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0.6666666666666666,
+  "graders": {
+   "research-fired": true,
+   "no-brew": true,
+   "cited": false
+  },
+  "error": null,
+  "cost_usd": 0.1311756,
+  "judge_cost_usd": 0.00023939999999999996,
+  "duration_s": 30,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11525,
+    "cache_read": 53441,
+    "output": 1400
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "asks": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.1385226,
+  "judge_cost_usd": 0.0005903999999999998,
+  "duration_s": 44,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 10874,
+    "cache_read": 53101,
+    "output": 2014
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "asks-before-building",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "asks": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.1386627,
+  "judge_cost_usd": 0.0006414999999999999,
+  "duration_s": 40,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 10,
+    "cache_creation": 10897,
+    "cache_read": 53126,
+    "output": 2009
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Read": 2,
+    "Skill": 1,
+    "Glob": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.12443180000000001,
+  "judge_cost_usd": 0.0003792000000000001,
+  "duration_s": 27,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11126,
+    "cache_read": 70083,
+    "output": 1049
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Read": 1,
+    "Grep": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "gate-explicit-change",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": false,
+  "score": 0,
+  "graders": {
+   "new-version-written": false,
+   "no-reask": false
+  },
+  "error": null,
+  "cost_usd": 0.12289219999999998,
+  "judge_cost_usd": 0.0003758000000000001,
+  "duration_s": 28,
+  "turns": 6,
+  "trace": {
+   "tokens": {
+    "input_uncached": 12,
+    "cache_creation": 11095,
+    "cache_read": 69942,
+    "output": 986
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 4,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "Skill": 1,
+    "Glob": 1,
+    "Grep": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 3,
+   "permission_denials": 3,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.21429279999999998,
+  "judge_cost_usd": 0.0012745999999999999,
+  "duration_s": 75,
+  "turns": 12,
+  "trace": {
+   "tokens": {
+    "input_uncached": 28662,
+    "cache_creation": 14234,
+    "cache_read": 108244,
+    "output": 6967
+   },
+   "models": [
+    "claude-haiku-5-5",
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 10,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 6,
+    "Skill": 1,
+    "ToolSearch": 1,
+    "Glob": 1,
+    "Read": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 2,
+   "permission_denials": 2,
+   "subagents": 0
+  }
+ },
+ {
+  "case": "review-planted-errors",
+  "version": "7.8.0",
+  "arm": "with",
+  "passed": true,
+  "score": 1,
+  "graders": {
+   "found-all": true,
+   "skill-fired": true
+  },
+  "error": null,
+  "cost_usd": 0.1572533,
+  "judge_cost_usd": 0.0011421,
+  "duration_s": 45,
+  "turns": 7,
+  "trace": {
+   "tokens": {
+    "input_uncached": 14,
+    "cache_creation": 11385,
+    "cache_read": 70076,
+    "output": 2548
+   },
+   "models": [
+    "claude-opus-5-5"
+   ],
+   "tool_calls": 5,
+   "subagent_tool_calls": 0,
+   "by_tool": {
+    "WebFetch": 3,
+    "Skill": 1,
+    "ToolSearch": 1
+   },
+   "duplicate_tool_calls": 0,
+   "tool_errors": 0,
+   "permission_denials": 0,
+   "subagents": 0
+  }
+ }
+]

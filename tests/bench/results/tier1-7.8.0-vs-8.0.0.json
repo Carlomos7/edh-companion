@@ -1,0 +1,3267 @@
+{
+ "label": "tier1-7.8.0-vs-8.0.0",
+ "date": "2026-11-04 17:59",
+ "repeats": 1,
+ "pause_s": 20.0,
+ "machine": {
+  "os": "Windows-11-10.0.26200-SP0",
+  "python": "3.12.15",
+  "cpus": 16
+ },
+ "roots": {
+  "base": {
+   "plugin_version": "7.8.0",
+   "commit": "718ada9",
+   "uncommitted_changes": false
+  },
+  "after": {
+   "plugin_version": "8.0.0",
+   "commit": "d7d5ecb",
+   "uncommitted_changes": false
+  }
+ },
+ "runs": [
+  {
+   "repeat": 1,
+   "scenario": "lookup-1",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 1.82,
+     "network_s": 0.26,
+     "waiting_s": 0.5,
+     "local_s": 1.06,
+     "stdout_bytes": 130,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 261,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 0.5
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check --cards-only (1)",
+       "seconds": 1.82,
+       "network_s": 0.26,
+       "waiting_s": 0.5,
+       "local_s": 1.06,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 261,
+       "request_ms_max": 261,
+       "slowest": [
+        261,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 1477
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 3.98,
+     "network_s": 0.54,
+     "waiting_s": 0.5,
+     "local_s": 2.94,
+     "stdout_bytes": 130,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 538,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 0.5
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check --cards-only (1)",
+       "seconds": 3.97,
+       "network_s": 0.54,
+       "waiting_s": 0.5,
+       "local_s": 2.94,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 538,
+       "request_ms_max": 538,
+       "slowest": [
+        538,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 1477
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "lookup-1",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 1.76,
+     "network_s": 0.22,
+     "waiting_s": 0.0,
+     "local_s": 1.54,
+     "stdout_bytes": 79,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 219,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "card_lookup names (1)",
+       "seconds": 1.76,
+       "network_s": 0.22,
+       "waiting_s": 0.0,
+       "local_s": 1.54,
+       "exit": 0,
+       "stdout_bytes": 79,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 219,
+       "request_ms_max": 219,
+       "slowest": [
+        219,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 1.76,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 1.76,
+     "stdout_bytes": 80,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "card_lookup names (1)",
+       "seconds": 1.76,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.76,
+       "exit": 0,
+       "stdout_bytes": 80,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "lookup-10",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 1.55,
+     "network_s": 0.3,
+     "waiting_s": 0.5,
+     "local_s": 0.74,
+     "stdout_bytes": 130,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 301,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 0.5
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check --cards-only (10)",
+       "seconds": 1.55,
+       "network_s": 0.3,
+       "waiting_s": 0.5,
+       "local_s": 0.74,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 301,
+       "request_ms_max": 301,
+       "slowest": [
+        301,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 11678
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 1.83,
+     "network_s": 0.59,
+     "waiting_s": 0.5,
+     "local_s": 0.74,
+     "stdout_bytes": 130,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 590,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 0.5
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check --cards-only (10)",
+       "seconds": 1.83,
+       "network_s": 0.59,
+       "waiting_s": 0.5,
+       "local_s": 0.74,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 590,
+       "request_ms_max": 590,
+       "slowest": [
+        590,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 11678
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "lookup-10",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 2.88,
+     "network_s": 0.3,
+     "waiting_s": 0.0,
+     "local_s": 2.58,
+     "stdout_bytes": 822,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 299,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "card_lookup names (10)",
+       "seconds": 2.88,
+       "network_s": 0.3,
+       "waiting_s": 0.0,
+       "local_s": 2.58,
+       "exit": 0,
+       "stdout_bytes": 822,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 299,
+       "request_ms_max": 299,
+       "slowest": [
+        299,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 2.48,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 2.48,
+     "stdout_bytes": 823,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "card_lookup names (10)",
+       "seconds": 2.48,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 2.48,
+       "exit": 0,
+       "stdout_bytes": 823,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "research",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 7.2,
+     "network_s": 2.1,
+     "waiting_s": 1.0,
+     "local_s": 4.1,
+     "stdout_bytes": 691,
+     "requests": 4,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1364,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 1.0
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "api.scryfall.com/cards/search": 1,
+      "backend.commanderspellbook.com/find-my-combos": 1
+     },
+     "steps": [
+      {
+       "step": "commander check",
+       "seconds": 3.32,
+       "network_s": 0.74,
+       "waiting_s": 0.5,
+       "local_s": 2.08,
+       "exit": 1,
+       "stdout_bytes": 561,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 745,
+       "request_ms_max": 567,
+       "slowest": [
+        567,
+        "https://backend.commanderspellbook.com/find-my-combos"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "cards-only 61 names",
+       "seconds": 3.88,
+       "network_s": 1.36,
+       "waiting_s": 0.5,
+       "local_s": 2.02,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 1364,
+       "request_ms_max": 1364,
+       "slowest": [
+        1364,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 68055
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 9.96,
+     "network_s": 2.6,
+     "waiting_s": 1.0,
+     "local_s": 6.35,
+     "stdout_bytes": 691,
+     "requests": 4,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1663,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 1.0
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "api.scryfall.com/cards/search": 1,
+      "backend.commanderspellbook.com/find-my-combos": 1
+     },
+     "steps": [
+      {
+       "step": "commander check",
+       "seconds": 4.98,
+       "network_s": 0.94,
+       "waiting_s": 0.5,
+       "local_s": 3.54,
+       "exit": 1,
+       "stdout_bytes": 561,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 943,
+       "request_ms_max": 512,
+       "slowest": [
+        512,
+        "https://backend.commanderspellbook.com/find-my-combos"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "cards-only 61 names",
+       "seconds": 4.98,
+       "network_s": 1.66,
+       "waiting_s": 0.5,
+       "local_s": 2.81,
+       "exit": 0,
+       "stdout_bytes": 130,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 1663,
+       "request_ms_max": 1663,
+       "slowest": [
+        1663,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 68055
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "research",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 6.24,
+     "network_s": 1.44,
+     "waiting_s": 0.39,
+     "local_s": 4.41,
+     "stdout_bytes": 714,
+     "requests": 3,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1297,
+     "sleeps": {
+      "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.39
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "api.scryfall.com/cards/search": 1
+     },
+     "steps": [
+      {
+       "step": "commander check",
+       "seconds": 2.97,
+       "network_s": 0.14,
+       "waiting_s": 0.39,
+       "local_s": 2.44,
+       "exit": 0,
+       "stdout_bytes": 534,
+       "requests": 2,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 137,
+       "request_ms_max": 97,
+       "slowest": [
+        97,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.39
+       }
+      },
+      {
+       "step": "cards-only 61 names",
+       "seconds": 3.27,
+       "network_s": 1.3,
+       "waiting_s": 0.0,
+       "local_s": 1.97,
+       "exit": 0,
+       "stdout_bytes": 180,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 1297,
+       "request_ms_max": 1297,
+       "slowest": [
+        1297,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 71140
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 2.68,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 2.68,
+     "stdout_bytes": 715,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "commander check",
+       "seconds": 1.4,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.4,
+       "exit": 0,
+       "stdout_bytes": 535,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      },
+      {
+       "step": "cards-only 61 names",
+       "seconds": 1.28,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.28,
+       "exit": 0,
+       "stdout_bytes": 180,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {},
+       "file_bytes": 71140
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "candidates",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 2.56,
+     "network_s": 0.15,
+     "waiting_s": 0.0,
+     "local_s": 2.41,
+     "stdout_bytes": 413,
+     "requests": 1,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 154,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 1
+     },
+     "steps": [
+      {
+       "step": "candidates",
+       "seconds": 2.56,
+       "network_s": 0.15,
+       "waiting_s": 0.0,
+       "local_s": 2.41,
+       "exit": 0,
+       "stdout_bytes": 413,
+       "requests": 1,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 154,
+       "request_ms_max": 154,
+       "slowest": [
+        154,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 0.99,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 0.99,
+     "stdout_bytes": 414,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "candidates",
+       "seconds": 0.99,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 0.99,
+       "exit": 0,
+       "stdout_bytes": 414,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "build",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 38.62,
+     "network_s": 9.63,
+     "waiting_s": 16.1,
+     "local_s": 12.88,
+     "stdout_bytes": 5159,
+     "requests": 37,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2289,
+     "sleeps": {
+      "deck_check.py:cheapest: time.sleep(0.5)": 13.51,
+      "deck_check.py:fetch: time.sleep(0.5)": 2.5,
+      "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+     },
+     "duplicates": 14,
+     "by_endpoint": {
+      "api.scryfall.com/cards/search": 30,
+      "api.scryfall.com/cards/collection": 5,
+      "backend.commanderspellbook.com/find-my-combos": 1,
+      "api.scryfall.com/cards/228e551e-023a-4c9a-8f32-58dae6ffdf7f": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check full + cheapest",
+       "seconds": 10.59,
+       "network_s": 3.45,
+       "waiting_s": 5.0,
+       "local_s": 2.13,
+       "exit": 0,
+       "stdout_bytes": 2558,
+       "requests": 12,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3452,
+       "request_ms_max": 1800,
+       "slowest": [
+        1800,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 4.5,
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 104991
+      },
+      {
+       "step": "page data, 2 variants",
+       "seconds": 26.79,
+       "network_s": 6.18,
+       "waiting_s": 11.1,
+       "local_s": 9.51,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 25,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 6176,
+       "request_ms_max": 2289,
+       "slowest": [
+        2289,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+        "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+        "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+       }
+      },
+      {
+       "step": "export",
+       "seconds": 1.24,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.24,
+       "exit": 0,
+       "stdout_bytes": 323,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 39.45,
+     "network_s": 10.0,
+     "waiting_s": 16.1,
+     "local_s": 13.35,
+     "stdout_bytes": 5159,
+     "requests": 37,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2427,
+     "sleeps": {
+      "deck_check.py:cheapest: time.sleep(0.5)": 13.51,
+      "deck_check.py:fetch: time.sleep(0.5)": 2.5,
+      "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+     },
+     "duplicates": 14,
+     "by_endpoint": {
+      "api.scryfall.com/cards/search": 30,
+      "api.scryfall.com/cards/collection": 5,
+      "backend.commanderspellbook.com/find-my-combos": 1,
+      "api.scryfall.com/cards/228e551e-023a-4c9a-8f32-58dae6ffdf7f": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check full + cheapest",
+       "seconds": 10.26,
+       "network_s": 3.47,
+       "waiting_s": 5.0,
+       "local_s": 1.79,
+       "exit": 0,
+       "stdout_bytes": 2558,
+       "requests": 12,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3467,
+       "request_ms_max": 1744,
+       "slowest": [
+        1744,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 4.5,
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 104991
+      },
+      {
+       "step": "page data, 2 variants",
+       "seconds": 27.81,
+       "network_s": 6.53,
+       "waiting_s": 11.1,
+       "local_s": 10.18,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 25,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 6528,
+       "request_ms_max": 2427,
+       "slowest": [
+        2427,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+        "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+        "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+       }
+      },
+      {
+       "step": "export",
+       "seconds": 1.38,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.38,
+       "exit": 0,
+       "stdout_bytes": 323,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "build",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 17.73,
+     "network_s": 3.52,
+     "waiting_s": 2.73,
+     "local_s": 11.49,
+     "stdout_bytes": 5209,
+     "requests": 15,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1598,
+     "sleeps": {
+      "http.py:request: self._wait(self.cache.reserve(name, interval))": 2.73
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/search": 11,
+      "api.scryfall.com/cards/collection": 3,
+      "backend.commanderspellbook.com/find-my-combos": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check full + cheapest",
+       "seconds": 9.96,
+       "network_s": 3.21,
+       "waiting_s": 2.73,
+       "local_s": 4.02,
+       "exit": 0,
+       "stdout_bytes": 2608,
+       "requests": 12,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3208,
+       "request_ms_max": 1598,
+       "slowest": [
+        1598,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 2.73
+       },
+       "file_bytes": 106937
+      },
+      {
+       "step": "page data, 2 variants",
+       "seconds": 6.03,
+       "network_s": 0.31,
+       "waiting_s": 0.0,
+       "local_s": 5.73,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 305,
+       "request_ms_max": 132,
+       "slowest": [
+        132,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {}
+      },
+      {
+       "step": "export",
+       "seconds": 1.74,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.74,
+       "exit": 0,
+       "stdout_bytes": 323,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 13.87,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 13.87,
+     "stdout_bytes": 5209,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "deck_check full + cheapest",
+       "seconds": 2.73,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 2.73,
+       "exit": 0,
+       "stdout_bytes": 2608,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {},
+       "file_bytes": 106937
+      },
+      {
+       "step": "page data, 2 variants",
+       "seconds": 9.97,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 9.97,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      },
+      {
+       "step": "export",
+       "seconds": 1.17,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.17,
+       "exit": 0,
+       "stdout_bytes": 323,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "atlas",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 43.12,
+     "network_s": 7.68,
+     "waiting_s": 11.1,
+     "local_s": 24.33,
+     "stdout_bytes": 2664,
+     "requests": 103,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2487,
+     "sleeps": {
+      "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+      "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+      "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+     },
+     "duplicates": 3,
+     "by_endpoint": {
+      "cards.scryfall.io": 77,
+      "api.scryfall.com/cards/search": 20,
+      "api.scryfall.com/cards/collection": 4,
+      "api.scryfall.com/cards/228e551e-023a-4c9a-8f32-58dae6ffdf7f": 1,
+      "backs.scryfall.io": 1
+     },
+     "steps": [
+      {
+       "step": "page data (atlas)",
+       "seconds": 29.34,
+       "network_s": 6.2,
+       "waiting_s": 11.1,
+       "local_s": 12.04,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 25,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 6197,
+       "request_ms_max": 2487,
+       "slowest": [
+        2487,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+        "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+        "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+       }
+      },
+      {
+       "step": "build_site atlas",
+       "seconds": 13.77,
+       "network_s": 1.48,
+       "waiting_s": 0.0,
+       "local_s": 12.29,
+       "exit": 0,
+       "stdout_bytes": 386,
+       "requests": 78,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 11262,
+       "request_ms_max": 179,
+       "slowest": [
+        179,
+        "https://cards.scryfall.io/normal/front/7/d/7d4b1d44-126e-4987-9a9f-f0f9627a09cb.jpg"
+       ],
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 34.14,
+     "network_s": 5.75,
+     "waiting_s": 11.1,
+     "local_s": 17.29,
+     "stdout_bytes": 2664,
+     "requests": 25,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2000,
+     "sleeps": {
+      "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+      "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+      "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+     },
+     "duplicates": 3,
+     "by_endpoint": {
+      "api.scryfall.com/cards/search": 20,
+      "api.scryfall.com/cards/collection": 4,
+      "api.scryfall.com/cards/228e551e-023a-4c9a-8f32-58dae6ffdf7f": 1
+     },
+     "steps": [
+      {
+       "step": "page data (atlas)",
+       "seconds": 24.13,
+       "network_s": 5.75,
+       "waiting_s": 11.1,
+       "local_s": 7.28,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 25,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 5748,
+       "request_ms_max": 2000,
+       "slowest": [
+        2000,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:cheapest: time.sleep(0.5)": 9.0,
+        "deck_check.py:fetch: time.sleep(0.5)": 2.0,
+        "site_data.py:back_image: time.sleep(0.1)  # Scryfall asks for 50-100 ms between API calls": 0.1
+       }
+      },
+      {
+       "step": "build_site atlas",
+       "seconds": 10.01,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 10.01,
+       "exit": 0,
+       "stdout_bytes": 386,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "atlas",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 26.99,
+     "network_s": 4.57,
+     "waiting_s": 2.87,
+     "local_s": 19.56,
+     "stdout_bytes": 2664,
+     "requests": 92,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1815,
+     "sleeps": {
+      "http.py:request: self._wait(self.cache.reserve(name, interval))": 2.87
+     },
+     "duplicates": 0,
+     "by_endpoint": {
+      "cards.scryfall.io": 77,
+      "api.scryfall.com/cards/search": 11,
+      "api.scryfall.com/cards/collection": 3,
+      "backs.scryfall.io": 1
+     },
+     "steps": [
+      {
+       "step": "page data (atlas)",
+       "seconds": 13.75,
+       "network_s": 2.9,
+       "waiting_s": 2.87,
+       "local_s": 7.98,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 14,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2898,
+       "request_ms_max": 1815,
+       "slowest": [
+        1815,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 2.87
+       }
+      },
+      {
+       "step": "build_site atlas",
+       "seconds": 13.24,
+       "network_s": 1.67,
+       "waiting_s": 0.0,
+       "local_s": 11.58,
+       "exit": 0,
+       "stdout_bytes": 386,
+       "requests": 78,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 11578,
+       "request_ms_max": 266,
+       "slowest": [
+        266,
+        "https://cards.scryfall.io/normal/front/2/f/2f5689e2-d8a2-442b-8027-f89686adcb67.jpg"
+       ],
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 18.79,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 18.79,
+     "stdout_bytes": 2664,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "page data (atlas)",
+       "seconds": 7.25,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 7.25,
+       "exit": 0,
+       "stdout_bytes": 2278,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      },
+      {
+       "step": "build_site atlas",
+       "seconds": 11.54,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 11.54,
+       "exit": 0,
+       "stdout_bytes": 386,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "optimize",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 13.46,
+     "network_s": 5.56,
+     "waiting_s": 1.0,
+     "local_s": 6.9,
+     "stdout_bytes": 2490,
+     "requests": 6,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2047,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 1.0
+     },
+     "duplicates": 1,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "api.scryfall.com/cards/search": 2,
+      "backend.commanderspellbook.com/find-my-combos": 2
+     },
+     "steps": [
+      {
+       "step": "deck_check before",
+       "seconds": 5.39,
+       "network_s": 2.65,
+       "waiting_s": 0.5,
+       "local_s": 2.24,
+       "exit": 0,
+       "stdout_bytes": 1408,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2650,
+       "request_ms_max": 1656,
+       "slowest": [
+        1656,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "deck_check after 5 swaps",
+       "seconds": 5.85,
+       "network_s": 2.91,
+       "waiting_s": 0.5,
+       "local_s": 2.44,
+       "exit": 0,
+       "stdout_bytes": 936,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2914,
+       "request_ms_max": 2047,
+       "slowest": [
+        2047,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "validate",
+       "seconds": 2.22,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 2.22,
+       "exit": 0,
+       "stdout_bytes": 146,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 11.4,
+     "network_s": 5.46,
+     "waiting_s": 1.0,
+     "local_s": 4.94,
+     "stdout_bytes": 2490,
+     "requests": 6,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2273,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 1.0
+     },
+     "duplicates": 1,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "api.scryfall.com/cards/search": 2,
+      "backend.commanderspellbook.com/find-my-combos": 2
+     },
+     "steps": [
+      {
+       "step": "deck_check before",
+       "seconds": 5.11,
+       "network_s": 3.05,
+       "waiting_s": 0.5,
+       "local_s": 1.56,
+       "exit": 0,
+       "stdout_bytes": 1408,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3053,
+       "request_ms_max": 2273,
+       "slowest": [
+        2273,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "deck_check after 5 swaps",
+       "seconds": 4.37,
+       "network_s": 2.41,
+       "waiting_s": 0.5,
+       "local_s": 1.46,
+       "exit": 0,
+       "stdout_bytes": 936,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2407,
+       "request_ms_max": 1586,
+       "slowest": [
+        1586,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       }
+      },
+      {
+       "step": "validate",
+       "seconds": 1.92,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.92,
+       "exit": 0,
+       "stdout_bytes": 146,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "optimize",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 13.33,
+     "network_s": 3.39,
+     "waiting_s": 0.0,
+     "local_s": 9.94,
+     "stdout_bytes": 2589,
+     "requests": 5,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 1613,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 2,
+      "backend.commanderspellbook.com/find-my-combos": 2,
+      "api.scryfall.com/cards/search": 1
+     },
+     "steps": [
+      {
+       "step": "deck_check before",
+       "seconds": 5.93,
+       "network_s": 2.38,
+       "waiting_s": 0.0,
+       "local_s": 3.55,
+       "exit": 0,
+       "stdout_bytes": 1457,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2378,
+       "request_ms_max": 1613,
+       "slowest": [
+        1613,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {}
+      },
+      {
+       "step": "deck_check after 5 swaps",
+       "seconds": 4.33,
+       "network_s": 1.01,
+       "waiting_s": 0.0,
+       "local_s": 3.32,
+       "exit": 0,
+       "stdout_bytes": 986,
+       "requests": 2,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 1012,
+       "request_ms_max": 841,
+       "slowest": [
+        841,
+        "https://backend.commanderspellbook.com/find-my-combos"
+       ],
+       "sleeps": {}
+      },
+      {
+       "step": "validate",
+       "seconds": 3.07,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 3.07,
+       "exit": 0,
+       "stdout_bytes": 146,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 5.49,
+     "network_s": 0.0,
+     "waiting_s": 0.0,
+     "local_s": 5.5,
+     "stdout_bytes": 2590,
+     "requests": 0,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 0,
+     "sleeps": {},
+     "duplicates": 0,
+     "by_endpoint": {},
+     "steps": [
+      {
+       "step": "deck_check before",
+       "seconds": 1.89,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.89,
+       "exit": 0,
+       "stdout_bytes": 1458,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      },
+      {
+       "step": "deck_check after 5 swaps",
+       "seconds": 1.73,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.73,
+       "exit": 0,
+       "stdout_bytes": 986,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      },
+      {
+       "step": "validate",
+       "seconds": 1.88,
+       "network_s": 0.0,
+       "waiting_s": 0.0,
+       "local_s": 1.88,
+       "exit": 0,
+       "stdout_bytes": 146,
+       "requests": 0,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 0,
+       "request_ms_max": 0,
+       "slowest": null,
+       "sleeps": {}
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "audit-planted",
+   "root": "base",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 64.12,
+     "network_s": 32.87,
+     "waiting_s": 7.5,
+     "local_s": 23.73,
+     "stdout_bytes": 11930,
+     "requests": 41,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2228,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 7.5
+     },
+     "duplicates": 17,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 15,
+      "api.scryfall.com/cards/search": 13,
+      "backend.commanderspellbook.com/find-my-combos": 13
+     },
+     "steps": [
+      {
+       "step": "audit clean-b2",
+       "seconds": 4.5,
+       "network_s": 2.55,
+       "waiting_s": 0.5,
+       "local_s": 1.45,
+       "exit": 0,
+       "stdout_bytes": 750,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2549,
+       "request_ms_max": 1775,
+       "slowest": [
+        1775,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87089,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit clean",
+       "seconds": 4.56,
+       "network_s": 2.5,
+       "waiting_s": 0.5,
+       "local_s": 1.56,
+       "exit": 0,
+       "stdout_bytes": 750,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2501,
+       "request_ms_max": 1806,
+       "slowest": [
+        1806,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87089,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit banned",
+       "seconds": 4.73,
+       "network_s": 2.64,
+       "waiting_s": 0.5,
+       "local_s": 1.59,
+       "exit": 1,
+       "stdout_bytes": 775,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2637,
+       "request_ms_max": 1895,
+       "slowest": [
+        1895,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87186,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit off-identity",
+       "seconds": 4.39,
+       "network_s": 2.31,
+       "waiting_s": 0.5,
+       "local_s": 1.59,
+       "exit": 1,
+       "stdout_bytes": 764,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2307,
+       "request_ms_max": 1528,
+       "slowest": [
+        1528,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87229,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit duplicate",
+       "seconds": 4.87,
+       "network_s": 2.5,
+       "waiting_s": 0.5,
+       "local_s": 1.87,
+       "exit": 1,
+       "stdout_bytes": 767,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2501,
+       "request_ms_max": 1807,
+       "slowest": [
+        1807,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87196,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit wrong-printing",
+       "seconds": 5.86,
+       "network_s": 3.2,
+       "waiting_s": 1.0,
+       "local_s": 1.66,
+       "exit": 1,
+       "stdout_bytes": 973,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3204,
+       "request_ms_max": 2228,
+       "slowest": [
+        2228,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 1.0
+       },
+       "file_bytes": 87611,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit count-99",
+       "seconds": 4.27,
+       "network_s": 2.48,
+       "waiting_s": 0.5,
+       "local_s": 1.29,
+       "exit": 1,
+       "stdout_bytes": 748,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2479,
+       "request_ms_max": 1753,
+       "slowest": [
+        1753,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 85953,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit fake-card",
+       "seconds": 4.75,
+       "network_s": 2.66,
+       "waiting_s": 0.5,
+       "local_s": 1.58,
+       "exit": 1,
+       "stdout_bytes": 809,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2665,
+       "request_ms_max": 1948,
+       "slowest": [
+        1948,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 86055,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit game-changers-4",
+       "seconds": 4.85,
+       "network_s": 2.42,
+       "waiting_s": 0.5,
+       "local_s": 1.93,
+       "exit": 1,
+       "stdout_bytes": 839,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2419,
+       "request_ms_max": 1670,
+       "slowest": [
+        1670,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87303,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit combo-b2",
+       "seconds": 5.65,
+       "network_s": 2.46,
+       "waiting_s": 0.5,
+       "local_s": 2.69,
+       "exit": 1,
+       "stdout_bytes": 1335,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2463,
+       "request_ms_max": 1692,
+       "slowest": [
+        1692,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 89131,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit unreleased",
+       "seconds": 5.4,
+       "network_s": 2.46,
+       "waiting_s": 0.5,
+       "local_s": 2.44,
+       "exit": 0,
+       "stdout_bytes": 951,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2461,
+       "request_ms_max": 1749,
+       "slowest": [
+        1749,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87566,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit foil-finish",
+       "seconds": 5.28,
+       "network_s": 2.42,
+       "waiting_s": 0.5,
+       "local_s": 2.36,
+       "exit": 1,
+       "stdout_bytes": 959,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2422,
+       "request_ms_max": 1736,
+       "slowest": [
+        1736,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87552,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit all-in-one",
+       "seconds": 4.99,
+       "network_s": 2.27,
+       "waiting_s": 1.0,
+       "local_s": 1.72,
+       "exit": 1,
+       "stdout_bytes": 1510,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2268,
+       "request_ms_max": 1498,
+       "slowest": [
+        1498,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 1.0
+       },
+       "file_bytes": 86569,
+       "detection": {
+        "planted": 9,
+        "detected": 9,
+        "missed": [],
+        "extra": []
+       }
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 65.72,
+     "network_s": 33.19,
+     "waiting_s": 7.5,
+     "local_s": 25.0,
+     "stdout_bytes": 11930,
+     "requests": 41,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2196,
+     "sleeps": {
+      "deck_check.py:fetch: time.sleep(0.5)": 7.5
+     },
+     "duplicates": 17,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 15,
+      "api.scryfall.com/cards/search": 13,
+      "backend.commanderspellbook.com/find-my-combos": 13
+     },
+     "steps": [
+      {
+       "step": "audit clean-b2",
+       "seconds": 6.63,
+       "network_s": 2.74,
+       "waiting_s": 0.5,
+       "local_s": 3.38,
+       "exit": 0,
+       "stdout_bytes": 750,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2741,
+       "request_ms_max": 2030,
+       "slowest": [
+        2030,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87089,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit clean",
+       "seconds": 4.74,
+       "network_s": 2.67,
+       "waiting_s": 0.5,
+       "local_s": 1.57,
+       "exit": 0,
+       "stdout_bytes": 750,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2669,
+       "request_ms_max": 1960,
+       "slowest": [
+        1960,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87089,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit banned",
+       "seconds": 5.3,
+       "network_s": 2.72,
+       "waiting_s": 0.5,
+       "local_s": 2.08,
+       "exit": 1,
+       "stdout_bytes": 775,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2722,
+       "request_ms_max": 1920,
+       "slowest": [
+        1920,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87186,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit off-identity",
+       "seconds": 5.15,
+       "network_s": 2.97,
+       "waiting_s": 0.5,
+       "local_s": 1.67,
+       "exit": 1,
+       "stdout_bytes": 764,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2974,
+       "request_ms_max": 2159,
+       "slowest": [
+        2159,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87229,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit duplicate",
+       "seconds": 4.3,
+       "network_s": 2.39,
+       "waiting_s": 0.5,
+       "local_s": 1.41,
+       "exit": 1,
+       "stdout_bytes": 767,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2395,
+       "request_ms_max": 1640,
+       "slowest": [
+        1640,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87196,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit wrong-printing",
+       "seconds": 5.49,
+       "network_s": 2.77,
+       "waiting_s": 1.0,
+       "local_s": 1.72,
+       "exit": 1,
+       "stdout_bytes": 973,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2771,
+       "request_ms_max": 1790,
+       "slowest": [
+        1790,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 1.0
+       },
+       "file_bytes": 87611,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit count-99",
+       "seconds": 4.53,
+       "network_s": 2.21,
+       "waiting_s": 0.5,
+       "local_s": 1.83,
+       "exit": 1,
+       "stdout_bytes": 748,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2207,
+       "request_ms_max": 1516,
+       "slowest": [
+        1516,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 85953,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit fake-card",
+       "seconds": 5.57,
+       "network_s": 3.06,
+       "waiting_s": 0.5,
+       "local_s": 2.02,
+       "exit": 1,
+       "stdout_bytes": 809,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3055,
+       "request_ms_max": 2196,
+       "slowest": [
+        2196,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 86055,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit game-changers-4",
+       "seconds": 4.34,
+       "network_s": 2.4,
+       "waiting_s": 0.5,
+       "local_s": 1.43,
+       "exit": 1,
+       "stdout_bytes": 839,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2405,
+       "request_ms_max": 1625,
+       "slowest": [
+        1625,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87303,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit combo-b2",
+       "seconds": 4.6,
+       "network_s": 2.26,
+       "waiting_s": 0.5,
+       "local_s": 1.84,
+       "exit": 1,
+       "stdout_bytes": 1335,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2261,
+       "request_ms_max": 1537,
+       "slowest": [
+        1537,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 89131,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit unreleased",
+       "seconds": 5.29,
+       "network_s": 2.49,
+       "waiting_s": 0.5,
+       "local_s": 2.31,
+       "exit": 0,
+       "stdout_bytes": 951,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2487,
+       "request_ms_max": 1775,
+       "slowest": [
+        1775,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87566,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit foil-finish",
+       "seconds": 4.05,
+       "network_s": 2.18,
+       "waiting_s": 0.5,
+       "local_s": 1.37,
+       "exit": 1,
+       "stdout_bytes": 959,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2181,
+       "request_ms_max": 1460,
+       "slowest": [
+        1460,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 0.5
+       },
+       "file_bytes": 87552,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit all-in-one",
+       "seconds": 5.7,
+       "network_s": 2.33,
+       "waiting_s": 1.0,
+       "local_s": 2.37,
+       "exit": 1,
+       "stdout_bytes": 1510,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2333,
+       "request_ms_max": 1581,
+       "slowest": [
+        1581,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "deck_check.py:fetch: time.sleep(0.5)": 1.0
+       },
+       "file_bytes": 86569,
+       "detection": {
+        "planted": 9,
+        "detected": 9,
+        "missed": [],
+        "extra": []
+       }
+      }
+     ]
+    }
+   ]
+  },
+  {
+   "repeat": 1,
+   "scenario": "audit-planted",
+   "root": "after",
+   "phases": [
+    {
+     "phase": "cold",
+     "seconds": 70.27,
+     "network_s": 32.75,
+     "waiting_s": 0.67,
+     "local_s": 36.82,
+     "stdout_bytes": 12567,
+     "requests": 41,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2700,
+     "sleeps": {
+      "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.68
+     },
+     "duplicates": 17,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 15,
+      "api.scryfall.com/cards/search": 13,
+      "backend.commanderspellbook.com/find-my-combos": 13
+     },
+     "steps": [
+      {
+       "step": "audit clean-b2",
+       "seconds": 5.6,
+       "network_s": 2.4,
+       "waiting_s": 0.0,
+       "local_s": 3.2,
+       "exit": 0,
+       "stdout_bytes": 799,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2400,
+       "request_ms_max": 1693,
+       "slowest": [
+        1693,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89010,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit clean",
+       "seconds": 5.12,
+       "network_s": 2.4,
+       "waiting_s": 0.0,
+       "local_s": 2.72,
+       "exit": 0,
+       "stdout_bytes": 799,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2402,
+       "request_ms_max": 1676,
+       "slowest": [
+        1676,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89010,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit banned",
+       "seconds": 6.11,
+       "network_s": 2.75,
+       "waiting_s": 0.0,
+       "local_s": 3.36,
+       "exit": 1,
+       "stdout_bytes": 824,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2749,
+       "request_ms_max": 1888,
+       "slowest": [
+        1888,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89107,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit off-identity",
+       "seconds": 4.94,
+       "network_s": 2.47,
+       "waiting_s": 0.0,
+       "local_s": 2.47,
+       "exit": 1,
+       "stdout_bytes": 813,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2465,
+       "request_ms_max": 1784,
+       "slowest": [
+        1784,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89150,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit duplicate",
+       "seconds": 4.98,
+       "network_s": 2.26,
+       "waiting_s": 0.0,
+       "local_s": 2.72,
+       "exit": 1,
+       "stdout_bytes": 816,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2263,
+       "request_ms_max": 1571,
+       "slowest": [
+        1571,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89117,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit wrong-printing",
+       "seconds": 5.85,
+       "network_s": 2.38,
+       "waiting_s": 0.27,
+       "local_s": 3.2,
+       "exit": 1,
+       "stdout_bytes": 1022,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2382,
+       "request_ms_max": 1485,
+       "slowest": [
+        1485,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.27
+       },
+       "file_bytes": 89532,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit count-99",
+       "seconds": 6.43,
+       "network_s": 3.52,
+       "waiting_s": 0.0,
+       "local_s": 2.91,
+       "exit": 1,
+       "stdout_bytes": 797,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 3519,
+       "request_ms_max": 2700,
+       "slowest": [
+        2700,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 87850,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit fake-card",
+       "seconds": 5.47,
+       "network_s": 2.6,
+       "waiting_s": 0.0,
+       "local_s": 2.87,
+       "exit": 1,
+       "stdout_bytes": 858,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2603,
+       "request_ms_max": 1913,
+       "slowest": [
+        1913,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 87952,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit game-changers-4",
+       "seconds": 4.58,
+       "network_s": 2.54,
+       "waiting_s": 0.0,
+       "local_s": 2.04,
+       "exit": 1,
+       "stdout_bytes": 888,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2542,
+       "request_ms_max": 1812,
+       "slowest": [
+        1812,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89224,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit combo-b2",
+       "seconds": 4.74,
+       "network_s": 2.46,
+       "waiting_s": 0.0,
+       "local_s": 2.28,
+       "exit": 1,
+       "stdout_bytes": 1384,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2459,
+       "request_ms_max": 1725,
+       "slowest": [
+        1725,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 91076,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit unreleased",
+       "seconds": 5.74,
+       "network_s": 2.27,
+       "waiting_s": 0.0,
+       "local_s": 3.47,
+       "exit": 0,
+       "stdout_bytes": 1000,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2269,
+       "request_ms_max": 1561,
+       "slowest": [
+        1561,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89487,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit foil-finish",
+       "seconds": 4.9,
+       "network_s": 2.24,
+       "waiting_s": 0.0,
+       "local_s": 2.66,
+       "exit": 1,
+       "stdout_bytes": 1008,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2240,
+       "request_ms_max": 1553,
+       "slowest": [
+        1553,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89473,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit all-in-one",
+       "seconds": 5.78,
+       "network_s": 2.46,
+       "waiting_s": 0.4,
+       "local_s": 2.92,
+       "exit": 1,
+       "stdout_bytes": 1559,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2459,
+       "request_ms_max": 1625,
+       "slowest": [
+        1625,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.41
+       },
+       "file_bytes": 88442,
+       "detection": {
+        "planted": 9,
+        "detected": 9,
+        "missed": [],
+        "extra": []
+       }
+      }
+     ]
+    },
+    {
+     "phase": "warm",
+     "seconds": 72.46,
+     "network_s": 32.59,
+     "waiting_s": 0.64,
+     "local_s": 39.21,
+     "stdout_bytes": 12567,
+     "requests": 41,
+     "failed": 0,
+     "http_429": 0,
+     "http_5xx": 0,
+     "request_ms_max": 2148,
+     "sleeps": {
+      "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.64
+     },
+     "duplicates": 17,
+     "by_endpoint": {
+      "api.scryfall.com/cards/collection": 15,
+      "api.scryfall.com/cards/search": 13,
+      "backend.commanderspellbook.com/find-my-combos": 13
+     },
+     "steps": [
+      {
+       "step": "audit clean-b2",
+       "seconds": 4.84,
+       "network_s": 2.48,
+       "waiting_s": 0.0,
+       "local_s": 2.37,
+       "exit": 0,
+       "stdout_bytes": 799,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2478,
+       "request_ms_max": 1791,
+       "slowest": [
+        1791,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89010,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit clean",
+       "seconds": 4.89,
+       "network_s": 2.31,
+       "waiting_s": 0.0,
+       "local_s": 2.58,
+       "exit": 0,
+       "stdout_bytes": 799,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2309,
+       "request_ms_max": 1550,
+       "slowest": [
+        1550,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89010,
+       "detection": {
+        "planted": 0,
+        "detected": 0,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit banned",
+       "seconds": 6.22,
+       "network_s": 2.38,
+       "waiting_s": 0.0,
+       "local_s": 3.84,
+       "exit": 1,
+       "stdout_bytes": 824,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2378,
+       "request_ms_max": 1689,
+       "slowest": [
+        1689,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89107,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit off-identity",
+       "seconds": 6.07,
+       "network_s": 2.41,
+       "waiting_s": 0.0,
+       "local_s": 3.65,
+       "exit": 1,
+       "stdout_bytes": 813,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2413,
+       "request_ms_max": 1642,
+       "slowest": [
+        1642,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89150,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit duplicate",
+       "seconds": 4.59,
+       "network_s": 2.36,
+       "waiting_s": 0.0,
+       "local_s": 2.22,
+       "exit": 1,
+       "stdout_bytes": 816,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2363,
+       "request_ms_max": 1680,
+       "slowest": [
+        1680,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89117,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit wrong-printing",
+       "seconds": 5.3,
+       "network_s": 2.29,
+       "waiting_s": 0.26,
+       "local_s": 2.75,
+       "exit": 1,
+       "stdout_bytes": 1022,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2291,
+       "request_ms_max": 1411,
+       "slowest": [
+        1411,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.26
+       },
+       "file_bytes": 89532,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit count-99",
+       "seconds": 5.56,
+       "network_s": 2.95,
+       "waiting_s": 0.0,
+       "local_s": 2.61,
+       "exit": 1,
+       "stdout_bytes": 797,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2952,
+       "request_ms_max": 2148,
+       "slowest": [
+        2148,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 87850,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit fake-card",
+       "seconds": 4.93,
+       "network_s": 2.6,
+       "waiting_s": 0.0,
+       "local_s": 2.33,
+       "exit": 1,
+       "stdout_bytes": 858,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2600,
+       "request_ms_max": 1906,
+       "slowest": [
+        1906,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 87952,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit game-changers-4",
+       "seconds": 4.66,
+       "network_s": 2.42,
+       "waiting_s": 0.0,
+       "local_s": 2.24,
+       "exit": 1,
+       "stdout_bytes": 888,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2423,
+       "request_ms_max": 1697,
+       "slowest": [
+        1697,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89224,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit combo-b2",
+       "seconds": 5.63,
+       "network_s": 2.82,
+       "waiting_s": 0.0,
+       "local_s": 2.81,
+       "exit": 1,
+       "stdout_bytes": 1384,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2822,
+       "request_ms_max": 1787,
+       "slowest": [
+        1787,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 91076,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit unreleased",
+       "seconds": 6.28,
+       "network_s": 2.92,
+       "waiting_s": 0.0,
+       "local_s": 3.37,
+       "exit": 0,
+       "stdout_bytes": 1000,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2915,
+       "request_ms_max": 1737,
+       "slowest": [
+        1737,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89487,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit foil-finish",
+       "seconds": 6.21,
+       "network_s": 2.46,
+       "waiting_s": 0.0,
+       "local_s": 3.75,
+       "exit": 1,
+       "stdout_bytes": 1008,
+       "requests": 3,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2465,
+       "request_ms_max": 1501,
+       "slowest": [
+        1501,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {},
+       "file_bytes": 89473,
+       "detection": {
+        "planted": 1,
+        "detected": 1,
+        "missed": [],
+        "extra": []
+       }
+      },
+      {
+       "step": "audit all-in-one",
+       "seconds": 7.25,
+       "network_s": 2.19,
+       "waiting_s": 0.38,
+       "local_s": 4.69,
+       "exit": 1,
+       "stdout_bytes": 1559,
+       "requests": 4,
+       "failed": 0,
+       "http_429": 0,
+       "http_5xx": 0,
+       "request_ms_sum": 2186,
+       "request_ms_max": 1430,
+       "slowest": [
+        1430,
+        "https://api.scryfall.com/cards/collection"
+       ],
+       "sleeps": {
+        "http.py:request: self._wait(self.cache.reserve(name, interval))": 0.38
+       },
+       "file_bytes": 88442,
+       "detection": {
+        "planted": 9,
+        "detected": 9,
+        "missed": [],
+        "extra": []
+       }
+      }
+     ]
+    }
+   ]
+  }
+ ],
+ "note": "repeat 1 of 3; repeat 2 crashed halfway (probe wrote a torn log line from atlas threads) and was discarded; repeats 2-3 are in tier1-7.8.0-vs-8.0.0-r2r3.json"
+}

@@ -565,7 +565,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             st, rel = status_of(c)
             cards.append({"name": c["name"], "qty": c["qty"], "type": c.get("type_line"), "mv": int(c.get("cmc") or 0),
                           "land": "Land" in (c.get("type_line") or "").split("//")[0], "commander": c["commander"],
-                          "set": c["set"], "cn": c["collector_number"], "price": price(c), "theme": tlabel.get(bc.get("theme")),
+                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "price": price(c), "theme": tlabel.get(bc.get("theme")),
                           "img": f, "back": b, "roles": c.get("roles") or {}, "label": bc.get("role"), "flags": fails.get(c["name"], []),
                           "mana": c.get("mana_cost"), "gc": c["game_changer"], "status": st, "releases": rel, "cheapest": c.get("cheapest"),
                           "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None, **views.card_types(c)})

@@ -23,7 +23,7 @@
  --on-accent:var(--l-on_accent,#ffffff);--focus:var(--l-focus,var(--accent));--hero-muted:var(--l-hero_muted,var(--muted));--art-wash:var(--l-art_wash,color-mix(in srgb,var(--accent) 9%,var(--bg)));
  --ok:#1a7346;--warn:#8a5a00;--fail:#b42318;--info:#1d5fb8;--unv:#5b6370;
  --ok-bg:#e2f2e8;--warn-bg:#faefd6;--fail-bg:#fde6e3;--info-bg:#e2edfb;--unv-bg:#eaecef;
- --gc:#5b49d0;--gc-ink:#fff;--gold:var(--l-gold,#8a5f08);--overlay:rgb(12 14 18/.86);
+ --gc:#5b49d0;--gc-ink:#fff;--gold:var(--l-gold,#8a5f08);--gold-ink:#fff;--overlay:rgb(12 14 18/.86);
  --s1:#2a78d6;--s2:#eb6834;--s3:#1baf7a;--s4:#eda100;--s5:#e87ba4;--s6:#008300;--s7:#6250d6;--s8:#e34948;
  --t-S:#184f95;--t-A:#256abf;--t-B:#3987e5;--t-C:#6da7ec;--t-D:#86b6ef}
 @media (pointer:coarse){:root{--ctl:44px}}
@@ -33,7 +33,7 @@
  --text:var(--d-text,#eceef2);--muted:var(--d-muted,#a3aab6);--accent:var(--d-accent,#aab4c3);--accent-2:var(--d-accent2,var(--accent));
  --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--hero-muted:var(--d-hero_muted,var(--muted));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
  --ok:#5fcf8c;--warn:#e8b54d;--fail:#f97a70;--info:#86b9f5;--unv:#a8afbb;--ok-bg:#11291b;--warn-bg:#30250c;--fail-bg:#3a1714;--info-bg:#122640;--unv-bg:#252930;
- --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);
+ --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);--gold-ink:#0f1115;
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95}}
 :root[data-theme="dark"]{color-scheme:dark;
@@ -41,7 +41,7 @@
  --text:var(--d-text,#eceef2);--muted:var(--d-muted,#a3aab6);--accent:var(--d-accent,#aab4c3);--accent-2:var(--d-accent2,var(--accent));
  --on-accent:var(--d-on_accent,#0f1115);--focus:var(--d-focus,var(--accent));--hero-muted:var(--d-hero_muted,var(--muted));--art-wash:var(--d-art_wash,color-mix(in srgb,var(--accent) 10%,var(--bg)));
  --ok:#5fcf8c;--warn:#e8b54d;--fail:#f97a70;--info:#86b9f5;--unv:#a8afbb;--ok-bg:#11291b;--warn-bg:#30250c;--fail-bg:#3a1714;--info-bg:#122640;--unv-bg:#252930;
- --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);
+ --gc:#9a8ff0;--gc-ink:#0f1115;--gold:var(--d-gold,#e3b04b);--gold-ink:#0f1115;
  --s1:#3987e5;--s2:#d95926;--s3:#199e70;--s4:#c98500;--s5:#d55181;--s6:#008300;--s7:#9085e9;--s8:#e66767;
  --t-S:#9ec5f4;--t-A:#6da7ec;--t-B:#3987e5;--t-C:#256abf;--t-D:#184f95}
 
@@ -170,7 +170,7 @@ a.stat{text-decoration:none;color:inherit}a.stat:hover{border-color:var(--accent
 
 /* status tags: icon shape + text, never colour alone, never interactive */
 .tag{display:inline-flex;align-items:center;gap:6px;font:500 var(--fs-xs)/1.2 var(--body);padding:4px 8px 4px 6px;border-radius:var(--r-tag);background:var(--unv-bg);color:var(--text);white-space:nowrap;vertical-align:middle}
-.ic{--c:var(--unv);display:inline-grid;place-items:center;width:15px;height:15px;flex:none;font:700 10px/1 var(--body);color:var(--bg);background:var(--c);border-radius:50%}
+.ic{--c:var(--unv);display:inline-grid;place-items:center;width:16px;height:16px;flex:none;font:700 11px/1 var(--body);color:var(--bg);background:var(--c);border-radius:50%}
 .st-pass{--c:var(--ok)}.st-warning{--c:var(--warn)}.st-fail{--c:var(--fail)}.st-info{--c:var(--info)}.st-unverified{--c:var(--unv)}
 .tag.st-pass{background:var(--ok-bg)}.tag.st-warning{background:var(--warn-bg)}.tag.st-fail{background:var(--fail-bg)}.tag.st-info{background:var(--info-bg)}
 .ic.st-warning{border-radius:2px;clip-path:polygon(50% 0,100% 100%,0 100%);padding-top:4px;width:17px;height:15px}
@@ -203,9 +203,9 @@ select,input[type=search]{font:400 var(--fs-sm) var(--body);color:var(--text);ba
 .pill{display:inline-flex;align-items:center;gap:var(--sp-1);font:500 var(--fs-xs)/1.6 var(--body);padding:0 var(--sp-2);border-radius:var(--r-pill);background:var(--surface-2);color:var(--text);white-space:nowrap}
 .pill i{width:8px;height:8px;border-radius:50%;display:inline-block;background:var(--c)}
 .pill.gc,abbr.gc{background:var(--gc);color:var(--gc-ink);text-decoration:none}
-abbr.gc{font:600 10.5px/1.5 var(--body);padding:0 5px;border-radius:var(--r-tag);margin-left:var(--sp-1);cursor:help}
+abbr.gc{font:600 11.5px/1.5 var(--body);padding:0 5px;border-radius:var(--r-tag);margin-left:var(--sp-1);cursor:help}
 .pill.lp-upcoming{box-shadow:inset 0 0 0 1.5px var(--warn)}.pill.lp-banned,.pill.lp-not_legal{box-shadow:inset 0 0 0 1.5px var(--fail)}
-.tp{display:inline-block;font:600 10.5px/1 var(--body);padding:3px 5px;border-radius:3px;margin-left:var(--sp-1);vertical-align:1px;white-space:nowrap;background:var(--c);color:var(--ink,#fff)}
+.tp{display:inline-block;font:600 11.5px/1 var(--body);padding:3px 5px;border-radius:3px;margin-left:var(--sp-1);vertical-align:1px;white-space:nowrap;background:var(--c);color:var(--ink,#fff)}
 .tp.off{background:transparent;border:1px solid var(--gold);color:var(--gold);padding:2px 4px}
 .tp.mdfc{background:transparent;border:1px solid var(--muted);color:var(--muted);padding:2px 4px;font-weight:500}
 .swp{display:inline-block;margin-left:var(--sp-1);font:600 var(--fs-xs)/1 var(--body);color:var(--accent)}
@@ -295,7 +295,7 @@ summary>h3,summary>h4{margin:0!important}
 .chip .cn{font:500 var(--fs-xs) var(--body);color:inherit;margin:0;opacity:.8}
 .chip i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .chipclr{justify-self:start;font:500 var(--fs-sm) var(--body);color:var(--accent);background:none;border:0;padding:0 var(--sp-1);min-height:32px;cursor:pointer;text-decoration:underline;text-underline-offset:3px}
-@media (min-width:1280px){.chips{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5)}.cg{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}.cg>:last-child{margin-right:0}.cgl{min-width:0}}
+@media (min-width:600px){.chips{display:flex;flex-wrap:wrap;gap:var(--sp-2) var(--sp-5)}.cg{flex-wrap:wrap;overflow:visible;-webkit-mask-image:none;mask-image:none}.cg>:last-child{margin-right:0}.cgl{min-width:0}}
 .decklist .cols{columns:1;column-gap:var(--sp-6)}
 @media (min-width:600px){.decklist .cols{columns:2}}
 @media (min-width:960px){.decklist .cols{columns:3}}
@@ -386,7 +386,8 @@ thead th{font-weight:600;color:var(--muted);border-bottom:2px solid var(--border
 .fsrc{display:flex;flex-wrap:wrap;align-items:center;gap:var(--sp-1) var(--sp-2);margin:var(--sp-2) 0 0;font-size:var(--fs-sm)}
 .cite{display:inline-grid;place-items:center;min-width:26px;height:26px;padding:0 6px;border-radius:var(--r-tag);background:var(--surface-2);color:var(--text);font:600 var(--fs-xs)/1 var(--body);text-decoration:none;font-variant-numeric:tabular-nums}
 .cite:hover{background:var(--accent);color:var(--on-accent)}
-a.ts{font-size:var(--fs-sm);font-variant-numeric:tabular-nums}
+a.ts{font-size:var(--fs-sm);font-variant-numeric:tabular-nums;display:inline-flex;align-items:center;min-height:24px}
+.fsrc>a{display:inline-grid;place-items:center;min-width:28px;min-height:28px}
 .ev{margin-top:var(--sp-1);font-size:var(--fs-sm)}
 .ev>summary{color:var(--muted)}
 .evlist{list-style:none;margin:0 0 var(--sp-2);padding:0;display:grid;gap:var(--sp-2)}
@@ -691,7 +692,7 @@ function linkRow(c){const L=cardLinks(c);return el("div",{class:"links"},ext(L.s
 function inkFor(c){const v=/^var\((--[\w-]+)\)$/.exec(String(c).trim());if(v)c=cssv(v[1]);const m=/^#?([0-9a-f]{6})$/i.exec(String(c).trim());if(!m)return{ink:"#fff"};const n=parseInt(m[1],16),lin=x=>{x/=255;return x<=.03928?x/12.92:((x+.055)/1.055)**2.4};
  const L=.2126*lin(n>>16)+.7152*lin(n>>8&255)+.0722*lin(n&255),dark=(L+.05)/.056,white=1.05/(L+.05);
  return dark>=4.5&&dark>=white?{ink:"#0d111a"}:white>=4.5?{ink:"#fff"}:{ink:"#fff",bg:`color-mix(in srgb,${c} 72%,#000)`}}  // mid tones: darken the tag until white text reaches 4.5:1
-function tag(label){if(!D.theme||!label)return null;const c=themeColor(label),k=inkFor(c);return label==="off-theme"?el("span",{class:"tp off"},"Off-theme"):el("span",{class:"tp",style:`--c:${k.bg||c};--ink:${k.ink}`},label)}
+function tag(label){if(!D.theme||!label)return null;const c=themeColor(label),k=c==="var(--gold)"?{ink:"var(--gold-ink)"}:inkFor(c);return label==="off-theme"?el("span",{class:"tp off"},"Off-theme"):el("span",{class:"tp",style:`--c:${k.bg||c};--ink:${k.ink}`},label)}
 const mark=label=>label&&!isDefaultTheme(label)?tag(label):null;
 // "32 of 35 themed cards on theme; 64 exempt (lands, utility) unmarked" from theme_stats; null without it
 function themeLine(d){const t=d.theme_stats;if(!t)return null;const n=(t.on||0)+(t.exception||0)+(t.off||0);
@@ -890,6 +891,7 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   {id:"role",label:"Role (rules)",get:c=>Object.keys(c.roles||{}),opts:[...new Set(d.cards.flatMap(c=>Object.keys(c.roles||{})))].sort().map(r=>({v:r,label:cap(r)}))},
   {id:"status",label:"Status",min:1,get:c=>c.status,opts:Object.keys(ST_LABEL).map(k=>({v:k,label:ST_LABEL[k]}))},
   themeChips(),
+  {id:"set",label:"Set",get:c=>c.set||null,opts:Object.entries(d.cards.reduce((a,c)=>(c.set&&(a[c.set]=(a[c.set]||0)+c.qty),a),{})).sort((a,b)=>b[1]-a[1]).map(([v])=>{const n=(d.cards.find(c=>c.set===v)||{}).set_name;return{v,label:n?`${n} (${v.toUpperCase()})`:v.toUpperCase()}})},
   {id:"tag",label:"Tags",min:1,get:c=>[isGC(c)&&"gc",swapsFor(c.name).length&&"swap",c.flags&&c.flags.length&&"flag",typeInfo(c).mdfc&&"mdfc"].filter(Boolean),
    opts:[{v:"gc",label:"Game Changers"},{v:"swap",label:"⇄ Proposed cuts"},{v:"flag",label:"! Flagged"},{v:"mdfc",label:"MDFC land"}]}].filter(Boolean);
  const q=el("input",{type:"search",placeholder:"Search cards",title:"Matches name, type or role",value:st.q,"aria-label":"Search the decklist"});
@@ -1122,7 +1124,7 @@ function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V
  if(SHOW.prices&&c.cheapest){const p=c.cheapest;side.append(el("h3",{},"Printings and prices"),el("table",{},el("tbody",{},
    el("tr",{},el("td",{},"Cheapest"),el("td",{},`${(p.set||"").toUpperCase()} #${p.collector_number||""}`),el("td",{class:"n num"},money(p.usd))),
    el("tr",{},el("td",{},"Priciest"),el("td",{},`${(p.max_set||"").toUpperCase()} #${p.max_collector_number||""}`),el("td",{class:"n num"},money(p.max_usd))),
-   c.price!=null?el("tr",{},el("td",{},"This list"),el("td",{},`${(c.set||"").toUpperCase()} #${c.cn||""}`),el("td",{class:"n num"},money(c.price))):null)),
+   c.price!=null?el("tr",{},el("td",{},"This list"),el("td",{},`${c.set_name?c.set_name+", ":""}${(c.set||"").toUpperCase()} #${c.cn||""}`),el("td",{class:"n num"},money(c.price))):null)),
   el("p",{class:"muted"},"Scryfall daily prices"+(D.data_dates&&D.data_dates["card data and prices (Scryfall)"]?", as of "+D.data_dates["card data and prices (Scryfall)"]:"")+"."))}
  if(!c.card){const sw=swapsFor(c.name);if(sw.length)side.append(el("div",{class:"alt"},el("h4",{},"Proposed changes"),...sw.map(x=>el("p",{},x.add?[el("b",{},x.add)," would replace it"]:"Cut it",x.reason?". "+x.reason:"",x.id?el("span",{class:"muted"}," ("+x.id+")"):""))))}
  if(c.reason)side.append(el("p",{},el("b",{},"Off-theme because: "),c.reason));

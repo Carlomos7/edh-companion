@@ -2,6 +2,15 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.3.0
+Cheaper re-audits and fewer audit failures on stale wording. In one project, a full audit after three card swaps cost about 300k tokens and 20 minutes, and most failures were prose that no longer matched the deck.
+- **Scoped re-audits:** `companion.py sections <brew.json>` fingerprints each deck line, recommendation and prose block; audits store them in `subject.sections`. `companion.py audit-scope <project> [brew-<variant>.json]` then lists what a re-audit must re-check (changed cards, recommendations and prose, deck-wide checks, earlier non-pass checks, two random spot checks) and what carries over, or says why it must be full (no baseline, PROJECT.md changed). New optional audit fields: `subject.mode`, `subject.based_on`, `checks[].carried_from`. The audit skill and auditor agent describe when to scope and when to stay full.
+- **Prose lint in `validate`:** warns when a brew's strategy or limitations still name a cut card, or state a land count, cast-by-turn percentage or listed price that differs from its deck_check.json. Mentions that say the card is gone ("no Teferi's Protection") and numbers about other decks ("community lists run 34 to 36 lands") are skipped.
+- **Role second opinion from Scryfall Tagger tags:** deck_check adds `stats.roles_tag_only`, the roles that community tags (otag:removal, tapper, recursion, sweeper, ...) give a card but the Oracle-text rules don't, such as Auras that neutralize a creature and tappers. Not counted (tags over-include: Path to Exile is tagged ramp); the auditor judges just those cards instead of recounting. A failed tag lookup never changes the data status. `--no-tags` skips it; page builds skip it.
+- **Compact research-find:** evidence shows IDs only (first three, then "+N more"); `--detail` restores source titles.
+- **Raw decklists:** research saves each fetched list to `sources/decklists/<source-id>.json`, so counts in findings can be recomputed.
+- 213 unit tests.
+
 ## 8.2.0
 - **Set filter:** the deck list has a "Set" chip group (most-played set first), labelled with the full set name and code, e.g. "Marvel's Spider-Man (SPM)". The card viewer's price row also names the set. Site data now carries each card's `set_name`.
 - **Filters wrap from 600 px:** chip groups wrap instead of scrolling sideways on tablets and desktops (was 1280 px); phones keep swipe rows.

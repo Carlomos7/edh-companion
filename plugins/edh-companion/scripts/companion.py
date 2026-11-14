@@ -15,8 +15,14 @@
                                      record the parallel research workers a merge expects (research.plan.json)
   companion.py merge-research <project> [--allow-partial]
                                      merge research.part-<slug>.json files into research.json (validated, idempotent)
-  companion.py research-find <project> [--card NAME] [--text WORDS] [--class CLASS] [--limit N]
-                                     compact matching findings, candidates and rankings with their evidence
+  companion.py research-find <project> [--card NAME] [--text WORDS] [--class CLASS] [--limit N] [--detail]
+                                     compact matching findings, candidates and rankings with their evidence IDs
+                                     (--detail adds source titles and every evidence ID)
+  companion.py sections <brew.json>  fingerprints of each deck line, recommendation and prose block (an audit
+                                     records them in subject.sections so the next audit can be scoped)
+  companion.py audit-scope <project> [brew-<variant>.json]
+                                     what a re-audit must re-check since the last audit: changed items, deck-wide
+                                     checks, earlier non-pass checks and a spot check; or why it must be full
 
 Exit 0 when everything present is valid, 1 otherwise. Missing files are fine (projects are partial by design).
 """
@@ -277,6 +283,11 @@ def validate(d):
                     errors.append(f"{bp}: {r['id']}: evidence {ref} not in research.json")
         if brew.get("decklist") and not os.path.exists(os.path.join(d, brew["decklist"])):
             errors.append(f"{bp}: decklist {brew['decklist']} not found")
+        dp = os.path.join(d, os.path.basename(bp).replace("brew", "deck_check", 1))
+        if os.path.exists(dp):
+            dc = load(dp)
+            if dc.get("deck_hash") == brew.get("deck_hash"):
+                notes += [f"WARN  {os.path.basename(bp)} prose: {w}" for w in lint_prose(brew, dc)]
         ap = os.path.join(d, os.path.basename(bp).replace("brew", "audit", 1))
         if not os.path.exists(ap):
             notes.append(f"{os.path.basename(bp)} v{brew.get('version')}: not audited")
@@ -307,6 +318,104 @@ def validate(d):
         if len(set(ids)) != len(ids):
             errors.append(f"{ap}: duplicate check id")
     return errors, notes
+
+
+DECK_WIDE = {"count", "singleton", "game_changers", "bracket", "combos", "mana", "composition"}  # depend on every card
+PROSE = ("commander", "strategy", "limitations", "theme_policy", "target_bracket")
+
+
+def fp(obj):
+    return hashlib.sha1(json.dumps(obj, sort_keys=True, ensure_ascii=False).encode()).hexdigest()[:12]
+
+
+def sections(brew):
+    """{section: fingerprint} for the parts of a brew an audit judges: each deck line, each recommendation, each prose block."""
+    out = {k: fp(brew.get(k)) for k in PROSE}
+    out.update({f"card:{c['name']}": fp(c) for c in brew.get("deck", [])})
+    out.update({f"rec:{r['id']}": fp(r) for r in brew.get("recommendations", [])})
+    return out
+
+
+def prose(brew):
+    """The brew's free text that restates deck facts (strategy and limitations), one string per sentence block."""
+    out = []
+
+    def walk(x):
+        if isinstance(x, str):
+            out.append(x)
+        elif isinstance(x, (list, dict)):
+            for v in (x.values() if isinstance(x, dict) else x):
+                walk(v)
+    walk(brew.get("strategy"))
+    walk(brew.get("limitations"))
+    return out
+
+
+def lint_prose(brew, dc):
+    """Stale facts in a brew's prose, checked against its deck_check output (same deck_hash): cut cards still named,
+    land counts, cast-by-turn percentages and the listed price. Heuristic: returns warnings, never errors."""
+    warns, st = [], dc.get("stats") or {}
+    names = {c["name"] for c in brew.get("deck", [])} | {c.get("name") for c in (brew.get("commander") or []) if isinstance(c, dict)}
+    cuts = {r["cut"] for r in brew.get("recommendations", []) if r.get("status") == "accepted" and r.get("cut") and r.get("cut") != r.get("add")}
+    by_turn = {str(k): v for k, v in ((st.get("cast_by_turn") or {}).get("by_turn") or {}).items()}
+    gone = re.compile(r"\b(?:no|cut|cuts|left|without|instead of|replac\w*|swapp\w*|removed)\b", re.I)  # says the card is gone
+    other = re.compile(r"communit|lists? run|EDHREC|average|guide|video|reference", re.I)  # a number about other decks
+    near = lambda rx, line, m: rx.search(line[max(0, m.start() - 40):m.end() + 25])
+    before = lambda rx, line, m: rx.search(line[max(0, m.start() - 40):m.start()])  # "community lists run 34 to 36 lands"
+    for line in prose(brew):
+        for c in sorted(cuts - names):
+            m = re.search(r"(?<![\w'])" + re.escape(c) + r"(?![\w'])", line)
+            if m and not near(gone, line, m):
+                warns.append(f"names {c}, which is no longer in the deck: {line[:90]}")
+        for m in re.finditer(r"\b(\d+) lands\b", line):
+            if st.get("lands") is not None and int(m[1]) != st["lands"] and not before(other, line, m):
+                warns.append(f"says {m[1]} lands, deck_check counts {st['lands']}: {line[:90]}")
+        for m in re.finditer(r"by turn (\d+)[^%.]{0,40}?(\d+(?:\.\d+)?)%", line):
+            v = by_turn.get(m[1])
+            if v is not None and abs(float(m[2]) - v * 100) > 1 and not before(other, line, m):
+                warns.append(f"says {m[2]}% by turn {m[1]}, deck_check has {v * 100:.1f}%: {line[:90]}")
+        for m in re.finditer(r"\$([\d,]+(?:\.\d+)?) as listed", line):
+            if st.get("price_usd") is not None and abs(float(m[1].replace(",", "")) - st["price_usd"]) > 0.5:
+                warns.append(f"says ${m[1]} as listed, deck_check has ${st['price_usd']:,.2f}: {line[:90]}")
+    return warns
+
+
+def audit_scope(d, brew_name="brew.json"):
+    """Plan a re-audit as (mode, lines): 'full' when there's no usable baseline, else 'scoped' with what to re-check."""
+    brew = load(os.path.join(d, brew_name))
+    ap = os.path.join(d, brew_name.replace("brew", "audit", 1))
+    if not os.path.exists(ap):
+        return "full", ["no earlier audit"]
+    audit = load(ap)
+    sub = audit.get("subject") or {}
+    if sub.get("goals_hash") and sub["goals_hash"] != goals_hash(d):
+        return "full", ["PROJECT.md rules changed since the last audit"]
+    old = sub.get("sections")
+    if not old:
+        return "full", ["the last audit recorded no subject.sections (store `companion.py sections` output in it)"]
+    new = sections(brew)
+    changed = sorted(k for k in new if old.get(k) != new[k])
+    removed = sorted(k for k in old if k not in new)
+    cards = {k.split(":", 1)[1] for k in changed + removed if k.startswith("card:")}
+    recs = {k.split(":", 1)[1] for k in changed if k.startswith("rec:")}
+    prose_changed = any(k in changed for k in PROSE)
+    rerun, carry = [], []
+    for c in audit.get("checks", []):
+        text = f"{c.get('id')} {c.get('requirement')} {c.get('detail') or ''}"
+        why = ("deck-wide" if c.get("area") in DECK_WIDE else f"was {c.get('status')}" if c.get("status") != "pass"
+               else "card changed" if cards & set(c.get("cards") or []) or any(x in text for x in cards)
+               else "recommendation changed" if any(x in text for x in recs)
+               else "text changed" if prose_changed and ("text" in str(c.get("id")) or c.get("area") == "other") else None)
+        (rerun if why else carry).append((c.get("id"), why))
+    spot = __import__("random").Random(brew.get("deck_hash") or "").sample([i for i, _ in carry], min(2, len(carry)))
+    dk = sub.get("deck") or {}
+    lines = [f"baseline: {os.path.basename(ap)} (v{dk.get('version')} {dk.get('deck_hash')})",
+             "always: deck_check.py --fresh, then every deck-wide check",
+             "changed: " + (", ".join(changed + [k + " (removed)" for k in removed]) or "nothing")]
+    lines += [f"re-check {i}: {w}" for i, w in rerun]
+    lines += [f"spot-check {i} (carried, picked at random)" for i in spot]
+    lines.append(f"carry over {len(carry) - len(spot)} unchanged pass checks (set carried_from to this baseline's created date)")
+    return "scoped", lines
 
 
 def dump(doc):
@@ -590,14 +699,15 @@ def merge_research(d, allow_partial=False):
     return 0
 
 
-def research_find(d, card=None, text=None, cls=None, limit=20):
+def research_find(d, card=None, text=None, cls=None, limit=20, detail=False):
     if not os.path.exists(os.path.join(d, "research.json")):
         sys.exit(f"no research.json in {d}")
     r = load(os.path.join(d, "research.json"))
     titles = {s["id"]: s.get("title", "") for s in r.get("sources", [])}
     words = (text or "").lower().split()
     cardl = (card or "").lower()
-    ev = lambda refs: "; ".join(f"{x} {titles[x][:40]}" if x in titles else x for x in refs)
+    ev = (lambda refs: "; ".join(f"{x} {titles[x][:40]}" if x in titles else x for x in refs)) if detail else \
+        (lambda refs: ", ".join(refs[:3]) + (f" +{len(refs) - 3} more" if len(refs) > 3 else ""))
     hit = lambda hay: all(w in hay.lower() for w in words)
     rows = []
     for f in r.get("findings", []):
@@ -622,6 +732,8 @@ def research_find(d, card=None, text=None, cls=None, limit=20):
 
 
 def main():
+    if hasattr(sys.stdout, "reconfigure"):  # Windows consoles default to cp1252; card names like "Araña" must survive a pipe
+        sys.stdout.reconfigure(encoding="utf-8")
     if len(sys.argv) > 1 and sys.argv[1] in ("research-plan", "merge-research", "research-find"):
         ap = argparse.ArgumentParser(prog=f"companion.py {sys.argv[1]}")
         ap.add_argument("project")
@@ -637,8 +749,18 @@ def main():
         ap.add_argument("--text")
         ap.add_argument("--class", dest="cls")
         ap.add_argument("--limit", type=int, default=20)
+        ap.add_argument("--detail", action="store_true", help="source titles and every evidence ID")
         a = ap.parse_args(sys.argv[2:])
-        return research_find(a.project, a.card, a.text, a.cls, a.limit)
+        return research_find(a.project, a.card, a.text, a.cls, a.limit, a.detail)
+    if len(sys.argv) > 2 and sys.argv[1] == "sections":
+        print(json.dumps(sections(load(sys.argv[2])), indent=1, ensure_ascii=False))
+        return
+    if len(sys.argv) > 2 and sys.argv[1] == "audit-scope":
+        mode, lines = audit_scope(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "brew.json")
+        print(f"mode: {mode}")
+        for x in lines:
+            print("  " + x)
+        return
     if len(sys.argv) < 2 or sys.argv[1] not in ("where", "projects", "research", "validate", "goals-hash"):
         sys.exit(__doc__)
     if sys.argv[1] == "where":

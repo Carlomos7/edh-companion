@@ -67,6 +67,27 @@
           ],
           "pattern": "^[0-9a-f]{12}$",
           "description": "companion.py goals-hash of PROJECT.md at audit time. If PROJECT.md's rules change, the audit is out of date."
+        },
+        "sections": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "companion.py sections output at audit time: fingerprint per deck line, recommendation and prose block. audit-scope diffs it to plan a scoped re-audit."
+        },
+        "mode": {
+          "enum": [
+            "full",
+            "scoped"
+          ],
+          "description": "scoped: only changed items, deck-wide checks, earlier non-pass checks and spot checks were re-checked; the rest carried over."
+        },
+        "based_on": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Scoped audits: the created date of the audit whose unchanged checks were carried over."
         }
       }
     },
@@ -174,6 +195,13 @@
             "items": {
               "type": "string"
             }
+          },
+          "carried_from": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Scoped audits: the created date of the audit this unchanged check was copied from."
           }
         }
       }

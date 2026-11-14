@@ -97,7 +97,7 @@ def deck_check(deck_path, tmp, project, cheapest=False, cards_only=False):
     Exit codes 1/2 are check results, not errors. Cards it has no data for are listed in "unavailable", not fatal."""
     uv = shutil.which("uv") or sys.exit("uv not found: deck_check.py runs with `uv run --script`")
     out = os.path.join(tmp, f"check-{len(os.listdir(tmp))}.json")
-    p = subprocess.run([uv, "run", "--quiet", "--script", DECK_CHECK, deck_path, "--json", out, "--no-combos", "--project", project]
+    p = subprocess.run([uv, "run", "--quiet", "--script", DECK_CHECK, deck_path, "--json", out, "--no-combos", "--no-tags", "--project", project]
                        + (["--cheapest"] if cheapest else []) + (["--cards-only"] if cards_only else []),
                        capture_output=True, text=True, encoding="utf-8")
     if not os.path.exists(out):

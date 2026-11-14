@@ -42,7 +42,7 @@ Each finding is one claim the player could act on or dispute, written so a page 
 ## Commander profile (standard depth)
 1. Scryfall: the commander's exact text, identity, legality, printings (for themes: which printings carry the theme's art).
 2. EDHREC: top/high-synergy cards with deck counts; themes people build.
-3. 3 to 6 recent public decklists across brackets: cards in most lists, cards the player's theme can't use, unusual inclusions worth a look.
+3. 3 to 6 recent public decklists across brackets: cards in most lists, cards the player's theme can't use, unusual inclusions worth a look. Save each list as fetched to `sources/decklists/<source-id>.json` (`url`, `fetched`, `cards`), so a count in a finding can be recomputed later instead of trusted.
 4. Creators: 2 to 3 deck techs from different channels in the last 12 months; extract plan, must-plays, traps, combos, with mm:ss.
 5. Community: 3 to 5 threads/primers: what's missing, overrated, frustrating at tables, "too strong for bracket N?".
 6. Commander-text search: name the commander's mechanics and search Scryfall for cards that scale exactly those (e.g. `o:"copy" o:"spell" id<=ubr`).

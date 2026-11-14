@@ -396,7 +396,9 @@ class Merge(unittest.TestCase):
         code, out = sh("research-find", self.p, "--card", "thief of")
         self.assertEqual(code, 0)
         self.assertIn("fnd-003 [popularity_metric/medium]", out)
-        self.assertIn("src-004 EDHREC: Dimir theft theme", out)
+        self.assertIn("| src-004", out)                         # evidence IDs only by default (compact)
+        self.assertNotIn("EDHREC: Dimir theft theme", out)
+        self.assertIn("src-004 EDHREC: Dimir theft theme", sh("research-find", self.p, "--card", "thief of", "--detail")[1])
         self.assertIn("candidate Thief of Sanity", out)
         self.assertIn("rank Dimir theft #1 Thief of Sanity (61.9% 520/840)", out)
         out = sh("research-find", self.p, "--class", "verified_fact")[1]

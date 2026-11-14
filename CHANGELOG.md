@@ -2,6 +2,11 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.2.0
+- **Set filter:** the deck list has a "Set" chip group (most-played set first), labelled with the full set name and code, e.g. "Marvel's Spider-Man (SPM)". The card viewer's price row also names the set. Site data now carries each card's `set_name`.
+- **Filters wrap from 600 px:** chip groups wrap instead of scrolling sideways on tablets and desktops (was 1280 px); phones keep swipe rows.
+- **Contrast and targets:** gold theme tags use a dedicated ink (`--gold-ink`) so they pass in dark mode; status icons, Game Changer and theme tags are 1 px larger; timestamp links are at least 24 px tall and source footnote links 28 px.
+
 ## 8.1.3
 - **Privacy, precise:** quotes of DECISIONS.md and PROJECT.md text inside audit or research files stay hidden on shared pages; STATE.md is no longer scanned for quotes, because it restates the audit and research (hiding those overlaps hid the audit's own public facts). STATE.md itself is still never on the page.
 - **Recommendations link their video moments:** a time after a named creator in a recommendation's reason or trade-offs (e.g. "MTG Bear … (1:13)") links that video at that moment, like findings and disagreements.

@@ -74,6 +74,37 @@ def fetch(entries):
     return {i: c for i, c in enumerate(cards) if c is not None}, [entries[i]["name"] for i in not_found]
 
 
+# Scryfall Tagger oracle tags -> our roles. Community-maintained, so they catch what the text rules miss
+# (Auras that neutralize a creature, tappers, recursion), but they can lag new cards: rules and tags are merged.
+TAG_ROLES = {"removal": "removal", "tapper": "removal", "counterspell": "counter", "sweeper": "wipe", "ramp": "ramp",
+             "card-advantage": "draw", "recursion": "recursion", "protection": "protection"}
+
+
+def tag_roles(names, chunk=30):
+    """{card name: {role: ["Scryfall tag otag:X"]}} for the given names, or None when the tags can't be fetched.
+    Optional extra: a failed lookup never changes the run's data status (the checks don't depend on tags)."""
+    s = session()
+    keep = (s.status, s.oldest, s.used, dict(s.client.unavailable))
+    out, want, hits = {}, set(names), {}
+    try:
+        for tag in TAG_ROLES:
+            hits[tag] = set()
+            for i in range(0, len(names), chunk):
+                q = f"otag:{tag} (" + " or ".join('!"' + n.replace('"', '') + '"' for n in names[i:i + chunk]) + ")"
+                hits[tag] |= {c["name"] for c in s.scryfall.search(q, need="search")} & want
+        hits["removal"] -= hits["sweeper"]  # otag:removal includes sweepers; ours is targeted removal only
+        for tag, role in TAG_ROLES.items():
+            for n in hits[tag]:
+                out.setdefault(n, {}).setdefault(role, []).append(f"Scryfall tag otag:{tag}")
+        return out
+    except Exception:
+        return None
+    finally:  # tags never change how fresh the run's data counts as
+        s.status, s.oldest, s.used = keep[:3]
+        s.client.unavailable.clear()
+        s.client.unavailable.update(keep[3])
+
+
 def cheapest(names):
     """Cheapest and priciest paper printing (any finish) per card name, via Scryfall search with unique=prints,
     15 names per query. Each name's printings are also cached on their own ("prints:<name>"), so a variant that shares
@@ -185,6 +216,7 @@ def main():
     ap.add_argument("--bracket", type=int, choices=range(1, 6))
     ap.add_argument("--theme-sets", default="", help="comma-separated set codes counted as on theme (printing check)")
     ap.add_argument("--no-combos", action="store_true")
+    ap.add_argument("--no-tags", action="store_true", help="role counts from Oracle-text rules only (skip Scryfall Tagger tags)")
     ap.add_argument("--budget", type=float, help="gameplay budget for the whole deck (USD): compared with the cheapest-printing total when --cheapest is on, else the listed total")
     ap.add_argument("--aesthetic-budget", type=float, help="extra spend allowed for chosen printings over the cheapest ones (USD); needs --cheapest")
     ap.add_argument("--per-card-max", type=float, help="most a single listed printing may cost (USD)")
@@ -388,6 +420,10 @@ def main():
     counts, per = analytics.role_counts(deck_qty)
     out["stats"]["roles"] = counts
     out["stats"]["roles_note"] = "from fixed Oracle-text rules (analytics.py); a card can count in several roles"
+    tags = None if a.no_tags else tag_roles(sorted({c["name"] for e, c in deck_rows if not is_land(c)}))
+    if tags is not None:  # second opinion, not counted: tags over-include (Path to Exile is tagged ramp)
+        out["stats"]["roles_tag_only"] = {n: sorted(set(r) - set(per.get(n, {}))) for n, r in sorted(tags.items()) if set(r) - set(per.get(n, {}))}
+        out["stats"]["roles_tag_note"] = "roles Scryfall Tagger tags (otag:) give a card but the text rules don't; judge each before counting it"
     for card in out["cards"]:
         card["roles"] = per.get(card["name"], {}) if not card["commander"] else analytics.roles(next(c for c in cmd_cards if c["name"] == card["name"]))
     out["stats"]["mana"] = analytics.mana([(e["qty"], c) for e, c in rows], identity)

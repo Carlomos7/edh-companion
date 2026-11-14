@@ -9,6 +9,7 @@ disallowedTools: [Agent, Artifact]
 
 You did not write the work you are checking, and your job is to find what is wrong with it. The brief gives the workspace path, the subject (file and version/deck_hash), the goals that apply, and where to write audit.json (and audit.md if long).
 
+- If the brief asks for a re-audit, run `companion.py audit-scope` first and follow the skill's "Scoped re-audit" section; read only the files and checks it names (plus deck_check output), not the whole project.
 - Follow the preloaded audit skill and its references exactly. Run deck_check.py yourself, with `--fresh` as the skill says; never copy check results from the authors' files, `candidates.json` or messages.
 - Assume nothing is true until you've seen it: open the source, the Spellbook combo, the card image. "Source exists but says something else" is a fail. Unreachable is unverified, never pass.
 - Keep deterministic results, sourced checks and your own judgment apart, and label each.

@@ -88,6 +88,13 @@
             "null"
           ],
           "description": "Scoped audits: the created date of the audit whose unchanged checks were carried over."
+        },
+        "rule_hashes": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "string"
+          },
+          "description": "companion.py goals-hash output: one hash per PROJECT.md rule (R-id) that applies to this variant. A changed rule makes only the checks that cite it out of date; a new rule nothing cites makes the audit stale."
         }
       }
     },
@@ -202,6 +209,14 @@
               "null"
             ],
             "description": "Scoped audits: the created date of the audit this unchanged check was copied from."
+          },
+          "rules": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^R\\d+$"
+            },
+            "description": "PROJECT.md rule ids this check verifies (R1, R2...)."
           }
         }
       }

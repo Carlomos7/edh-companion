@@ -10,7 +10,9 @@
   companion.py research [project]   show saved research approval, ask-mode, depth and exclusions (+ project override)
   companion.py validate <project>    check research.json / brew*.json / audit*.json against the schemas,
                                      resolve citation IDs, and report stale or contradictory audits
-  companion.py goals-hash <project>  fingerprint of PROJECT.md's rules; audits record it so a rule change makes them stale
+  companion.py goals-hash <project> [--variant V]
+                                     fingerprint of PROJECT.md's Rules (R-ids) for a variant, plus one hash per rule;
+                                     audits record both, and checks cite rule ids, so a rule change stales only its checks
   companion.py research-plan <project> --worker slug:role:subject1,subject2 [--worker ...]
                                      record the parallel research workers a merge expects (research.plan.json)
   companion.py merge-research <project> [--allow-partial]
@@ -121,14 +123,73 @@ def projects():
     return ws, how, sorted(rows, key=lambda r: -r["updated"])
 
 
-def goals_hash(d):
-    """Hash of PROJECT.md with whitespace normalised; None if there's no PROJECT.md."""
+RULE = re.compile(r"^\s*[-*]\s*([RG]\d+)\s*(?:\[([^\]]*)\])?\s*[:.]?\s*(.+)$")
+
+
+def norm(text):
+    return re.sub(r"\s+", " ", text).strip().lower()
+
+
+def rules(d):
+    """{'R1': {'text', 'variants'}, 'G1': {...}} from PROJECT.md's `## Rules` and `## Guidance` lists. `[b2, b4]` after
+    the id limits a rule to those variants (`main` is brew.json); no tag means every variant."""
+    p, out, sec = os.path.join(d, "PROJECT.md"), {}, None
+    if not os.path.exists(p):
+        return out
+    with open(p, encoding="utf-8") as h:
+        for line in h:
+            if line.startswith("## "):
+                sec = line[3:].strip().lower()
+                continue
+            m = RULE.match(line)
+            if m and sec in ("rules", "guidance") and m[1][0] == ("R" if sec == "rules" else "G"):
+                if m[1] in out:
+                    out.setdefault("_dupes", []).append(m[1])
+                out[m[1]] = {"text": m[3].strip(), "variants": [v.strip().lower() for v in (m[2] or "").split(",") if v.strip()]}
+    return out
+
+
+def variant_of(brew_name):
+    b = os.path.basename(brew_name or "brew.json")
+    return b[5:-5] if b.startswith("brew-") else "main"
+
+
+def rule_hashes(d, variant="main"):
+    """{R-id: hash} for the Rules that apply to a variant. Guidance is never hashed: it can't make an audit stale."""
+    return {k: hashlib.sha1(norm(v["text"]).encode()).hexdigest()[:12] for k, v in rules(d).items()
+            if k.startswith("R") and (not v["variants"] or variant in v["variants"])}
+
+
+def goals_hash(d, variant="main"):
+    """Fingerprint of PROJECT.md's rules for one variant: the Rules section when it has R-ids, else (older projects)
+    the whole file with whitespace normalised. None if there's no PROJECT.md."""
     p = os.path.join(d, "PROJECT.md")
     if not os.path.exists(p):
         return None
+    rh = rule_hashes(d, variant)
+    if rh:
+        return hashlib.sha1(json.dumps(rh, sort_keys=True).encode()).hexdigest()[:12]
     with open(p, encoding="utf-8") as h:
-        text = re.sub(r"\s+", " ", h.read()).strip().lower()
+        text = norm(h.read())
     return hashlib.sha1(text.encode()).hexdigest()[:12]
+
+
+def rule_drift(d, audit, variant="main"):
+    """(stale, why, check_ids): with subject.rule_hashes, only checks citing a changed rule are out of date, and a new
+    or changed rule no check cites makes the audit stale; without them, any goals_hash change does."""
+    sub = audit.get("subject") or {}
+    old = sub.get("rule_hashes")
+    if old is None:
+        gh = sub.get("goals_hash")
+        return (bool(gh) and gh != goals_hash(d, variant)), "PROJECT.md rules changed since the audit", []
+    cur = rule_hashes(d, variant)
+    changed = sorted(r for r in set(old) | set(cur) if old.get(r) != cur.get(r))
+    if not changed:
+        return False, "", []
+    cites = [c.get("id") for c in audit.get("checks", []) if set(c.get("rules") or []) & set(changed)]
+    uncited = [r for r in changed if r in cur and not any(r in (c.get("rules") or []) for c in audit.get("checks", []))]
+    why = "rules changed: " + ", ".join(changed) + (f" (no check covers {', '.join(uncited)})" if uncited else "")
+    return bool(cites or uncited), why, cites
 
 
 def registry():
@@ -301,8 +362,8 @@ def validate(d):
         gh = (audit.get("subject") or {}).get("goals_hash")
         if seen.get("deck_hash") != brew.get("deck_hash") or seen.get("version") != brew.get("version"):
             notes.append(f"{os.path.basename(ap)}: STALE (audited v{seen.get('version')} {seen.get('deck_hash')}, current v{brew.get('version')} {brew.get('deck_hash')})")
-        elif gh and gh != goals_hash(d):
-            notes.append(f"{os.path.basename(ap)}: STALE (PROJECT.md rules changed since the audit)")
+        elif (drift := rule_drift(d, audit, variant_of(bp)))[0]:
+            notes.append(f"{os.path.basename(ap)}: STALE ({drift[1]}" + (f"; re-check {', '.join(drift[2])}" if drift[2] else "") + ")")
         else:
             notes.append(f"{os.path.basename(ap)}: current, verdict {audit['verdict']['status']}")
     for ap in sorted(glob.glob(os.path.join(d, "audit*.json"))):
@@ -319,7 +380,35 @@ def validate(d):
         ids = [c.get("id") for c in audit.get("checks", [])]
         if len(set(ids)) != len(ids):
             errors.append(f"{ap}: duplicate check id")
+        known_r = rules(d)
+        for c in audit.get("checks", []):
+            for r in c.get("rules") or []:
+                if r not in known_r:
+                    notes.append(f"WARN  {os.path.basename(ap)}: {c.get('id')} cites {r}, which is not in PROJECT.md")
+        gone = sorted(set((audit.get("subject") or {}).get("rule_hashes") or {}) - set(known_r))
+        if gone and not all(re.search(rf"\b{r}\b", decisions_text(d)) for r in gone):
+            errors.append(f"{ap}: rule(s) {', '.join(gone)} left PROJECT.md Rules without a DECISIONS.md line naming them")
+    rs = rules(d)
+    if rs.get("_dupes"):
+        errors.append(f"PROJECT.md: duplicate rule id(s) {', '.join(rs['_dupes'])}")
+    errors += decision_problems(d)
     return errors, notes
+
+
+def decisions_text(d):
+    p = os.path.join(d, "DECISIONS.md")
+    if not os.path.exists(p):
+        return ""
+    with open(p, encoding="utf-8") as h:
+        return h.read()
+
+
+def decision_problems(d):
+    """DECISIONS.md lines with ids (`- D-12 2026-11-16 ...`): ids unique, `superseded by D-n` points at a real one."""
+    ids = re.findall(r"^\s*[-*]\s*(D-\d+)\b", decisions_text(d), re.M)
+    out = [f"DECISIONS.md: duplicate id {i}" for i in sorted({i for i in ids if ids.count(i) > 1})]
+    out += [f"DECISIONS.md: superseded by {i}, which doesn't exist" for i in re.findall(r"superseded by (D-\d+)", decisions_text(d), re.I) if i not in ids]
+    return out
 
 
 DECK_WIDE = {"count", "singleton", "game_changers", "bracket", "combos", "mana", "composition"}  # depend on every card
@@ -390,8 +479,9 @@ def audit_scope(d, brew_name="brew.json"):
         return "full", ["no earlier audit"]
     audit = load(ap)
     sub = audit.get("subject") or {}
-    if sub.get("goals_hash") and sub["goals_hash"] != goals_hash(d):
-        return "full", ["PROJECT.md rules changed since the last audit"]
+    stale, rule_why, rule_checks = rule_drift(d, audit, variant_of(brew_name))
+    if stale and not sub.get("rule_hashes"):
+        return "full", [rule_why]
     old = sub.get("sections")
     if not old:
         return "full", ["the last audit recorded no subject.sections (store `companion.py sections` output in it)"]
@@ -408,6 +498,7 @@ def audit_scope(d, brew_name="brew.json"):
                else "card changed" if cards & set(c.get("cards") or []) or any(x in text for x in cards)
                else "recommendation changed" if any(x in text for x in recs)
                else "text changed" if prose_changed and ("text" in str(c.get("id")) or c.get("area") == "other") else None)
+        why = why or ("rule changed" if c.get("id") in rule_checks else None)
         (rerun if why else carry).append((c.get("id"), why))
     spot = __import__("random").Random(brew.get("deck_hash") or "").sample([i for i, _ in carry], min(2, len(carry)))
     _SCOPE.update(audit=audit, ap=ap, brew=brew, carry=[i for i, _ in carry if i not in spot])
@@ -415,6 +506,8 @@ def audit_scope(d, brew_name="brew.json"):
     lines = [f"baseline: {os.path.basename(ap)} (v{dk.get('version')} {dk.get('deck_hash')})",
              "always: deck_check.py --fresh, then every deck-wide check",
              "changed: " + (", ".join(changed + [k + " (removed)" for k in removed]) or "nothing")]
+    if stale and "no check covers " in rule_why:
+        lines.append("add checks for " + rule_why.split("no check covers ", 1)[1].rstrip(")") + " (a new or changed rule nothing checks yet)")
     lines += [f"re-check {i}: {w}" for i, w in rerun]
     lines += [f"spot-check {i} (carried, picked at random)" for i in spot]
     lines.append(f"carry over {len(carry) - len(spot)} unchanged pass checks (set carried_from to this baseline's created date)")
@@ -432,7 +525,9 @@ def write_carry(d, brew_name="brew.json"):
     a, brew = _SCOPE["audit"], _SCOPE["brew"]
     sub = copy.deepcopy(a.get("subject") or {})
     sub["deck"] = {**(sub.get("deck") or {}), "version": brew.get("version"), "deck_hash": brew.get("deck_hash")}
-    sub.update(goals_hash=goals_hash(d), sections=sections(brew), mode="scoped", based_on=a.get("created"))
+    sub.update(goals_hash=goals_hash(d, variant_of(brew_name)), sections=sections(brew), mode="scoped", based_on=a.get("created"))
+    if rule_hashes(d, variant_of(brew_name)):
+        sub["rule_hashes"] = rule_hashes(d, variant_of(brew_name))
     keep = set(_SCOPE["carry"])
     checks = [{**c, "carried_from": c.get("carried_from") or a.get("created")} for c in a.get("checks", []) if c.get("id") in keep]
     out = os.path.join(d, "carry-" + os.path.basename(_SCOPE["ap"]))  # not audit*.json, so validate skips it
@@ -835,7 +930,10 @@ def main():
     if len(sys.argv) < 3:
         sys.exit(f"usage: companion.py {sys.argv[1]} <project-dir>")
     if sys.argv[1] == "goals-hash":
-        print(goals_hash(sys.argv[2]) or "no PROJECT.md")
+        v = sys.argv[sys.argv.index("--variant") + 1] if "--variant" in sys.argv else "main"
+        print(goals_hash(sys.argv[2], v) or "no PROJECT.md")
+        if rule_hashes(sys.argv[2], v):
+            print(json.dumps({"rule_hashes": rule_hashes(sys.argv[2], v)}))
         return
     errors, notes = validate(sys.argv[2])
     for e in errors:

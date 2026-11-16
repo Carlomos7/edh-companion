@@ -9,7 +9,7 @@ Find out what real players know, then recommend. Quality beats volume: relevant,
 
 **Replies:** answer first, reasons next, limits once, next step last (a choice as options, recommended first with why). Read [writing.md](../../references/writing.md) before writing directions, a research reply, RESEARCH.md or findings.
 
-**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py` and `art_sheet.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py`, `art_sheet.py` and `plan.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
 
 ## Boundaries
 - **One-lookup questions** ("what does lifelink do?", "is Sol Ring banned?", one card's text or price): answer from one authoritative lookup with its date; no files.

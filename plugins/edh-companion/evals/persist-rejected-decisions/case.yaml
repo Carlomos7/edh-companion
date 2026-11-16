@@ -1,7 +1,7 @@
 schema_version: "1.0"
 name: persist-rejected-decisions
 description: A later iteration keeps earlier decisions (rejected cards, bracket 2) and doesn't change the accepted deck unasked.
-tags: [persistence, brew]
+tags: [persistence, brew, regression]
 context: {scaffold_script: scaffold.sh}
 execution: {prompt: "Suggest 5 upgrades for my Spider-Gwen deck.", max_turns: 40, timeout_seconds: 1500}
 runs: 1

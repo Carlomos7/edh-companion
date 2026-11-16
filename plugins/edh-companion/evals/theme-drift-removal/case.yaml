@@ -1,7 +1,7 @@
 schema_version: "1.0"
 name: theme-drift-removal
 description: In a strict-theme workspace, "add more removal" stays on theme.
-tags: [theme, brew]
+tags: [theme, brew, regression]
 context: {scaffold_script: scaffold.sh}
 execution: {prompt: "Add more removal to my Spider-Gwen deck.", max_turns: 40, timeout_seconds: 1500}
 runs: 1

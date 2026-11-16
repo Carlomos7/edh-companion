@@ -25,6 +25,8 @@ Record in research.json `methodology`: sources actually reviewed (including ones
 ## Writing findings
 Each finding is one claim the player could act on or dispute, written so a page can show the conclusion first and the evidence on demand ([schemas/README.md](../../../schemas/README.md), "Findings and checks"):
 - **One claim per finding.** A video that makes three points gives three findings; a finding never bundles a recommendation, a warning and a card list.
+- **`facet`**: what it's about: `strategy` (how the deck wins), `combo`, `card` (one card's value), `power` (bracket and speed) or `table-feel` (how it plays at real tables). `companion.py research-find <project> --summary` groups findings by facet and evidence class and counts creators, not videos; use it instead of writing a summary by hand.
+- **Replacing a finding:** set the old one's `status: "superseded"` and `superseded_by`, never delete it; `companion.py archive-findings <project>` later moves uncited superseded findings to research.archive.json (ids stay reserved).
 - **`headline`**: the conclusion as a sentence of about 90 characters or fewer ("Flash enablers are a trap for Azula: 4 creators skip them"), not a topic ("Flash").
 - **`claim`**: the claim in 1 to 3 plain sentences, attributed ("EDHRECast cuts…"). Citation brackets and timestamps stay out of the text.
 - **`locators`**: for each cited source, where this claim is supported: `[{"source": "src-106", "at": ["8:00-9:20"]}]`. Each finding carries its own moments, even when several findings cite the same video; `sources[].timestamps` lists every moment cited from that video.

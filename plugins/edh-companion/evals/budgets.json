@@ -1,0 +1,9 @@
+{
+ "_note": "Per-case budgets for `python tests/bench/session_stats.py --eval RESULT.json --budget plugins/edh-companion/evals/budgets.json` (exit 1 when a median is >20% over). Seeded from the 8.0.0 Tier 2 medians in docs/benchmarks.md; new cases get a budget after their first measured run.",
+ "act-lookup-banned": {"cost_usd": 0.176, "turns": 3},
+ "act-present-not-for-text": {"cost_usd": 0.127, "turns": 6},
+ "act-research-anti-venom": {"cost_usd": 0.131, "turns": 5},
+ "asks-before-building": {"cost_usd": 0.149, "turns": 7},
+ "gate-explicit-change": {"cost_usd": 0.123, "turns": 6},
+ "review-planted-errors": {"cost_usd": 0.194, "turns": 12}
+}

@@ -296,3 +296,23 @@ python tests/bench/bench.py --table tests/bench/results/LABEL.json
 # Tier 2, from each worktree's plugins/edh-companion (flags above), then:
 python tests/bench/session_stats.py --eval <aggregate-result.json or --json output> ... --json OUT
 ```
+
+## Tier 3: real sessions
+Evals measure single prompts in a sandbox; the cost players actually feel comes from long sessions. Tier 3 measures those.
+
+**How to measure:**
+- **Whole session:** `python tests/bench/session_stats.py ~/.claude/projects/<dir>/<session>.jsonl`. It reports tokens, peak context, tool calls, duplicates and errors, with subagents included.
+- **Per skill:** turn on Claude Code's OpenTelemetry export (https://code.claude.com/docs/en/monitoring-usage) and group token metrics by the `skill.name` and `agent.name` attributes. Without OTEL, `/usage` at the end of a session gives the session total only.
+- **Before/after a release:** measure 3 to 5 sessions of the same kind (a research pass, a build, a scoped re-audit) on each version, and compare medians, never single sessions.
+
+**Baseline before 8.3.0** (cosmic-spider-man and appa projects, measured 2026-11-16 from saved transcripts; these sessions also included plugin work, so they overstate skill cost):
+
+| Session | Plugin version | Skills fired | Wall time | Output tokens | Cache read | Peak context | Tool calls (Bash) | Errors | 429s |
+|---|---|---|---|---|---|---|---|---|---|
+| a0a3a74c | 8.1.0–8.1.3 | brew 6, audit 1, research 1 | multi-day | 1,136,737 | 137.3 M | 408,709 | 921 (608) | 59 | 7 |
+| f5d2f8b2 | 8.1.3 | brew 2 | 99 min | 310,566 | 30.5 M | 368,793 | 255 (140) | 9 | 0 |
+| 52c434f3 | 7.6.0 | brew 1 | 14 min | 5,815 | 1.1 M | 97,837 | 14 (7) | 4 | 1 |
+
+**Not measured yet:** sessions on 8.3.0 or later. Per-skill splits need OTEL, which wasn't enabled for these sessions. The next 3 to 5 deck sessions on 8.7+ should be measured the same way and added here.
+
+**Eval cost budgets:** `plugins/edh-companion/evals/budgets.json` holds a cost and turn budget per case, seeded from the 8.0.0 Tier 2 medians above. `session_stats.py --eval RESULT.json --budget plugins/edh-companion/evals/budgets.json` exits 1 when a case's median is more than 20% over.

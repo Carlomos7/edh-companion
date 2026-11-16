@@ -2,6 +2,25 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.8.0
+Hooks, cost measurement and a wider eval suite, plus tools so findings and cards don't have to be read in full.
+- **Hooks (`hooks/hooks.json`, `scripts/hook.py`, stdlib only):**
+  - After Claude writes a research.json, brew*.json or audit*.json, the project is validated, and any errors go back to Claude in the same turn.
+  - At startup or resume inside a project, a one-line status is added: STATE.md's first line and the builds.
+  - The auditor can't finish while an audit.json it wrote in the last 30 minutes fails validation.
+  - Unrelated writes cost about 1 s (uv startup).
+- **Findings:** a new `facet` field (strategy, combo, card, power, table-feel). `research-find --summary` groups findings by facet and evidence class and counts creators, not videos, in place of a hand-written brief. A replaced finding gets `status: superseded`, and `archive-findings` moves uncited ones to research.archive.json.
+- **`companion.py card <project> NAME`:** every place a card appears: builds (with printing), recommendations, candidates, findings, rankings, audit checks and DECISIONS lines.
+- **Measurement:** a "Tier 3: real sessions" section in docs/benchmarks.md (method, OTEL per-skill attributes, a baseline from 3 sessions before 8.3.0). `session_stats.py --eval … --budget evals/budgets.json` exits 1 when a case's median cost or turn count is more than 20% over budget.
+- **Evals:**
+  - reaudit-history: a multi-turn case via `context.history_file`.
+  - research-large-find: a 600-finding research.json, which must not be read whole.
+  - present-builds-page: Linux/WSL only.
+  - 20 trigger cases (10 should, 10 should-not).
+  - A `regression` tag for pass^3 runs.
+  - `--max-cost-usd 0` checks that every case loads, for free.
+- 234 unit tests.
+
 ## 8.7.0
 The cast-by-turn simulation now sees colors. It used to count only the amount of mana, so a five-color commander looked castable whenever five lands were out.
 - **Color-aware cast-by-turn:** lands and cheap mana producers carry the colors they make (Scryfall `produced_mana`; fetch lands count as any needed color), and the commander's pips have to be paid. It uses Karsten's 2022 Commander model: London mulligan with the first one free, his keep rules, bottoming toward three lands, and a turn-1 draw. It also reports `mulligans_per_game`, the share of games where colors (not mana) were the problem, which color was short, and the `bottleneck`. In the Spider-Man deck, Cosmic Spider-Man is castable by turn 5 in 53% of games; in a quarter of games the mana was there but a color wasn't, most often red.

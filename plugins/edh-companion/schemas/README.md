@@ -59,6 +59,7 @@ EDHCompanion/projects/<project>/     project = commander or idea slug, e.g. spid
 ├── audit.json      checks and verdict for one deck version              (audit)  audit-<variant>.json for variants
 ├── ACQUISITION.md  optional: how to get the cards, with dated prices   (brew, on request)
 ├── decklists/      main-v1.txt, main-v2.txt, b4-v1.txt ... importable lists, never overwritten
+├── sources/        theme-rule.json, pool.lock.json + pool.diff.md, art_notes.json, freshness.json, sheets/  (pool.py, art_sheet.py)
 └── reports/        index.html + img/ and presentation-checks.md         (present)
 ```
 Create only what the task needs. A research question writes RESEARCH.md and research.json and nothing else.

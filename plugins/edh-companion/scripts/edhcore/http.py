@@ -105,7 +105,7 @@ class Client:
     def post_json(self, url, body):
         return json.loads(self.request(url, json.dumps(body).encode(), {"Content-Type": "application/json"}))
 
-    def request(self, url, data=None, headers=None, accept="application/json"):
+    def request(self, url, data=None, headers=None, accept="application/json", with_headers=False):
         ep = endpoint(url)
         host = urllib.parse.urlsplit(url).netloc
         if self.policy and host and (why := self.policy.blocked(host)):
@@ -131,9 +131,9 @@ class Client:
             try:
                 self.requests += 1
                 with urllib.request.urlopen(urllib.request.Request(url, data=data, headers=hdr), timeout=self.timeout, context=CTX) as r:
-                    body = r.read()
+                    body, info = r.read(), getattr(r, "headers", None) or {}
                 self._answered(ep, probe)
-                return body
+                return (body, info) if with_headers else body
             except urllib.error.HTTPError as e:
                 if e.code == 429:
                     wait = retry_after(e, self.now())
@@ -144,7 +144,7 @@ class Client:
                     elif i < self.tries - 1:
                         self._wait(wait)
                     continue
-                if e.code < 500:  # an answer: the endpoint works, the request was wrong
+                if e.code < 500:  # an answer: the endpoint works, the request was wrong (or 304: not modified)
                     self._answered(ep, probe)
                     raise RequestError(url, e.code, (e.read() or b"")[:300].decode("utf-8", "replace") if e.fp else "")
                 last, only_429 = f"HTTP {e.code}", False
@@ -168,6 +168,41 @@ class Client:
         until = new["open_until"] if new["open_until"] > failed_at else None
         self.unavailable[ep] = f"{last} after {self.tries} tries"
         raise Unavailable(ep, f"{last} after {self.tries} tries", until)
+
+    def snapshot(self, url, path, key=None):
+        """Download url to path only if it changed: If-None-Match / If-Modified-Since from the sidecar <path>.meta.json,
+        a 304 keeps the file. `key` (e.g. a bulk file's updated_at) skips the request when it matches the stored one.
+        Returns the meta: {url, etag, last_modified, key, sha256, bytes, fetched_at, changed}."""
+        import hashlib
+        mp = path + ".meta.json"
+        try:
+            with open(mp, encoding="utf-8") as h:
+                meta = json.load(h)
+        except (OSError, ValueError):
+            meta = {}
+        have = os.path.exists(path) and meta.get("sha256")
+        if have and key is not None and meta.get("key") == key:
+            return dict(meta, changed=False)
+        hdr = {}
+        if have and meta.get("etag"):
+            hdr["If-None-Match"] = meta["etag"]
+        if have and meta.get("last_modified"):
+            hdr["If-Modified-Since"] = meta["last_modified"]
+        try:
+            body, info = self.request(url, headers=hdr, accept="*/*", with_headers=True)
+        except RequestError as e:
+            if e.code == 304 and have:
+                return dict(meta, changed=False)
+            raise
+        os.makedirs(os.path.dirname(os.path.abspath(path)), exist_ok=True)
+        with open(path + ".tmp", "wb") as h:
+            h.write(body)
+        os.replace(path + ".tmp", path)
+        meta = {"url": url, "etag": info.get("ETag"), "last_modified": info.get("Last-Modified"), "key": key,
+                "sha256": hashlib.sha256(body).hexdigest(), "bytes": len(body), "fetched_at": self.now()}
+        with open(mp, "w", encoding="utf-8") as h:
+            json.dump(meta, h, indent=1)
+        return dict(meta, changed=True)
 
     def _answered(self, ep, probe):
         """Any HTTP answer except 5xx/429 (a 404 too) shows the endpoint works: close its breaker."""

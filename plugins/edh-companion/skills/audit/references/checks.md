@@ -55,7 +55,7 @@ When an acquisition plan is checked: products really contain the cards claimed (
 - Bracket relevance: two-card (commander + up to 2 cards) at B1–B2 fail. At B3 fail when it can win early or the deck holds it for later ([brackets.md](brackets.md)); a warning only when it is incidental and late-game, saying why.
 
 ## Composition and mana (judgment on calculated data)
-Compare deck_check stats with the plan and [construction defaults](../../brew/references/construction.md): lands vs curve, ramp, draw, interaction, wipes, color sources vs pips. Report numbers as calculated and the verdict as judgment.
+Compare deck_check stats with the plan and [construction defaults](../../brew/references/construction.md): lands vs curve (`stats.land_count`), ramp, draw, interaction, wipes, color sources vs Karsten's table (`stats.sources_check`), and when the commander comes down (`stats.cast_by_turn`, with its `bottleneck` color). Report numbers as calculated and the verdict as judgment.
 
 ## Research completeness
 - Coverage: does `methodology.coverage` include data, decklists, creators and community for a standard pass? Missing types → research_gaps.

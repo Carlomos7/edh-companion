@@ -428,12 +428,13 @@ def main():
     for card in out["cards"]:
         card["roles"] = per.get(card["name"], {}) if not card["commander"] else analytics.roles(next(c for c in cmd_cards if c["name"] == card["name"]))
     out["stats"]["mana"] = analytics.mana([(e["qty"], c) for e, c in rows], identity)
-    if len(cmd_cards) == 1 and deck_rows:
-        mv = int(cmd_cards[0].get("cmc") or 0)
-        out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, mv)
-    elif len(cmd_cards) == 2 and deck_rows:
-        out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, max(int(c.get("cmc") or 0) for c in cmd_cards))
-        out["stats"]["cast_by_turn"]["assumptions"] += "; two commanders: the more expensive one"
+    out["stats"]["sources_check"] = analytics.source_check(deck_qty)
+    out["stats"]["land_count"] = analytics.land_count(deck_qty)
+    if cmd_cards and deck_rows:
+        top = max(cmd_cards, key=lambda c: int(c.get("cmc") or 0))  # two commanders: the more expensive one
+        out["stats"]["cast_by_turn"] = analytics.simulate(deck_qty, int(top.get("cmc") or 0), cost=analytics.pips(top))
+        if len(cmd_cards) == 2:
+            out["stats"]["cast_by_turn"]["assumptions"] += "; two commanders: the more expensive one"
     listed = out["stats"]["price_usd"]
     cheap_total, cheap_st, combo_st = None, "fresh", "fresh"
     if a.cheapest or a.aesthetic_budget is not None:
@@ -531,6 +532,16 @@ def finish(out, a):
         if out.get("stats"):
             s = out["stats"]
             print(f"stats: {s.get('cards')} cards, {s.get('lands')} lands, avg MV {s.get('average_mv')}, GC {len(s.get('game_changers', []))}, ${s.get('price_usd')}")
+            cbt = s.get("cast_by_turn") or {}
+            if cbt:
+                t = cbt["commander_mv"]
+                print(f"commander castable by turn {t}: {cbt['by_turn'].get(t, 0) * 100:.0f}%, turn {t + 1}: {cbt['by_turn'].get(t + 1, 0) * 100:.0f}%"
+                      + (f"; colors were the problem in {cbt['color_short_games'] * 100:.0f}% of games, mostly {cbt['bottleneck']}" if cbt.get("bottleneck") else ""))
+            short = {c: v for c, v in (s.get("sources_check") or {}).items() if v["short"]}
+            if short:
+                print("sources below Karsten's 99-card table: " + ", ".join(f"{c} {v['sources']}/{v['needed']} (for {v['for']})" for c, v in short.items()))
+            if (s.get("land_count") or {}).get("warning"):
+                print("land count: " + s["land_count"]["warning"])
         if out.get("bracket_indicators"):
             print("indicators (read in context): " + "; ".join(out["bracket_indicators"]))
         if out.get("combos"):

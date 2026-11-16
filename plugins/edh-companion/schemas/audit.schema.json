@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "audit.schema.json",
-  "title": "audit.json: independent verification by mtg-audit",
+  "title": "audit.json: independent verification by the audit skill",
   "type": "object",
   "required": [
     "schema_version",
@@ -99,7 +99,7 @@
       "properties": {
         "independent": {
           "type": "boolean",
-          "description": "true only when the judgment checks ran in a context that did not produce the work (mtg-auditor subagent), or the work came from the player. Script checks are independent by nature."
+          "description": "true only when the judgment checks ran in a context that did not produce the work (the auditor agent), or the work came from the player. Script checks are independent by nature."
         },
         "how": {
           "type": "string"

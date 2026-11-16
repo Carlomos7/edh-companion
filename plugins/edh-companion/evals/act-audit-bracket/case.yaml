@@ -1,6 +1,6 @@
 schema_version: "1.0"
 name: act-audit-bracket
-description: "\"Is my deck really bracket 3?\" routes to mtg-audit and catches the deterministic problems."
+description: "\"Is my deck really bracket 3?\" routes to audit and catches the deterministic problems."
 tags: [activation, audit]
 execution:
   prompt: |

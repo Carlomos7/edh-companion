@@ -1,6 +1,6 @@
 ---
 name: research
-description: Researches Magic: The Gathering Commander ideas, commanders, cards, themes and strategies across real community knowledge (EDHREC statistics, public decklists and primers, Reddit, articles, YouTube deck techs, tournament results), recommends promising directions, and records cited, classified evidence in RESEARCH.md and research.json. Use when the player is exploring an idea or theme, asks what players recommend or think about something, wants commanders or strategies compared, wants something from YouTube or Reddit investigated, or when another skill finds an evidence gap that changes its conclusions. Not for a single fact or rules question that one lookup answers, not for building or changing a deck (brew), not for verifying finished work (audit), not for pages (present).
+description: Researches Commander ideas, commanders, cards, themes and strategies across real community knowledge (EDHREC, public decklists, Reddit, YouTube deck techs, articles, tournaments), recommends directions, and saves cited, classified evidence in RESEARCH.md and research.json. Use when the player is exploring an idea or options before building, asks what players think of something, wants commanders or strategies compared, wants a video or thread investigated, or another skill finds an evidence gap. Not for a single fact or rules lookup, building or changing a deck (brew), or verifying finished work (audit).
 ---
 
 # Research
@@ -9,11 +9,12 @@ Find out what real players know, then recommend. Quality beats volume: relevant,
 
 **Replies:** answer first, reasons next, limits once, next step last (a choice as options, recommended first with why). Read [writing.md](../../references/writing.md) before writing directions, a research reply, RESEARCH.md or findings.
 
-## When to use
-- **Use:** "I want a Spider-Man deck, where do I start?", "what are people saying about Anti-Venom?", "best Spider-Man commanders?", "is this Reddit combo real?", "which precon has most of these cards?", "is this Secret Lair still available?", a gap brew or audit reports.
-- **Don't use:** "what does lifelink do?", "is Sol Ring banned?", one card's text or price. Answer directly from one authoritative lookup with its date; no files.
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py` and `candidates.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+
+## Boundaries
+- **One-lookup questions** ("what does lifelink do?", "is Sol Ring banned?", one card's text or price): answer from one authoritative lookup with its date; no files.
 - **Parallel agents:** only for several independent subjects (e.g. four commanders to compare); small jobs run inline. One `researcher` owns card data, the others take videos, decklists and community; each writes `research.part-<slug>.json`, merged by `companion.py merge-research` only when every planned worker finished. Plan, briefs and merge: [references/sources.md](references/sources.md), "Parallel research" and "Reliability".
-- **Needs approval:** only the one-time research approval, and work clearly beyond it (much deeper than the saved depth, many long videos, an unapproved or excluded tool). Approved research at the saved depth, including every Scryfall search it needs, runs after an announcement, with progress updates and no more questions ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)). Research never changes a deck.
+- **Needs approval:** only the one-time research approval, and work clearly beyond it (much deeper than the saved depth, many long videos, an unapproved or excluded tool). Approved research at the saved depth, including every Scryfall search it needs, runs after an announcement (in "ask every time" mode, after a yes), with progress updates and no other questions ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)). Research never changes a deck.
 
 ## Inputs
 The question; optionally the project's PROJECT.md, DECISIONS.md, STATE.md (goals, theme rules, what's settled) and an existing research.json to extend. Project files: [schemas/README.md](../../schemas/README.md).
@@ -22,7 +23,7 @@ The question; optionally the project's PROJECT.md, DECISIONS.md, STATE.md (goals
 ```
 - [ ] 1. Read the project files if there's a project; reuse existing research
 - [ ] 2. Depth (quick / comprehensive / deep), the important questions, the recency cutoff
-- [ ] 3. Confirm which capabilities work (one cheap call each)
+- [ ] 3. Confirm which approved capabilities work (one cheap call each)
 - [ ] 4. Gather: facts, then what's played, then why, then how it plays at tables
 - [ ] 5. Label every claim; keep sources with dates and timestamps
 - [ ] 6. Hunt for what's missing and where sources disagree; for themes, assess feasibility
@@ -32,7 +33,7 @@ The question; optionally the project's PROJECT.md, DECISIONS.md, STATE.md (goals
 
 1. **Reuse.** No project named? Check saved projects first and offer to resume a match ([schemas/README.md](../../schemas/README.md), "Starting a session"). Extend an existing research.json (bump `version`, keep IDs); query it with `companion.py research-find <project> --card NAME | --text WORDS` instead of reading it whole, and only research what it doesn't already answer. A theme in PROJECT.md shapes the search: look for on-theme cards and printings, not only strong cards. Research about an existing deck records the deck version it describes in `scope.deck` ([references/method.md](references/method.md), "When the deck changes after research").
 2. **Approval and depth.** Before the first substantial research (not a one-card or one-rule question), run the two-step approval in [references/sources.md](references/sources.md), "Research approval": the tools found, approved by the player, then how often to ask in future. Nothing external is called before that answer. Saved choices are reused across sessions and projects; PROJECT.md "Research preferences" overrides them per project. Announce every substantial task; in "ask every time" mode, wait for a yes. Claude Code's own permission prompts are separate and still apply.
-   Depth: Quick, Comprehensive (default) or Deep. Research until the important questions are answered or new sources stop adding anything, then say why it stopped ([references/method.md](references/method.md), "Depth and when to stop"). Recency cutoff: the latest Wizards bans / Game Changers / bracket update; older power or legality claims can support, never decide.
+   Depth and when to stop: [references/method.md](references/method.md), "Depth and when to stop" (Comprehensive by default). Recency cutoff: the latest Wizards bans / Game Changers / bracket update; older power or legality claims can support, never decide.
 3. **Capabilities, not tool names.** Use approved tools only; respect preferences (PROJECT.md "Research preferences", else `research:` in the config): favour preferred sources, never use excluded ones, say when an exclusion leaves a gap, and ask before falling back to an unapproved tool. Otherwise pick tools by what they do and confirm each with one cheap call; installed doesn't mean working. Which tool for which job, how they behaved when tested, and the fallbacks: [references/sources.md](references/sources.md). When YouTube transcripts work and aren't excluded, comprehensive research includes creator deck techs with timestamps. Record failures and fallbacks in `methodology.tools_failed`. Never fill a gap from memory.
 4. **Gather** in this order: card facts and rules → EDHREC and real decklists (what's played, with sample sizes) → creators and primers (why) → Reddit and forums (how it plays at real tables, what's overrated or frustrating) → articles. Parallel lookups where independent. Method and evidence rules: [references/method.md](references/method.md).
 5. **Label.** Each finding gets an evidence class (`verified_fact`, `calculated`, `popularity_metric`, `community_opinion`, `model_assessment`, `unresolved`) and a confidence. Popularity isn't effectiveness; one creator is one source however many videos; a statistic without a sample size is `unresolved`. One claim per finding, written per [references/method.md](references/method.md), "Writing findings".

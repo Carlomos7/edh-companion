@@ -86,6 +86,25 @@ class Scope(unittest.TestCase):
         self.assertIn("re-check chk-art-1: card changed", text)
         self.assertNotIn("re-check chk-art-2", text)
 
+    def test_write_carry_records_new_subject_and_oldest_carried_date(self):
+        self.audit["checks"][4]["carried_from"] = "2026-11-01"  # carried before: keep the oldest date
+        self.audit["checks"] += [{"id": f"chk-art-{i}", "area": "printing", "status": "pass", "requirement": "art", "cards": ["Forest"]} for i in (3, 4)]
+        b = json.loads(json.dumps(BREW))
+        b.update(version=3, deck_hash="def")
+        b["deck"][1]["note"] = "new printing"
+        self.plan(b)
+        out = co.write_carry(self.d)
+        doc = json.load(open(out, encoding="utf-8"))
+        sub = doc["subject"]
+        self.assertEqual((sub["deck"]["version"], sub["deck"]["deck_hash"]), (3, "def"))
+        self.assertEqual((sub["mode"], sub["based_on"], sub["goals_hash"]), ("scoped", "2026-11-14", co.goals_hash(self.d)))
+        self.assertEqual(sub["sections"], co.sections(b))
+        carried = {c["id"]: c["carried_from"] for c in doc["checks"]}
+        self.assertEqual(len(carried), 2)  # 4 unchanged pass checks minus 2 spot checks
+        self.assertLessEqual(set(carried), {"chk-rec-001", "chk-art-2", "chk-art-3", "chk-art-4"})
+        for i, date in carried.items():
+            self.assertEqual(date, "2026-11-01" if i == "chk-art-2" else "2026-11-14")
+
 
 class Tags(unittest.TestCase):
     def test_unavailable_tags_never_change_data_status(self):

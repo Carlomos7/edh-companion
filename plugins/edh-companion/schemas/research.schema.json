@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "research.schema.json",
-  "title": "research.json: evidence gathered by mtg-research",
+  "title": "research.json: evidence gathered by the research skill",
   "type": "object",
   "required": [
     "schema_version",

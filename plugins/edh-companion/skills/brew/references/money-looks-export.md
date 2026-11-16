@@ -36,7 +36,7 @@ After a build or review, proactively offer the worthwhile swaps, ordered by impa
 ## Export
 Exact printings matter for art themes, looks and prices, so exports keep them:
 ```bash
-uv run --script "${CLAUDE_SKILL_DIR}/scripts/export_deck.py" <project>/brew.json --format all --out <project>/decklists/export
+uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/brew/scripts/export_deck.py" <project>/brew.json --format all --out <project>/decklists/export
 ```
 | Format | Use | Keeps printing / finish |
 |---|---|---|

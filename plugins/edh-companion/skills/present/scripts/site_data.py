@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["pyyaml", "jsonschema>=4.18", "certifi", "pillow"]
+# dependencies = ["pyyaml", "jsonschema>=4.18", "certifi", "truststore", "pillow"]
 # ///
 """Build the page data for the template from project files, so no number on the page is typed by hand.
 
@@ -521,6 +521,8 @@ def add_project(site, ws, group_override=None, look_cands=()):
         brew = load(f)
         vid = name[5:-5] if name.startswith("brew-") else (brew.get("variant") or "main")
         builds.append({"file": f, "id": vid, "brew": brew, "audit": opt(os.path.join(ws, name.replace("brew", "audit", 1)))})
+    builds.sort(key=lambda b: ((b["brew"].get("target_bracket") or {}).get("bracket") or 0, b["id"] != "main"))  # build switch in bracket order
+    brackets = [(b["brew"].get("target_bracket") or {}).get("bracket") for b in builds]
     site.brews += [b["brew"] for b in builds]
     tsite, tlabel = theme_setup([b["brew"] for b in builds])
     if tsite:
@@ -631,7 +633,8 @@ def add_project(site, ws, group_override=None, look_cands=()):
             by_label.setdefault(x["label"], []).append(x["value"])
         rule0 = "; ".join(f"{k}: {', '.join(v)}" for k, v in by_label.items())  # summary.md: each label once, its values joined
         site.public.append(rule0)  # from brew.json: never a private quote
-        label = B["id"].upper() if re.fullmatch(r"b\d", B["id"]) else B["id"]
+        label = (B["id"].upper() if re.fullmatch(r"b\d", B["id"])
+                 else f"B{tb['bracket']}" if B["id"] == "main" and brackets.count(tb["bracket"]) == 1 else B["id"])  # "main" says nothing; its bracket does
         deck = {"id": B["id"], "label": label, "bracket": tb["bracket"], "project": proj, "rule0": rule0, "rule0_items": rule0_items, "future": brew.get("future"),
                 "cards": cards, "stats": stats, "theme": theme, "theme_stats": theme_stats, "validation": val, "summary": summary, "version": brew["version"],
                 "archetype": st["archetype"], "audit_view": views.audit_view(audit, val),
@@ -749,7 +752,7 @@ def finish(site, default_dir):
     decks = [d for g in D["groups"] for c in g["commanders"] for d in c["decks"]]
     if not (decks or D["research"] or D["rankings"]):
         sys.exit("nothing to show: no build has card data and there is no research: " + "; ".join(u["text"] for u in A["unverified"][:6]))
-    D["default_bracket"] = decks[0]["bracket"] if decks else None
+    D["default_bracket"] = next((d["bracket"] for d in decks if d["id"] == "main"), decks[0]["bracket"] if decks else None)  # open on the main build
     ptitle, project = site.titles[0] if site.titles else (None, {})
     first = D["groups"][0]["commanders"][0]["name"] if D["groups"] else None
     D["title"] = a.title or D.get("title") or ptitle or (f"{first} decks" if first else "Research")

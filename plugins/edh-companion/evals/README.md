@@ -14,8 +14,10 @@ claude plugin eval . --scaffold --mocks off --ablation none --runs 1 --allow-too
 
 | Tag | Cases |
 |---|---|
-| activation | lookup-lifelink, research-anti-venom, ambiguous-best-commanders, audit-bracket, present-not-for-text |
+| activation | act-lookup-lifelink, act-research-anti-venom, act-ambiguous-best-commanders, act-audit-bracket, act-present-not-for-text |
 | routing / negative | act-lookup-banned, not-mtg |
+| gates | gate-delete-asks, gate-explicit-change |
+| commanders | commander-pairing |
 | persistence, theme, art | persist-rejected-decisions, theme-drift-removal, art-mismatch-audit |
 | accuracy, research | unsupported-claim, conflicting-sources, card-facts, cedh-realism, transcript-names, alchemy-name, rules-current |
 | theme, feasibility | theme-official-feasible, theme-stardew-infeasible, theme-refuses-exceptions, theme-loosen-midway, theme-weak-honest |

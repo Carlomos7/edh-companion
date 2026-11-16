@@ -51,11 +51,7 @@ Use nothing external before this answer. After it, test each approved tool with 
 | Scripts (uv) | `companion.py where` | paths print |
 
 ### Depth (independent of approval)
-- **Comprehensive (Recommended):** every approved source: data, decklists, creator videos with timestamps, Reddit and forums, articles; about 5 to 15 minutes per commander.
-- **Quick:** card data, EDHREC, one or two community threads, a video only if central; about 1 to 3 minutes.
-- **Deep:** comprehensive plus tournament data, more decklists and smaller creators; for comparisons and contested questions; longer (often 15 to 30 minutes per subject).
-- **Custom:** chosen source categories.
-- **Skip:** no web research; card data and rules only, labelled as unresearched.
+The modes and when to stop: [method.md](method.md), "Depth and when to stop".
 
 ### Saved form
 ```yaml
@@ -78,7 +74,7 @@ research:
 
 ## Reliability (lessons from real runs)
 - **Card data through the shared scripts, never ad-hoc.** Don't curl Scryfall or write throwaway Python for it. Known names: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/card_lookup.py" names "A" "B" …` (or `--file names.txt`); discovery: `card_lookup.py search '<scryfall query>' [--unique prints] [--limit 40]`. One compact line per card (name, cost, type, identity, legality, Game Changer, price); full data only with `--json FILE`. For a whole list: `deck_check.py names.txt --cards-only --json <project>/cards.json`. Every script shares one cache (repeat lookups cost no request), one rate limit across parallel workers, and bounded retries; output ends with a `data:` line (fresh / cached / stale / unavailable). Stale or unavailable data is reported as such, never as verified.
-- **Respect rate limits.** Scryfall search/named/collection allow about 2 requests a second; a 429 means a 30-second lockout. The scripts wait and make every other process wait too; MCP calls don't, so don't loop MCP lookups — batch through the scripts.
+- **Respect rate limits.** Scryfall search/named/collection allow about 2 requests a second (others 10); a 429 means a 30-second lockout. The scripts wait, make every other process wait too, and batch (the collection endpoint takes 75 cards); MCP calls don't, so don't loop MCP lookups. EDHREC: one staples pull per commander, reused. YouTube: one transcript at a time. Reddit and YouTube block some direct requests; go through a search/fetch tool.
 - **Check MCP results before trusting them.** Treat a result as unreliable when it contradicts itself or the authority: EDHREC numbers where a card's deck count exceeds the commander's total, `total_decks: 0` next to non-zero card counts, inclusion % that doesn't match count/total, generic staples returned for a specific commander, or card facts that differ from Scryfall. Cross-check with the source site (the EDHREC page itself, Scryfall) and record the conflict; never present the contradictory number as fact.
 - **Failing endpoints.** On a 502/503 or timeout from an MCP tool, retry at most once, then stop using that one operation (not the whole provider: one broken tool says nothing about its siblings) for this research task, record it in `methodology.tools_failed`, switch to an approved fallback, and try it again only in a later task. A 429 is a rate limit, not a failure: wait and continue. The scripts do this themselves per endpoint (a short cooldown that doubles to 10 min, then a probe) and name unavailable endpoints in their `data:` line. Direct API use (the scripts) as a fallback is fine unless that provider is excluded in the research preferences; the scripts check that too. Say what the failure cost (e.g. "no EDHREC numbers for Azula; lists and threads only").
 - **No invented URLs.** Don't guess EDHREC (or any) page paths. Find the page through search, or build it only from a pattern you've just verified loads (e.g. the commander page `edhrec.com/commanders/<slug>` with the slug from that page or a search result), and record the URL actually opened.
@@ -100,7 +96,7 @@ Use the strongest tool for each job, not every tool for every job:
 - **Real lists:** read known deck links; find links with web search when the deck tool's search doesn't filter.
 Don't run a second tool for the same job unless the first came back empty or wrong or you're cross-checking a key fact, and don't refetch a page already read this session. When a tool fails mid-research, switch to its fallback, note it in `methodology.tools_failed`, and keep going.
 
-Tested 2026-11-04 with the j4th MTG MCP (claude.ai connector), Parallel Search, Exa and jkawamoto YouTube Transcript:
+Tested 2026-11-04 with the j4th MTG MCP (claude.ai connector), Parallel Search, Exa and jkawamoto YouTube Transcript. Re-test by 2027-02-04, or sooner when a result looks odd:
 
 | Capability | Typical tool | Tested result | Fallback |
 |---|---|---|---|
@@ -134,8 +130,3 @@ Re-test a capability whenever a result looks odd (empty, generic, or contradicti
 | How it plays at real tables | Reddit and forum threads, primer comments | as proof of power |
 | Rules interactions | Comprehensive Rules (with effective date), Scryfall rulings | memory |
 
-## Rate limits and access
-- Scryfall: search/named/collection 2 requests/s, others 10/s; a 429 locks you out for 30 s. Batch (the collection endpoint takes 75 cards).
-- EDHREC: one staples pull per commander, reused.
-- YouTube: one transcript at a time.
-- Reddit and YouTube block some direct requests; go through a search/fetch tool.

@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]
+# dependencies = ["certifi", "truststore"]
 # ///
 """Compact, cached Scryfall lookups for research and brewing: one line per card instead of raw JSON.
 

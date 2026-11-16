@@ -4,6 +4,73 @@ deck_check card records) to the page-data views the template renders. No network
 Nothing is dropped: a long claim keeps its full text as `body` next to its short `headline`, every cited source and
 timestamp stays reachable, and legacy inline citations in claim text ("[src-101 9:00, 9:40-10:40]", "[video 4:52-5:01]",
 "(src-100 1:00-1:14)") become structured `cites[].at` with per-claim video links.
+
+View model (page-data additions; all old fields stay):
+Built by `scripts/views.py` from the project files, deterministically. Labels follow
+  [writing.md](../../../references/writing.md): evidence classes Verified fact · Calculated · Popularity data ·
+  Community opinion · Claude's judgment · Unresolved; audit Pass · Pass with warnings · Fail · Incomplete (plus Not
+  audited, Audit out of date); checks Pass · Warning · Fail · Unverified.
+- **`findings_view`**: `[{id, title, kind, project, items}]`. Groups: verified facts, popularity data and calculated
+  first (by class), then community opinions by creator (the first cited source's author, else its site, e.g. Reddit),
+  then Claude's judgment and unresolved; creators with higher confidence and more findings first, items by confidence.
+  Item: `{id, anchor, headline, summary, body, class, class_label, confidence, cards, cites, disputed, explanation,
+  limitations}`. `anchor` = `f-<project folder slug>-<id>`, unique on a showcase page (ids repeat across projects).
+  `headline` is research.json's `headline`, else the claim's first sentence when it fits 140 characters. A longer one:
+  "Label: conclusion" with a label under 60 characters gives the conclusion when that fits (never the bare label);
+  else it ends at a semicolon, dash or a colon after 60+ characters, else at a word boundary with "…"; never inside
+  quotation marks or brackets. `summary` = the next sentence (or the rest of a cut one, starting "…"), at most 200
+  characters, so the conclusion shows without opening Details. `body` is always the full claim (minus parsed
+  citations); when it starts with the headline (without its "…"), render only the rest. `disputed` = cited by a
+  disagreement. `kind: "topic"` is reserved; research.json has no topic field yet.
+- **`cites`**: `[{n, source_id, anchor, label, kind, title, url, at: [{t, url, note?}]}]`, every source the finding
+  cites, in evidence order. `n` and `anchor` match `sources_view`. Bare times in brackets right after a named video in
+  the same sentence ("Planeswalker Project ... (2:17, 2:39)", "Slam Hammer (17:47-18:15)": the creator's name or
+  source id) link that video's moment; the text keeps them. `at` comes from research.json `locators`, or from legacy
+  citations parsed out of the claim and explanation ("[src-101 9:00, 9:40-10:40]", "[video 4:52-5:01]" = the finding's
+  video, "(src-100 1:00-1:14)", "[video 5:36 (src-104); 2:08 (src-105)]", labels like "4:09 kill early" become
+  `note`). Each `url` opens that moment: YouTube `?t=Ns` (a range opens at its start), Twitch `?t=1h2m3s`, Vimeo
+  `#t=Ns`; other hosts get the plain URL with the time shown as text. A reference whose source can't be resolved stays
+  in the text.
+- **`disagreements_view`**: `[{topic, explanation, project, positions: [{text, cites, findings}]}]`; a finding id in a
+  position (or a recommendation or candidate) brings only the sources that finding's claim cites with times (locators,
+  inline times), else its first source, never the other side named in its explanation. `findings` are ids: link them
+  with the finding's `anchor`, looked up by (`project`, id). Shown open, for deck projects too.
+- **`sources_view`**: `[{kind, kind_label, items: [{n, id, anchor, project, title, creator, date, url, primary,
+  sample_size, cited_by: [{id, anchor, project, headline}], moments: [{t, url, findings}]}]}]`; `anchor` = `s-<project
+  folder slug>-<id>`; `cited_by` are findings of the same project; `moments[].findings` are ids of the source's
+  project. Numbered once per page in this order (videos, articles, community, decklists, tournaments, stats, prices,
+  card data, combos, rules, official). `moments` = the times findings cite, each with those findings, plus the
+  source's own `timestamps` no finding names (with `findings: []`).
+- **`decks[].audit_view`**: `{verdict, verdict_label, note, counts: {fail, warning, unverified, pass}, summary: {lead,
+  more}, method_common, groups: [{status, label, open, checks: [{id, title, status, status_label, result, method,
+  cards, area, kind, evidence}]}], required_fixes, next_steps, limitations, audited, independent}` plus `bracket`,
+  `combos`, `theme_violations`, `legality_issues`, `research_gaps`, `recommendations`, `follow_up_questions` when the
+  audit has them. Groups go fail, warning, unverified (open), then passes (closed, "27 checks passed"). `method` is
+  audit.json `checks[].method`, else split from a legacy "[method: …]" prefix of `detail`; `result` is the rest.
+  `method_common` is a method shared by at least a third of the checks: show it once and a check's method only when it
+  differs. `summary.lead` is the first verdict sentence that says more than the label. An out-of-date or missing audit
+  has no groups.
+- **`decks[].recs_view`**: `{applied, proposed, rejected, rejected_count}`; an item is applied when the current list
+  shows it (its add is in the deck; a pure cut is gone), whatever the status says; `status_label` stays as written;
+  each item has `add_in_deck`, `cut_in_deck` and `cites`.
+- **`research_tab`**: `[{id, title, project, has_builds, question, version, created, scope: {theme, depth},
+  methodology: {approach, tools_used, tools_failed, stopped_because}, feasibility, candidates, recommendations,
+  alternatives, gaps, next_steps, follow_up_questions}]` (methodology keys only when set); candidates carry card data,
+  `in_deck`, type fields and `cites`.
+- **`notices`**: `[{level, text, project}]`. Research staleness uses research.json `scope.deck` when present; older
+  files fall back to research dated strictly before the deck's last change (dates only), or whose newest named
+  decklist file is older than the newest one in `decklists/` for that build (main-v3.txt when main-v5.txt exists).
+  File numbers are never compared with brew versions.
+- **Card types** (`views.card_types`, one rule for groups, filters, charts and summary.md): every card has
+  `type_group`, `types`, `supertypes`, `subtypes`, `face_types`, `mdfc_land`; each deck has `stats.type_counts` and
+  `stats.mdfc_lands`. Group precedence: Commander > Land > Creature > Planeswalker > Battle > Artifact > Enchantment >
+  Instant > Sorcery > Other, the order deck_check's `stats.types` tally uses (that tally leaves the commander out and
+  reads only the front half, so the two differ only for a split card whose front half is a sorcery and back half an
+  instant). Double-faced cards (transform, modal, flip, meld) count by their front face; a modal spell // land is
+  grouped as its spell and flagged `mdfc_land` ("36 lands + 2 MDFC"); split and adventure cards count by every half.
+  `types` keeps every type (a filter for Artifact finds artifact creatures). Supertypes and subtypes (Legendary,
+  Basic, Snow; Equipment, Aura, Saga, Vehicle...) never make groups. Non-deck types (Conspiracy, Plane, Scheme,
+  Vanguard, Dungeon, Attraction, Contraption, Stickers, Emblem, tokens) are Other.
 """
 import collections, os, re, sys, urllib.parse
 
@@ -523,7 +590,9 @@ def research_notices(research, brew, label=None, lists=()):
     out, pre = [], f"{label}: " if label else ""
     scope = research.get("scope") or {}
     ver, why = brew.get("version"), []
-    if scope.get("deck"):
+    if scope.get("deck") and brew.get("variant"):
+        pass  # shortcut: scope.deck has no variant field, so it only describes the main build; variants skip this check until the schema names one
+    elif scope.get("deck"):
         sd = scope["deck"]
         if sd.get("version") != ver:
             why.append(f"it was written for version {sd.get('version')}")

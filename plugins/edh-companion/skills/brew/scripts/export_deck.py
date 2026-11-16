@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]  # shared core (scripts/edhcore)
+# dependencies = ["certifi", "truststore"]  # shared core (scripts/edhcore)
 # ///
 """Export a deck to import formats, keeping exact printings and finishes where the format supports them.
 

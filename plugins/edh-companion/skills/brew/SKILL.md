@@ -1,6 +1,6 @@
 ---
 name: brew
-description: Guides players from an idea, theme, character or commander to a playable Commander (EDH) deck, and improves, compares and re-themes existing decks, respecting theme, artwork, budget, playstyle and bracket; it recommends directions, checks whether restrictions are feasible, keeps proposals separate from the accepted deck, and saves brew.json plus importable decklists across sessions. Use when the player wants a deck built, upgraded, cut down, made cheaper, kept on theme, split into bracket or budget variants, compared as alternate builds, or wants research turned into a list; also for managing saved deck projects (resume, rename, archive, delete, which always needs confirmation first). Not for information-only questions or card comparisons (research or a direct lookup), not for judging a deck's legality or bracket without changing it (audit), not for pages (present).
+description: Builds, upgrades, cuts, re-themes and compares Commander (EDH) decks while keeping the player's theme, artwork, budget and bracket, and saves brew.json plus importable decklists across sessions. Use when the player wants a deck built from an idea or commander, made stronger, cheaper or more on theme, split into bracket or budget variants, compared as builds in chat, exported, or turned from research into a list; also to resume, rename, archive or delete saved deck projects (delete always asks first). Not for exploring options before building (research), judging a deck without changing it (audit), or a comparison page (present).
 ---
 
 # Brew
@@ -9,9 +9,9 @@ Act like an informed deckbuilding friend: explore first, recommend with reasons,
 
 **Replies:** answer first, reasons next, limits once, next step last (a choice as options, recommended first with why). Read [writing.md](../../references/writing.md) before writing directions, a plan, a hand-back or file prose.
 
-## When to use
-- **Use:** "help me build a Spider-Man deck", "make my Doom deck stronger without losing the theme", "what should I cut", "bracket 3 and 4 versions", "drip it out under $200 extra", "export it for Archidekt", "turn this research into a list", any revision of a saved project.
-- **Don't use:** information only ("best Spider-Man commanders?" is research), "is my deck bracket 3?" (audit), "show it as a page" (present).
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py` and `candidates.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+
+## Boundaries
 - **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first, queried with `companion.py research-find`, not read whole.
 - **Calls audit** at decision boundaries: a build or revision handed back as ready, before export or sleeving, after a set of variants. Not for each card suggestion.
 - **Needs approval:** the direction/plan before filling 99 slots; changes to the accepted deck the player didn't ask for in so many words (an explicit "swap X for Y" is the approval: do it, as a new version); any relaxed or reinterpreted hard rule; variants they didn't ask for. Everything else runs without asking ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)).

@@ -12,15 +12,28 @@ Failure classes (per endpoint = host + path template, never a whole provider):
                                Breaker updates are read-modify-write in one cache transaction, so concurrent
                                processes' failures all count
 """
-import email.utils, http.client, json, random, socket, ssl, time, urllib.error, urllib.parse, urllib.request
+import email.utils, http.client, json, os, random, socket, ssl, time, urllib.error, urllib.parse, urllib.request
 
-try:
-    import certifi
-    CTX = ssl.create_default_context(cafile=certifi.where())
-except ImportError:  # atlas can run without certifi
-    CTX = None
+try:  # the OS certificate store first: it also trusts corporate proxies and antivirus TLS inspection
+    import truststore
+    CTX = truststore.SSLContext(ssl.PROTOCOL_TLS_CLIENT)
+except ImportError:
+    try:
+        import certifi
+        CTX = ssl.create_default_context(cafile=certifi.where())
+    except ImportError:  # atlas can run without either: Python's default context
+        CTX = None
 
-UA = "edh-companion/8.0 (+https://github.com/Carlomos7/edh-companion)"
+
+def _version():
+    try:
+        with open(os.path.join(os.path.dirname(__file__), "..", "..", ".claude-plugin", "plugin.json"), encoding="utf-8") as h:
+            return json.load(h)["version"]
+    except (OSError, ValueError, KeyError):
+        return "dev"
+
+
+UA = f"edh-companion/{_version()} (+https://github.com/Carlomos7/edh-companion)"
 MAX_WAIT = 60
 BREAK_AFTER = 3
 COOLDOWN, MAX_COOLDOWN = 60.0, 600.0

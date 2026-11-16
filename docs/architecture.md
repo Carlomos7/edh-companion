@@ -16,7 +16,9 @@ Hybrid: skills decide and talk to the player; a small shared Python core does th
 | 2 agents | `agents/` | `researcher` for independent research subjects; `auditor` so work made in a chat is judged in a fresh context. |
 | Evals, tests, benchmarks | `plugins/edh-companion/evals/`, `tests/unit/`, `tests/bench/` | Skill behaviour, script behaviour, measured cost. |
 
-Not included on purpose: MCP servers, a service, external databases, an agent framework, a collection manager, hooks. Optional MCPs (YouTube, Exa, Parallel, Moxfield, MTG data) are discovered at runtime by capability and stay the way research reaches the web.
+| Hooks | `hooks/hooks.json`, `scripts/hook.py` | Since 8.8: validate research/brew/audit files right after Claude writes them, a one-line project status at session start, and an auditor that can't finish with an invalid audit.json. Stdlib only; about 1 s for unrelated writes (uv startup). |
+
+Not included on purpose: MCP servers, a service, external databases, an agent framework, a collection manager. Optional MCPs (YouTube, Exa, Parallel, Moxfield, MTG data) are discovered at runtime by capability and stay the way research reaches the web.
 
 ## The data core
 | Module | Responsibility |

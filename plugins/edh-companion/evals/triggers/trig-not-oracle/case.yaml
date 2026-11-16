@@ -1,0 +1,8 @@
+schema_version: "1.0"
+name: trig-not-oracle
+description: A one-lookup or unrelated question; no edh-companion skill.
+tags: [triggers, should-not]
+execution: {prompt: "What does Smothering Tithe say?", max_turns: 4, timeout_seconds: 240}
+runs: 1
+graders:
+  - {type: tool_used, name: no-skill, tool: Skill, input_match: "edh-companion:", min: 0, max: 0, arm: both}

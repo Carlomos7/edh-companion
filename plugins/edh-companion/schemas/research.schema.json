@@ -315,6 +315,30 @@
               "string",
               "null"
             ]
+          },
+          "facet": {
+            "enum": [
+              "strategy",
+              "combo",
+              "card",
+              "power",
+              "table-feel"
+            ],
+            "description": "What the finding is about, so research-find --summary can group it: strategy (how the deck wins), combo, card (one card's value), power (bracket and speed), table-feel (how it plays at real tables)."
+          },
+          "status": {
+            "enum": [
+              "current",
+              "superseded"
+            ],
+            "description": "superseded: replaced by a newer finding (superseded_by); archive-findings moves it to research.archive.json. Missing means current."
+          },
+          "superseded_by": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "The finding that replaces this one."
           }
         }
       }

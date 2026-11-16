@@ -128,17 +128,36 @@ def eval_table(runs):
               f"{med(tv('tool_calls'), 0)} | {med(tv('duplicate_tool_calls'), 0)} | {med(tv('tool_errors'), 0)} | {med(tv('permission_denials'), 0)} | {med(tv('subagents'), 0)} |")
 
 
+def over_budget(runs, budgets, slack=0.2):
+    """Exit status 1 when any case's median cost_usd or turns is more than `slack` over its budget; prints each breach."""
+    by = collections.defaultdict(list)
+    for r in runs:
+        by[r["case"]].append(r)
+    bad = []
+    for case, b in sorted(budgets.items()):
+        if case.startswith("_") or case not in by:
+            continue
+        for k in ("cost_usd", "turns"):
+            xs = [r[k] for r in by[case] if r.get(k) is not None]
+            if k in b and xs and statistics.median(xs) > b[k] * (1 + slack):
+                bad.append(f"OVER BUDGET {case}: median {k} {statistics.median(xs):g} > {b[k]:g} + {slack:.0%}")
+    print("\n".join(bad) if bad else "all cases within budget")
+    return 1 if bad else 0
+
+
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("session", nargs="?")
     ap.add_argument("--eval", nargs="+", metavar="RESULT_JSON")
     ap.add_argument("--json")
+    ap.add_argument("--budget", metavar="BUDGETS_JSON", help="with --eval: per-case cost and turn budgets; exit 1 when a case's median is more than 20%% over")
     a = ap.parse_args()
     if a.eval:
         runs = eval_runs(a.eval)
         if a.json:
             json.dump(runs, open(a.json, "w", encoding="utf-8"), indent=1)
-        return eval_table(runs)
+        eval_table(runs)
+        return over_budget(runs, json.load(open(a.budget, encoding="utf-8"))) if a.budget else None
     if not a.session:
         ap.error("give a SESSION.jsonl or --eval RESULT.json ...")
     sub = os.path.join(os.path.splitext(a.session)[0], "subagents")

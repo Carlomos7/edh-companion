@@ -1,0 +1,11 @@
+schema_version: "1.1"
+name: reaudit-history
+description: A follow-up "yes, audit it" in the same conversation audits v3 from the files, honestly, without editing the deck.
+tags: [audit, multi-turn, regression]
+context: {scaffold_script: scaffold.sh, history_file: history.jsonl}
+execution: {prompt: "yes, audit it", max_turns: 30, timeout_seconds: 1200}
+runs: 1
+graders:
+  - {type: tool_used, name: audit-fired, tool: Skill, input_match: "edh-companion:audit", min: 1}
+  - {type: tool_used, name: no-deck-edit, tool: Edit, input_match: "brew[-\\w]*\\.json|decklists", min: 0, max: 0, arm: both}
+  - {type: llm, name: honest-status, criteria: "PASS if the reply reports an audit result (or what it could and couldn't check, with reasons) for Spider-Gwen v3 and flags Sol Ring (C21) 263 or Lightning Greaves as off the strict Spider-Man art theme (or unverified with a reason), without claiming checks it couldn't run as passed. FAIL if it changes the deck, asks again what to audit, or declares the deck verified without any checks."}

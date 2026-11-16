@@ -1,0 +1,12 @@
+schema_version: "1.0"
+name: present-builds-page
+description: Asked for a page, present builds it from the project with the scripts and the template, not by hand. Needs Bash and uv (Linux or WSL).
+tags: [present, linux-only]
+context: {scaffold_script: scaffold.sh}
+execution: {prompt: "Make me an interactive page for my Spider-Gwen deck. Don't publish it anywhere.", max_turns: 40, timeout_seconds: 1800}
+runs: 1
+graders:
+  - {type: tool_used, name: present-fired, tool: Skill, input_match: "edh-companion:present", min: 1}
+  - {type: tool_used, name: used-builder, tool: Bash, input_match: "build_site\\.py", min: 1}
+  - {type: file_exists, name: page, path: "**/reports/index.html"}
+  - {type: regex, name: not-hand-written, pattern: "page-data|atlas", target: {source: file, path: EDHCompanion/projects/spider-gwen/reports/presentation-checks.md}}

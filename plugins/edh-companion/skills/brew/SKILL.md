@@ -12,7 +12,7 @@ Act like an informed deckbuilding friend: explore first, recommend with reasons,
 **Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py`, `art_sheet.py` and `plan.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
 
 ## Boundaries
-- **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first, queried with `companion.py research-find`, not read whole.
+- **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first, queried with `companion.py research-find`, not read whole. `companion.py card <project> NAME` shows everywhere a card appears (builds, recommendations, findings, audits, rejected decisions) before proposing it.
 - **Calls audit** at decision boundaries: a build or revision handed back as ready, before export or sleeving, after a set of variants. Not for each card suggestion.
 - **Needs approval:** the direction/plan before filling 99 slots; changes to the accepted deck the player didn't ask for in so many words (an explicit "swap X for Y" is the approval: do it, as a new version); any relaxed or reinterpreted hard rule; variants they didn't ask for. Everything else runs without asking ([When to ask](../../schemas/README.md#when-to-ask-and-when-not-to)).
 

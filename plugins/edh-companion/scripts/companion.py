@@ -17,9 +17,14 @@
                                      record the parallel research workers a merge expects (research.plan.json)
   companion.py merge-research <project> [--allow-partial]
                                      merge research.part-<slug>.json files into research.json (validated, idempotent)
-  companion.py research-find <project> [--card NAME] [--text WORDS] [--class CLASS] [--limit N] [--detail]
+  companion.py research-find <project> [--card NAME] [--text WORDS] [--class CLASS] [--limit N] [--detail] [--summary]
                                      compact matching findings, candidates and rankings with their evidence IDs
-                                     (--detail adds source titles and every evidence ID)
+                                     (--detail adds source titles and every evidence ID; --summary groups all findings
+                                     by facet and evidence class, counting creators rather than videos)
+  companion.py card <project> NAME   where a card shows up: builds, recommendations, candidates, findings, rankings,
+                                     audit checks and DECISIONS lines
+  companion.py archive-findings <project>
+                                     move superseded findings to research.archive.json (ids stay reserved)
   companion.py sections <brew.json>  fingerprints of each deck line, recommendation and prose block (an audit
                                      records them in subject.sections so the next audit can be scoped)
   companion.py audit-scope <project> [brew-<variant>.json] [--write-carry]
@@ -315,7 +320,7 @@ def validate(d):
         research = check_schema(p, "research", reg, errors)
     if research:
         warns = []
-        errors += [f"{p}: {m}" for m in research_problems(research, soft=warns)]
+        errors += [f"{p}: {m}" for m in research_problems(research, known=archived_ids(d), soft=warns)]
         notes += [f"WARN  {p}: {m}" for m in warns]
     pp = os.path.join(d, PLAN)
     if os.path.exists(pp):
@@ -332,7 +337,7 @@ def validate(d):
     cp = os.path.join(d, "candidates.json")
     if os.path.exists(cp) and os.path.exists(p) and os.path.getmtime(cp) < os.path.getmtime(p):
         notes.append("candidates.json stale (older than research.json)")
-    known = {s["id"] for s in (research or {}).get("sources", [])} | {f["id"] for f in (research or {}).get("findings", [])}
+    known = {s["id"] for s in (research or {}).get("sources", [])} | {f["id"] for f in (research or {}).get("findings", [])} | archived_ids(d)
     for bp in sorted(glob.glob(os.path.join(d, "brew*.json"))):
         brew = check_schema(bp, "brew", reg, errors)
         if not brew:
@@ -816,10 +821,114 @@ def merge_research(d, allow_partial=False):
     return 0
 
 
-def research_find(d, card=None, text=None, cls=None, limit=20, detail=False):
+FACETS = ("strategy", "combo", "card", "power", "table-feel")
+ARCHIVE = "research.archive.json"
+
+
+def archived_ids(d):
+    p = os.path.join(d, ARCHIVE)
+    return {f["id"] for f in load(p).get("findings", [])} if os.path.exists(p) else set()
+
+
+def research_summary(r):
+    """Findings grouped by facet and evidence class, deterministic. Creators are counted, not videos: one creator with
+    five videos is one voice."""
+    by_src = {s["id"]: s for s in r.get("sources", [])}
+    groups = {}
+    for f in r.get("findings", []):
+        if f.get("status") == "superseded":
+            continue
+        g = groups.setdefault((f.get("facet") or "unfaceted", f["class"]), {"ids": [], "creators": set(), "conf": {}})
+        g["ids"].append(f["id"])
+        g["conf"][f["confidence"]] = g["conf"].get(f["confidence"], 0) + 1
+        for e in f.get("evidence") or []:
+            s = by_src.get(e)
+            if s:
+                g["creators"].add((s.get("author") or urlsplit(s.get("url") or "").netloc.replace("www.", "") or e).strip().lower())
+    order = {f: i for i, f in enumerate(FACETS + ("unfaceted",))}
+    lines = []
+    for (facet, cls), g in sorted(groups.items(), key=lambda kv: (order.get(kv[0][0], 99), kv[0][1])):
+        conf = ", ".join(f"{k} {v}" for k, v in sorted(g["conf"].items()))
+        ids = ", ".join(g["ids"][:6]) + (f" +{len(g['ids']) - 6} more" if len(g["ids"]) > 6 else "")
+        lines.append(f"{facet} · {cls}: {len(g['ids'])} finding(s) from {len(g['creators'])} creator(s) ({conf}) | {ids}")
+    return lines
+
+
+def archive_findings(d):
+    """Move superseded findings (status: superseded) into research.archive.json, keeping their ids reserved. A finding
+    still cited by a brew, a disagreement or a recommendation stays."""
+    p = os.path.join(d, "research.json")
+    r = load(p)
+    cited = set()
+    for bp in glob.glob(os.path.join(d, "brew*.json")):
+        b = load(bp)
+        for x in b.get("deck", []) + b.get("recommendations", []):
+            cited |= set(x.get("evidence") or [])
+    cited |= {e for _, ev in evidence_lists({k: v for k, v in r.items() if k != "findings"}) for e in ev if isinstance(e, str)}
+    move = [f for f in r.get("findings", []) if f.get("status") == "superseded" and f["id"] not in cited]
+    if not move:
+        return []
+    ap = os.path.join(d, ARCHIVE)
+    arch = load(ap) if os.path.exists(ap) else {"note": "superseded findings moved out of research.json; ids stay reserved", "findings": []}
+    arch["findings"] += [dict(f, archived=today()) for f in move]
+    write_atomic(ap, dump(arch))
+    gone = {f["id"] for f in move}
+    r["findings"] = [f for f in r["findings"] if f["id"] not in gone]
+    write_atomic(p, dump(r))
+    return sorted(gone)
+
+
+def card_report(d, name):
+    """Every place a card shows up in a project: builds, recommendations, candidates, research, audits, decisions."""
+    n = name.lower()
+    has = lambda s: n in str(s or "").lower()
+    out = []
+    for bp in sorted(glob.glob(os.path.join(d, "brew*.json"))):
+        b, f = load(bp), os.path.basename(bp)
+        for c in b.get("deck", []):
+            if c["name"].lower() == n:
+                pr = f" ({c['set'].upper()} {c.get('collector_number')}{' ' + c['finish'] if c.get('finish') not in (None, 'nonfoil') else ''})" if c.get("set") else ""
+                out.append(f"deck     {f} v{b['version']}: {c['qty']} {c['name']}{pr}, role {c.get('role')}")
+        for r in b.get("recommendations", []):
+            if has(r.get("add")) or has(r.get("cut")):
+                out.append(f"rec      {f} {r['id']} [{r['status']}]: +{r.get('add') or '-'} / -{r.get('cut') or '-'}")
+    cp = os.path.join(d, "candidates.json")
+    if os.path.exists(cp):
+        for c in load(cp).get("candidates", []):
+            if has((c.get("card") or {}).get("name") or c.get("name")):
+                out.append(f"candidate candidates.json: {c.get('verdict') or c.get('status') or ''} {', '.join(c.get('evidence') or [])[:60]}")
+    rp = os.path.join(d, "research.json")
+    if os.path.exists(rp):
+        r = load(rp)
+        for f in r.get("findings", []):
+            if any(has(c) and c.lower() == n for c in f.get("cards") or []) or has(f["claim"]):
+                out.append(f"finding  {f['id']} [{f['class']}{', superseded' if f.get('status') == 'superseded' else ''}] {(f.get('headline') or f['claim'])[:90]}")
+        for c in r.get("card_candidates", []):
+            if c["card"]["name"].lower() == n:
+                out.append(f"research candidate: {c['relevance'][:90]}")
+        for g in r.get("rankings", []):
+            for c in g["cards"]:
+                if c["card"]["name"].lower() == n:
+                    out.append(f"ranking  {g['group']} #{c['rank']}")
+    for ap in sorted(glob.glob(os.path.join(d, "audit*.json"))):
+        a = load(ap)
+        for c in a.get("checks", []):
+            if any(x.lower() == n for x in c.get("cards") or []) or has(c.get("detail")):
+                out.append(f"audit    {os.path.basename(ap)} {c['id']} [{c['status']}]")
+    for line in decisions_text(d).splitlines():
+        if has(line):
+            out.append("decision " + line.strip("-* ")[:110])
+    return out
+
+
+def research_find(d, card=None, text=None, cls=None, limit=20, detail=False, summary=False):
     if not os.path.exists(os.path.join(d, "research.json")):
         sys.exit(f"no research.json in {d}")
     r = load(os.path.join(d, "research.json"))
+    if summary:
+        for line in research_summary(r):
+            print(line)
+        return
     titles = {s["id"]: s.get("title", "") for s in r.get("sources", [])}
     words = (text or "").lower().split()
     cardl = (card or "").lower()
@@ -828,7 +937,7 @@ def research_find(d, card=None, text=None, cls=None, limit=20, detail=False):
     hit = lambda hay: all(w in hay.lower() for w in words)
     rows = []
     for f in r.get("findings", []):
-        if cls and f.get("class") != cls:
+        if cls and f.get("class") != cls or f.get("status") == "superseded":
             continue
         if card and not any(cardl in c.lower() for c in f.get("cards") or []) and cardl not in f["claim"].lower():
             continue
@@ -867,8 +976,17 @@ def main():
         ap.add_argument("--class", dest="cls")
         ap.add_argument("--limit", type=int, default=20)
         ap.add_argument("--detail", action="store_true", help="source titles and every evidence ID")
+        ap.add_argument("--summary", action="store_true", help="findings grouped by facet and evidence class, creators counted")
         a = ap.parse_args(sys.argv[2:])
-        return research_find(a.project, a.card, a.text, a.cls, a.limit, a.detail)
+        return research_find(a.project, a.card, a.text, a.cls, a.limit, a.detail, a.summary)
+    if len(sys.argv) > 3 and sys.argv[1] == "card":
+        rows = card_report(sys.argv[2], " ".join(sys.argv[3:]))
+        print("\n".join(rows) if rows else "not found in this project")
+        return
+    if len(sys.argv) > 2 and sys.argv[1] == "archive-findings":
+        gone = archive_findings(sys.argv[2])
+        print(f"archived {len(gone)} superseded finding(s) to {ARCHIVE}: {', '.join(gone)}" if gone else "nothing to archive")
+        return
     if len(sys.argv) > 2 and sys.argv[1] == "sections":
         print(json.dumps(sections(load(sys.argv[2])), indent=1, ensure_ascii=False))
         return

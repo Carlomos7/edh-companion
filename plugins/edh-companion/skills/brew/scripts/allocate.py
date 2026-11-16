@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]
+# dependencies = ["certifi", "truststore"]
 # ///
 """Divide a card pool (a Secret Lair, a box, a trade binder) between decks or players without handing out more
 copies than exist.

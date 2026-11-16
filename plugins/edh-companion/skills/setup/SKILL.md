@@ -1,6 +1,6 @@
 ---
 name: setup
-description: Optional first-time setup and reconfiguration for edh-companion. Reports which research and card-data capabilities are available, suggests optional integrations, and saves a few preferences (deck platform, default bracket, budget style, workspace folder) to a small config file.
+description: Optional first-time setup and reconfiguration for edh-companion: reports which research and card-data capabilities are available, suggests optional integrations, and saves a few preferences (deck platform, default bracket, budget style, workspace folder, research tools) to a small config file. Use when the player runs setup or asks to change those saved defaults.
 disable-model-invocation: true
 argument-hint: "[nothing, or what to change, e.g. 'workspace D:/MTG']"
 ---
@@ -9,16 +9,14 @@ argument-hint: "[nothing, or what to change, e.g. 'workspace D:/MTG']"
 
 Nothing requires setup: every skill works without it, using defaults. This only saves preferences and tells the player what their tools can do. Replies follow [writing.md](../../references/writing.md).
 
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py` and `candidates.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+
 Request: $ARGUMENTS
 
 ## 1. Show what's there
-Check capabilities by calling, not by reading tool names (one cheap call each; list in [research's sources.md](../research/references/sources.md)): card data (Scryfall), EDHREC stats, combos (Commander Spellbook), deck links (Moxfield/Archidekt), web search, YouTube transcripts, a browser for page testing (Playwright/Chrome), Bash + uv (for the deck checker and page builder). Report answer-first: one line on what works and what's missing ("Card data, combos and web search work; no YouTube transcripts, so no creator deck techs"), then a table: capability · available or missing · what's lost without it.
+Detect capabilities from the tool list without calling anything external ([research's sources.md](../research/references/sources.md), "Research approval"); test with one cheap call only tools the player already approved. Capabilities: card data (Scryfall), EDHREC stats, combos (Commander Spellbook), deck links (Moxfield/Archidekt), web search, YouTube transcripts, a browser for page testing (Playwright/Chrome), Bash + uv (for the deck checker and page builder). Report answer-first: one line on what works and what's missing ("Card data, combos and web search work; no YouTube transcripts, so no creator deck techs"), then a table: capability · available or missing · what's lost without it.
 
-For missing capabilities that would clearly help, suggest options in one line each (never install anything yourself):
-- MTG data: j4th MTG MCP (`claude mcp add mtg --scope user -- uvx --with "selectolax<1.0" mtg-mcp-server`) or its hosted connector
-- Search: Parallel (`claude mcp add parallel-search --scope user --transport http https://search.parallel.ai/mcp`) or Exa (`claude mcp add exa --scope user --transport http https://mcp.exa.ai/mcp`); built-in web search also works
-- Video: jkawamoto YouTube transcripts (`claude mcp add youtube-transcript --scope user -- uvx --from git+https://github.com/jkawamoto/mcp-youtube-transcript mcp-youtube-transcript`)
-- uv (`winget install astral-sh.uv` / `brew install uv`), needed for the deck checker and pages
+For missing capabilities that would clearly help, suggest options in one line each, with the install commands in [references/integrations.md](references/integrations.md) (never install anything yourself): MTG data, search, video transcripts, uv.
 
 ## 2. Ask, one question at a time, only what they want to set
 Any can be skipped.

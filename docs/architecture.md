@@ -9,7 +9,7 @@ Hybrid: skills decide and talk to the player; a small shared Python core does th
 | Project files contract | `plugins/edh-companion/schemas/README.md` + JSON schemas | How skills share work: Markdown for goals and decisions, JSON for citations, candidates, decks and checks. |
 | Shared data core `edhcore/` | `plugins/edh-companion/scripts/edhcore/` | One HTTP client, cache, rate limit and card model for every script (below). Exists because three scripts had three HTTP paths, nothing was cached, and parallel workers had no shared rate limit. |
 | `card_lookup.py` | `scripts/` | Compact cached card lookups and searches for research and brew, replacing ad-hoc curl/Python (37 such calls in one real research session). |
-| `companion.py` | `scripts/` | Workspace, project validation, and research coordination: `research-plan`, `merge-research`, `research-find`. |
+| `companion.py` | `scripts/` | Workspace, project validation, research coordination (`research-plan`, `merge-research`, `research-find`) and scoped re-audits (`sections`, `audit-scope [--write-carry]`). |
 | `candidates.py` | `scripts/` | Research findings → verified card candidates (`candidates.json`) for brew, citations kept. |
 | `deck_check.py` | `skills/audit/scripts/` | Deterministic deck checks (Scryfall + Commander Spellbook): same deck, same answer. |
 | Page pipeline | `skills/present/scripts/`, `assets/template.html` | Deck-browser template; image atlases because artifacts block hotlinked images. |

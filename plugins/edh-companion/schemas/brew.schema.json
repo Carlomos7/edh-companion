@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "brew.schema.json",
-  "title": "brew.json: one deck (or build variant) made by mtg-brew",
+  "title": "brew.json: one deck (or build variant) made by the brew skill",
   "description": "One build. deck holds only the accepted version; proposals live in recommendations until the player accepts them. brew.json is the main build; brew-<variant>.json a variant (b4, budget...). Goals and decisions live in PROJECT.md and DECISIONS.md, not here.",
   "type": "object",
   "required": [

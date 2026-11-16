@@ -51,7 +51,7 @@ When an acquisition plan is checked: products really contain the cards claimed (
 ## Combos
 - Copy Commander Spellbook's included combos from deck_check.py with their ids/URLs.
 - Interactions the research or brew mentions that Spellbook doesn't list: walk them step by step with Comprehensive Rules citations, listing every piece; if you can't, `unverified`.
-- Bracket relevance: two-card (commander + up to 2 cards) at B1–B2 fail; at B3 warning, judged on whether it's an early or held win.
+- Bracket relevance: two-card (commander + up to 2 cards) at B1–B2 fail. At B3 fail when it can win early or the deck holds it for later ([brackets.md](brackets.md)); a warning only when it is incidental and late-game, saying why.
 
 ## Composition and mana (judgment on calculated data)
 Compare deck_check stats with the plan and [construction defaults](../../brew/references/construction.md): lands vs curve, ramp, draw, interaction, wipes, color sources vs pips. Report numbers as calculated and the verdict as judgment.

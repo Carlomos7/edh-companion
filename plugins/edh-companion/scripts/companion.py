@@ -20,9 +20,11 @@
                                      (--detail adds source titles and every evidence ID)
   companion.py sections <brew.json>  fingerprints of each deck line, recommendation and prose block (an audit
                                      records them in subject.sections so the next audit can be scoped)
-  companion.py audit-scope <project> [brew-<variant>.json]
+  companion.py audit-scope <project> [brew-<variant>.json] [--write-carry]
                                      what a re-audit must re-check since the last audit: changed items, deck-wide
-                                     checks, earlier non-pass checks and a spot check; or why it must be full
+                                     checks, earlier non-pass checks and a spot check; or why it must be full.
+                                     --write-carry writes carry-audit[-<variant>].json: the new subject (deck, goals_hash,
+                                     sections, mode, based_on) and the carried checks with their oldest carried_from
 
 Exit 0 when everything present is valid, 1 otherwise. Missing files are fine (projects are partial by design).
 """
@@ -408,6 +410,7 @@ def audit_scope(d, brew_name="brew.json"):
                else "text changed" if prose_changed and ("text" in str(c.get("id")) or c.get("area") == "other") else None)
         (rerun if why else carry).append((c.get("id"), why))
     spot = __import__("random").Random(brew.get("deck_hash") or "").sample([i for i, _ in carry], min(2, len(carry)))
+    _SCOPE.update(audit=audit, ap=ap, brew=brew, carry=[i for i, _ in carry if i not in spot])
     dk = sub.get("deck") or {}
     lines = [f"baseline: {os.path.basename(ap)} (v{dk.get('version')} {dk.get('deck_hash')})",
              "always: deck_check.py --fresh, then every deck-wide check",
@@ -416,6 +419,25 @@ def audit_scope(d, brew_name="brew.json"):
     lines += [f"spot-check {i} (carried, picked at random)" for i in spot]
     lines.append(f"carry over {len(carry) - len(spot)} unchanged pass checks (set carried_from to this baseline's created date)")
     return "scoped", lines
+
+
+_SCOPE = {}  # the last scoped plan, for write_carry
+
+
+def write_carry(d, brew_name="brew.json"):
+    """Start a scoped audit file: the new subject plus the carried checks (oldest carried_from kept). Returns its path.
+    The re-checked and spot-checked checks are added by the auditor; the verdict is recomputed then."""
+    if audit_scope(d, brew_name)[0] != "scoped":
+        return None
+    a, brew = _SCOPE["audit"], _SCOPE["brew"]
+    sub = copy.deepcopy(a.get("subject") or {})
+    sub["deck"] = {**(sub.get("deck") or {}), "version": brew.get("version"), "deck_hash": brew.get("deck_hash")}
+    sub.update(goals_hash=goals_hash(d), sections=sections(brew), mode="scoped", based_on=a.get("created"))
+    keep = set(_SCOPE["carry"])
+    checks = [{**c, "carried_from": c.get("carried_from") or a.get("created")} for c in a.get("checks", []) if c.get("id") in keep]
+    out = os.path.join(d, "carry-" + os.path.basename(_SCOPE["ap"]))  # not audit*.json, so validate skips it
+    write_atomic(out, dump({"subject": sub, "checks": checks}))
+    return out
 
 
 def dump(doc):
@@ -756,10 +778,13 @@ def main():
         print(json.dumps(sections(load(sys.argv[2])), indent=1, ensure_ascii=False))
         return
     if len(sys.argv) > 2 and sys.argv[1] == "audit-scope":
-        mode, lines = audit_scope(sys.argv[2], sys.argv[3] if len(sys.argv) > 3 else "brew.json")
+        args = [x for x in sys.argv[2:] if x != "--write-carry"]
+        mode, lines = audit_scope(args[0], args[1] if len(args) > 1 else "brew.json")
         print(f"mode: {mode}")
         for x in lines:
             print("  " + x)
+        if "--write-carry" in sys.argv and mode == "scoped":
+            print("  wrote " + write_carry(args[0], args[1] if len(args) > 1 else "brew.json") + " (merge it into the new audit file)")
         return
     if len(sys.argv) < 2 or sys.argv[1] not in ("where", "projects", "research", "validate", "goals-hash"):
         sys.exit(__doc__)

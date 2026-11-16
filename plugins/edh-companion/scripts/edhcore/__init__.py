@@ -9,4 +9,11 @@
   decklist  decklist parsing (text and brew.json) and deck hashes
 
 Scripts import it with sys.path pointing at plugins/edh-companion/scripts. Nothing here talks to Claude or MCPs.
+Importing it also makes stdout and stderr UTF-8: Windows consoles default to cp1252, and card names like "Araña" must
+survive a pipe.
 """
+import sys
+
+for _s in (sys.stdout, sys.stderr):
+    if hasattr(_s, "reconfigure"):
+        _s.reconfigure(encoding="utf-8")

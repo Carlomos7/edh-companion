@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]
+# dependencies = ["certifi", "truststore"]
 # ///
 """Research findings -> verified card candidates for brewing, with citations, theme fit and a verdict per card.
 

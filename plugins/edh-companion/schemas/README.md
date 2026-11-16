@@ -1,6 +1,6 @@
 # Project files
 
-All four skills work from one folder per project, outside the plugin. This file is the single description of that folder; skills link here instead of repeating it. How replies and file prose are written for the player: [references/writing.md](../references/writing.md).
+All five skills work from one folder per project, outside the plugin. This file is the single description of that folder; skills link here instead of repeating it. How replies and file prose are written for the player: [references/writing.md](../references/writing.md).
 
 ## Where projects live
 One persistent workspace, the same wherever Claude Code is started:
@@ -35,14 +35,14 @@ projects:
 Projects keep their own files, decisions and audits; a showcase only points at them. When a new report is requested and a showcase already exists that fits (same theme, same player, related decks), offer to add the deck to it (as a new tab, a variant, or in a group) instead of a separate report; once the player agrees, that grouping is saved in showcase.yaml and reused without asking again. Regenerate reports from the source files; never edit generated HTML.
 
 ## Report themes
-Pages take accent colors from each commander's color identity automatically. A saved theme overrides that: `<project>/report-theme.yaml` or `theme:` in showcase.yaml (whole report or per project), e.g.
+A saved theme sets a report's accent colors: `<project>/report-theme.yaml` or `theme:` in showcase.yaml (whole report or per project), e.g.
 ```yaml
 accent: "#c8102e"
 accent2: "#1f3a93"
 style: comic        # comic | gothic | flames | null
 label: Spider-Man comic
 ```
-Precedence: a theme the player asks for now > the saved theme > the commander's colors > neutral. Save a theme only when the player wants it kept.
+Which colors win: present's pages.md, "Theme and palette". Save a theme only when the player wants it kept.
 
 ## One project
 ```text
@@ -123,6 +123,7 @@ A later request that conflicts with a decision is a question to the player, neve
 ## Versions and stale audits
 - `brew.json.version` goes up on every accepted change, with the new `deck_hash` from `deck_check.py` and a new file in `decklists/`.
 - `audit.json.subject.deck` records the version and hash it checked, and `subject.goals_hash` (from `companion.py goals-hash <project>`) records PROJECT.md's rules at the time. If either differs now, the audit is **stale**: say so and don't call the deck verified. `companion.py validate` reports stale audits.
+- A scoped audit (`subject.mode: "scoped"`) re-checked only what changed since `subject.based_on` and carried the rest (`checks[].carried_from`); `companion.py audit-scope --write-carry` starts one (the audit skill, "Scoped re-audit").
 - When the player changes a restriction, update PROJECT.md, add a dated DECISIONS.md line, re-check the cards the change affects, and treat earlier audits as stale.
 
 ## Card vs printing

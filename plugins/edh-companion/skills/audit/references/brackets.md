@@ -1,6 +1,6 @@
 # Commander Brackets
 
-Official WotC system. Bracket definitions are Wizards policy and aren't in any card data, so this table is maintained by hand. Last verified against the Feb 9, 2026 update (Farewell and Biorhythm became Game Changers). Card-level facts (which cards are Game Changers, bans) come from card data, never from this file. **If the web shows a newer Wizards announcement, or says brackets changed, follow the announcement and tell the user this table may be out of date.**
+Official WotC system. Bracket definitions are Wizards policy and aren't in any card data, so this table is maintained by hand. Last verified against the Feb 9, 2026 update (Farewell and Biorhythm became Game Changers); re-checked 2026-11-16, no newer Commander update (the next banned-list announcement was scheduled for 2026-11-30). Card-level facts (which cards are Game Changers, bans) come from card data, never from this file. **If the web shows a newer Wizards announcement, or says brackets changed, follow the announcement and tell the user this table may be out of date.**
 
 | Bracket | Game Changers | 2-card infinite combos | Mass land denial | Extra turns | Expected game length |
 |---|---|---|---|---|---|

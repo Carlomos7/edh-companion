@@ -1,13 +1,15 @@
 # Research method
 
 ## Depth and when to stop
-Three modes. The source ranges are starting guidelines, not quotas.
+The single definition of depth. The source ranges are starting guidelines, not quotas.
 
-| Mode | Typical sources per subject | Use for |
-|---|---|---|
-| **Quick** | card data, EDHREC, 1 to 2 community threads, a video only if it's central (about 3 to 6 sources) | a first look, a narrow question |
-| **Comprehensive** (default) | card data, EDHREC, 3 to 6 decklists, 2 to 3 creator deck techs, 3 to 5 community threads or articles | a commander, a theme, a build |
-| **Deep** | comprehensive, plus tournament data where power matters, more decklists across brackets, smaller creators, older discussions for context | comparisons, unusual strategies, contested questions |
+| Mode | Typical sources per subject | Rough time | Use for |
+|---|---|---|---|
+| **Quick** | card data, EDHREC, 1 to 2 community threads, a video only if it's central (about 3 to 6 sources) | 1 to 3 min | a first look, a narrow question |
+| **Comprehensive** (default) | card data, EDHREC, 3 to 6 decklists, 2 to 3 creator deck techs with timestamps, 3 to 5 community threads or articles | 5 to 15 min | a commander, a theme, a build |
+| **Deep** | comprehensive, plus tournament data where power matters, more decklists across brackets, smaller creators, older discussions for context | 15 to 30 min | comparisons, unusual strategies, contested questions |
+| **Custom** | the source categories the player chose | varies | |
+| **Skip** | no web research; card data and rules only, labelled as unresearched | seconds | |
 
 Plan the **important questions** first (what the deck does, what real lists play, what creators and players recommend and warn about, what's contested, what's missing for this player's goals). Then research until they're answered well enough, judged by:
 - **Coverage:** each kind of evidence the question needs is present: authoritative card data, what's played (EDHREC with sample sizes, real decklists), why (creator deck techs, prioritized when transcripts are available), how it plays at tables (community threads).

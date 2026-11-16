@@ -1,7 +1,7 @@
 #!/usr/bin/env -S uv run --script
 # /// script
 # requires-python = ">=3.10"
-# dependencies = ["certifi"]
+# dependencies = ["certifi", "truststore"]
 # ///
 """Deterministic Commander deck checks from Scryfall and Commander Spellbook's public APIs.
 
@@ -12,7 +12,8 @@ and drift. This file only reports facts with fixed rules. Judgment (theme fit, p
 Usage:
   deck_check.py DECK [--commander NAME ...] [--bracket N] [--theme-sets spm,spe,...] [--no-combos] [--json OUT]
                 [--budget USD] [--aesthetic-budget USD] [--per-card-max USD] [--cheapest] [--hard-budget]
-                [--fresh | --offline] [--project DIR]
+                [--fresh | --offline] [--project DIR] [--no-tags]
+  deck_check.py NAMES --cards-only --json OUT            just look the cards up and write their data (no deck checks)
   deck_check.py --commander NAME [--commander NAME]      only check commander eligibility and the pairing
 
 DECK is a Moxfield/Archidekt-style text list ("1 Sol Ring (C21) 263 *F*", sections Commander/Deck/Sideboard),

@@ -1,6 +1,6 @@
 schema_version: "1.0"
 name: act-research-anti-venom
-description: "\"What are people saying about X\" routes to mtg-research, not deckbuilding."
+description: "\"What are people saying about X\" routes to research, not deckbuilding."
 tags: [activation, research]
 execution: {prompt: "What are people saying about Anti-Venom as a commander?", max_turns: 25, timeout_seconds: 900}
 runs: 1

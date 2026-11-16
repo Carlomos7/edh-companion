@@ -12,11 +12,9 @@ Show 2 to 4 options, the recommended one first with why, each in the shared dire
 
 ## 3. Ask what matters, one question at a time
 Ask at natural decision points, only when the answer changes the deck. Typical order, skipping what's known:
-1. Which direction (the options above).
+1. **Direction** (the options above), with **bracket** and **budget** named in the same message, each asked or stated as the default you'll use ("bracket 3; just build it, see the price at the end; say if not"). Bracket: Wizards' 1 to 5 scale; 3 is a typical upgraded deck. Budget, asked once ([writing.md](../../../references/writing.md), "Facts, citations and money"): "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget (hard limit or rough target?) · drippy (fancy printings, per-card max) · no expense spared (the ultimate blinged-out deck). Details: money-looks-export.md.
 2. **Theme strictness** (if there's a theme): strict / prefer with a few exceptions / themed printings only / none. And whether artwork matters.
-3. **Power**: bracket (explain it: Wizards' 1 to 5 scale; 3 is a typical upgraded deck).
-4. **Budget**, asked once ([writing.md](../../../references/writing.md), "Facts, citations and money"): "Just build it, see the price at the end (Recommended)" · keep it cheap · a set budget (hard limit or rough target?) · drippy (fancy printings, per-card max) · no expense spared (the ultimate blinged-out deck). Details: money-looks-export.md.
-5. Playstyle details only if the direction leaves them open (interaction level, win style).
+3. Playstyle details only if the direction leaves them open (interaction level, win style).
 Multiple choice, recommended first with its reason. For low-impact gaps, state a provisional assumption ("assuming medium interaction; say if not") and move on. Record answers in PROJECT.md.
 
 ## 4. Check feasibility before committing

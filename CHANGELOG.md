@@ -2,6 +2,23 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.4.0
+Fixes from a review of every skill: instructions that contradicted each other, a scoped re-audit that left its bookkeeping to the model, and paths that might not resolve.
+- **Contradictions resolved:**
+  - brew asks direction, bracket and budget in one message (discovery.md used to ask them third and fourth).
+  - present publishes an Artifact link only on the player's yes.
+  - setup detects tools from the tool list and tests only approved ones, as research does.
+  - audit reports validate's prose warnings as brew fixes instead of fixing them.
+  - A bracket 3 two-card combo fails when it can win early or is held for later; it is a warning only when incidental and late-game.
+  - Palette precedence lives only in pages.md; research depth only in method.md.
+  - Research in "ask every time" mode waits for a yes.
+- **`companion.py audit-scope --write-carry`:** writes `carry-audit[-<variant>].json` with the new subject (deck, goals_hash, sections, mode, based_on) and the carried checks, each keeping its oldest `carried_from` date. The audit checklist starts with "earlier audit exists → audit-scope"; audits before export or sleeving stay full.
+- **Paths:** every script runs as `uv run --script "${CLAUDE_PLUGIN_ROOT}/..."`, and each SKILL.md states the plugin root, so reference files with an unexpanded variable still resolve.
+- **Descriptions:** trimmed to about 90 words, with routing split (exploring before building is research; exporting is brew; a comparison in chat is brew, a comparison page is present). "When to use" sections that repeated the description are gone.
+- **Pages:** the build switch is in bracket order and labels the main build by its bracket ("B3"); pages still open on the main build. Research written for the main deck no longer marks variants as out of date (ported from a lost 8.1.3 local patch).
+- **Network and output:** TLS uses the OS certificate store (`truststore`) first, then certifi, then Python's default. The User-Agent reads the version from plugin.json. Every edhcore script prints UTF-8.
+- **Housekeeping:** setup's install commands moved to `setup/references/integrations.md`; the view-model and palette detail moved into the views.py and palette.py docstrings; the template-change note is in page-spec.md, marked maintainer-only; duplicate rate-limit text merged; tool table has a re-test date; brackets.md re-checked against Wizards on 2026-11-16; stale skill names fixed in evals and schemas; eval tag table completed; deck_check usage lists `--no-tags` and `--cards-only`.
+
 ## 8.3.0
 Cheaper re-audits and fewer audit failures on stale wording. In one project, a full audit after three card swaps cost about 300k tokens and 20 minutes, and most failures were prose that no longer matched the deck.
 - **Scoped re-audits:** `companion.py sections <brew.json>` fingerprints each deck line, recommendation and prose block; audits store them in `subject.sections`. `companion.py audit-scope <project> [brew-<variant>.json]` then lists what a re-audit must re-check (changed cards, recommendations and prose, deck-wide checks, earlier non-pass checks, two random spot checks) and what carries over, or says why it must be full (no baseline, PROJECT.md changed). New optional audit fields: `subject.mode`, `subject.based_on`, `checks[].carried_from`. The audit skill and auditor agent describe when to scope and when to stay full.

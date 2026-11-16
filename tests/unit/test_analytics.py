@@ -82,6 +82,30 @@ class Simulation(unittest.TestCase):
         self.assertGreater(analytics.simulate(lands + rocks, 4, runs=3000)["by_turn"][3], analytics.simulate(lands + filler, 4, runs=3000)["by_turn"][3])
 
 
+class ColorAware(unittest.TestCase):
+    def test_missing_color_is_the_bottleneck(self):
+        five = {c: 1 for c in "WUBRG"}
+        mono = [(36, c("Mountain", "Basic Land — Mountain", produced=["R"])), (63, c("Bear", "Creature", "", "{1}{R}", 2))]
+        rainbow = [(36, c("Command Tower", "Land", produced=list("WUBRG"))), (63, c("Bear", "Creature", "", "{1}{R}", 2))]
+        bad = analytics.simulate(mono + [(1, c("Island", "Basic Land — Island", produced=["U"]))], 5, runs=2000, cost=five)
+        good = analytics.simulate(rainbow, 5, runs=2000, cost=five)
+        self.assertEqual(bad["by_turn"][8], 0.0)  # no W, B or G source at all
+        self.assertIn(bad["bottleneck"], {"W", "B", "G"})
+        self.assertGreater(good["by_turn"][5], 0.5)
+        self.assertIsNone(good["bottleneck"])
+        self.assertGreater(good["mulligans_per_game"], 0)
+
+    def test_karsten_needs_and_land_formula(self):
+        self.assertEqual(analytics.karsten_need(c("Wrath of God", "Sorcery", "", "{2}{W}{W}", 4)), {"W": 26})
+        self.assertEqual(analytics.karsten_need(c("Boros Charm", "Instant", "", "{R}{W}", 2)), {"R": 20, "W": 20})  # gold +1
+        rows = [(36, c("Forest", "Basic Land — Forest", produced=["G"])), (63, c("Bear", "Creature", "", "{1}{G}", 2))]
+        lc = analytics.land_count(rows)
+        self.assertEqual(lc["recommended"], round(31.42 + 3.13 * 2, 1))
+        self.assertIsNone(lc["warning"])  # 36 vs 37.7: within 2
+        chk = analytics.source_check(rows)
+        self.assertEqual(chk["G"], {"sources": 36, "needed": 19, "for": "Bear", "short": 0})
+
+
 class Allocation(unittest.TestCase):
     colors = {"Doctor Strange": {"U"}, "Spider-Man": {"R"}, "Sol Ring": set(), "Counterspell": {"U"}, "Lightning Bolt": {"R"}, "Llanowar Elves": {"G"}}
 

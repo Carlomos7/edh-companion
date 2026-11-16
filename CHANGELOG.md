@@ -2,6 +2,14 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.7.0
+The cast-by-turn simulation now sees colors. It used to count only the amount of mana, so a five-color commander looked castable whenever five lands were out.
+- **Color-aware cast-by-turn:** lands and cheap mana producers carry the colors they make (Scryfall `produced_mana`; fetch lands count as any needed color), and the commander's pips have to be paid. It uses Karsten's 2022 Commander model: London mulligan with the first one free, his keep rules, bottoming toward three lands, and a turn-1 draw. It also reports `mulligans_per_game`, the share of games where colors (not mana) were the problem, which color was short, and the `bottleneck`. In the Spider-Man deck, Cosmic Spider-Man is castable by turn 5 in 53% of games; in a quarter of games the mana was there but a color wasn't, most often red.
+- **`stats.sources_check`:** each color's effective sources (lands 1, cheap mana producers ¾) against the most demanding card's need in Karsten's 99-card table (gold cards +1, his rule), naming that card.
+- **`stats.land_count`:** Karsten's formula, 31.42 + 3.13 × average mana value − 0.28 × cheap ramp and draw, with a warning when the deck is 2 or more lands off.
+- deck_check prints all three. Prose that quotes the old percentages will get validate's prose-lint warning after the next deck_check.
+- 228 unit tests.
+
 ## 8.6.0
 Rules versus preferences, one plan for a swap across variants, and a short STATE.md.
 - **PROJECT.md `## Rules` (R1…) and `## Guidance` (G1…):**

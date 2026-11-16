@@ -48,7 +48,9 @@ Which colors win: present's pages.md, "Theme and palette". Save a theme only whe
 ```text
 EDHCompanion/projects/<project>/     project = commander or idea slug, e.g. spider-man-marvel
 ├── PROJECT.md      goals and restrictions, in Markdown                  (any skill, when the player states them)
-├── STATE.md        where things stand, open questions, next steps       (any skill, after meaningful progress)
+├── STATE.md        a short snapshot, overwritten: status, open questions, next steps  (any skill, after meaningful progress)
+├── HISTORY.md      what happened, appended; moved out of STATE.md, not read by default (any skill)
+├── PLAN.json       the one pending deck change, pinned to deck hashes   (plan.py; brew)
 ├── DECISIONS.md    what the player accepted, rejected or allowed, why   (any skill, when the player decides)
 ├── RESEARCH.md     readable research summary with citations             (research)
 ├── research.json   sources and findings, for citations and checks       (research)
@@ -70,7 +72,8 @@ Markdown is the source of truth for goals and decisions; JSON is used where stru
 Scripts get card data through the shared core (`scripts/edhcore/`), never by hand: `card_lookup.py` for lookups and searches, `deck_check.py` for decks, `candidates.py` for research candidates. They share a cache in `~/.cache/edh-companion/` (outside the workspace; disposable; `EDHC_CACHE_DIR` moves it, `EDHC_NO_CACHE=1` turns it off), one rate limit across parallel processes, and retries per endpoint. Freshness: card text 7 days; legality, Game Changers, prices and searches 24 hours; `--fresh` re-reads everything (audits use it). Every result has a `data` block (`fresh`, `cached`, `stale` = an older copy used because the refresh failed, `unavailable`); anything that relied on stale or unavailable data is `unverified`. Providers excluded in the research preferences are never called; `--offline` uses the cache only.
 
 ## Reading and writing
-- Start by reading PROJECT.md, STATE.md and DECISIONS.md (short), then load research.json / brew.json only when needed.
+- Start by reading PROJECT.md, STATE.md and DECISIONS.md (short), then load research.json / brew.json only when needed. HISTORY.md only when the past matters.
+- **STATE.md is a snapshot**, rewritten each time and kept under about 20 lines: one status line per build (version, audit verdict), open questions, next steps. What happened goes to HISTORY.md as dated lines, appended.
 - Update files after meaningful changes (a decision, a new deck version, finished research or audit), not every message.
 - Never overwrite an accepted decklist version or erase research: add a new decklist file and bump `version`; extend research.json and keep its IDs.
 - A skill writes its own files; any skill may record what the player says in PROJECT.md, DECISIONS.md and STATE.md.
@@ -107,18 +110,28 @@ Prefer EDHREC and Reddit; skip MTGGoldfish.
 ## Must include / never include
 ## Platform
 Moxfield
+## Rules
+- R1 Strict Marvel: every card, lands included, is played in a Marvel printing.
+- R2 [b2] Bracket 2: no Game Changers.
+## Guidance
+- G1 Spider-Verse creatures first; any Marvel card when it is clearly stronger.
 ```
+**Rules and Guidance.** `## Rules` lists the hard requirements an audit can fail a deck on, one per line with an id (`R1`, `R2`…, never reused); `[b2, b4]` after the id limits a rule to those variants (`main` is brew.json). `## Guidance` (`G1`…) holds preferences: they shape choices and can only ever be audit warnings. `companion.py goals-hash` hashes each rule separately (Guidance never), audits record those hashes in `subject.rule_hashes`, and each check cites the rules it verifies in `checks[].rules`, so editing one rule makes only the checks citing it out of date. Moving a rule to Guidance (or deleting it) needs a DECISIONS.md line naming the rule id; validate refuses otherwise. Older PROJECT.md files without R-ids still work: the whole file is hashed.
+
+**Which instruction wins:** plugin defaults < PROJECT.md Rules < a variant's own rules (`[b2]`) < a one-off instruction from the player in this conversation (do it, and ask whether to record it).
 Theme modes: **none** (best deck) · **printings** (best cards, themed printings when they exist) · **prefer** (on theme unless an approved exception) · **strict** (nothing off theme).
 Theme basis (what "on theme" is judged by): **official** (cards or printings from the franchise's own Magic products) · **visual/story** (art and flavor that clearly depict the theme, any set) · **mechanical** (cards that play like the theme, e.g. farming = landfall, food, plants) · **inspired** (a mix, judged case by case with the player).
 Hard rules are never bent without the player changing them; flexible preferences can be traded off with a stated reason.
 
 ## DECISIONS.md
-Append-only, dated, in the player's words where possible:
+Append-only, dated, in the player's words where possible, each line with an id (`D-1`, `D-2`…):
 ```markdown
-- 2026-11-04 Theme is strict Spider-Man; basics exempt.
-- 2026-11-04 Rejected Cyclonic Rift (rec-004): "no off-theme blue staples".
-- 2026-11-05 Allowed exception: Sol Ring, any printing.
+- D-1 2026-11-04 Theme is strict Spider-Man; basics exempt.
+- D-2 2026-11-04 Rejected Cyclonic Rift (rec-004): "no off-theme blue staples".
+- D-3 2026-11-05 Allowed exception: Sol Ring, any printing. (superseded by D-9)
+- D-9 2026-11-13 Theme relaxed for all variants: any Marvel card when stronger; R1 kept, G1 added.
 ```
+A decision is never edited away: a later one replaces it, and the old line gets "(superseded by D-n)". validate checks the ids are unique and every "superseded by" points at a real line. Older lines without ids stay valid.
 A later request that conflicts with a decision is a question to the player, never a silent override. A rejected card isn't proposed again unless the player asks or the reason no longer applies (say why).
 
 ## Versions and stale audits

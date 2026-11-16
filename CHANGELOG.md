@@ -2,6 +2,19 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.6.0
+Rules versus preferences, one plan for a swap across variants, and a short STATE.md.
+- **PROJECT.md `## Rules` (R1…) and `## Guidance` (G1…):**
+  - Rules are hashed one by one; `[b2]` after an id limits a rule to that variant. Guidance is never hashed, so it can only ever produce audit warnings.
+  - Audits record `subject.rule_hashes`, and checks cite the rules they verify (`checks[].rules`). A changed rule makes only its checks out of date, and audit-scope re-checks just those. A new or changed rule that no check covers makes the audit stale.
+  - A rule that leaves Rules needs a DECISIONS line naming it.
+  - PROJECT.md files without rule ids still hash as a whole.
+- **`plan.py`:** PLAN.json holds one pending change across variants, pinned to their deck hashes. `new` shows a dry-run; `apply` applies exactly that plan and reports a result per variant. It refuses a variant whose deck changed, or one where an add is a Game Changer at bracket 1–2, is off identity or is banned. Each applied variant gets one version bump, a new decklist and its hash; `revert` undoes the apply. Adds may name a printing: `"+Sol Ring (SLD) 908 *F*@ramp"`.
+- **DECISIONS ids:** `D-n` ids, with "(superseded by D-n)" instead of edits. validate checks the ids are unique and that each reference points at a real decision.
+- **STATE.md is a short snapshot;** history is appended to HISTORY.md, which sessions don't read by default.
+- **Precedence:** plugin defaults < Rules < variant rules < a one-off instruction from the player.
+- 226 unit tests.
+
 ## 8.5.0
 A franchise theme's card pool becomes a reviewed lockfile instead of a fresh search every session. In the Spider-Man project, 29 Marvel Secret Lair bonus cards had no drop name anywhere and were found only by reading their footers.
 - **`pool.py sweep <project>`:** discovers printings through several channels: set names from Scryfall's default_cards bulk file, which is fetched only when Scryfall's `updated_at` changes (bulk hosts have no rate limit); MTGJSON Secret Lair drop names; Secret Lair cards with no drop name; and a `date>now` search for cards newer than the bulk file. It writes `sources/pool.lock.json`, keyed by Scryfall id, with the evidence and a status (accepted, pending, rejected or removed) for each card, plus `pool.diff.md` listing what changed. Brew and audit use only accepted entries.

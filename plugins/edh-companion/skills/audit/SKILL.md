@@ -9,7 +9,7 @@ An audit is worth something only if it can say "fail" and "couldn't check". Each
 
 **Replies:** answer first, reasons next, limits once, next step last (a choice as options, recommended first with why). Read [writing.md](../../references/writing.md) before writing a verdict reply, `verdict.summary` or audit.md.
 
-**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py` and `art_sheet.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py`, `art_sheet.py` and `plan.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
 
 ## Boundaries
 - **One lookup** ("does this card have Marvel art?"): open the printing and answer; offer a full audit only if they want the deck checked.
@@ -32,7 +32,7 @@ The subject: a pasted list, a decklist file, a brew.json, research.json, or a se
 - [ ] 7. Verdict and required fixes; write audit.json (+ audit.md for big audits); validate
 ```
 
-1. **Subject.** Record the brew file, `version`, `deck_hash`, `goals_hash` (`companion.py goals-hash <project>`) and `sections` (`companion.py sections <brew.json>`: a fingerprint per deck line, recommendation and prose block, so the next audit can be scoped). The audit applies to that version and those rules only; a later change to either makes it out of date.
+1. **Subject.** Record the brew file, `version`, `deck_hash`, `goals_hash` and `rule_hashes` (`companion.py goals-hash <project> --variant <v>`; each check lists the rule ids it verifies in `rules`, Guidance is only ever a warning) and `sections` (`companion.py sections <brew.json>`: a fingerprint per deck line, recommendation and prose block, so the next audit can be scoped). The audit applies to that version and those rules only; a later change to either makes it out of date.
 2. **Deterministic checks:**
    `uv run --script "${CLAUDE_PLUGIN_ROOT}/skills/audit/scripts/deck_check.py" <list|brew.json> --bracket N [--commander NAME] [--theme-sets set,set] --fresh --project <project> --json deck_check.json`
    Always `--fresh`; stale or unavailable data makes the affected checks `unverified`. Copy its checks unchanged (command and inputs in `method`, result in `detail`). What it covers, the `data` block and budget flags: [references/checks.md](references/checks.md), "Deterministic checks". If Bash or the network isn't available, do the same checks by hand from Scryfall (count every line, each card's legality and identity, Game Changers via `is:gamechanger`), mark them `sourced`, and say so. Unreachable sources make checks `unverified`, never skipped.

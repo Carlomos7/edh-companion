@@ -19,6 +19,7 @@ Every check in audit.json has `kind`: **deterministic** (script/tool result with
 3. Count exceptions and off-theme cards against the limits. Over the limit or not approved → `theme_violations` + a fail.
 4. Ambiguous cases from `theme_policy.unresolved` are `unverified` with the question, not decided by the auditor.
 5. Judge by the theme's **basis** in PROJECT.md (official / visual-story / mechanical / inspired) and its hard rules; flexible preferences can't fail a deck, hard rules can.
+6. **Pool lockfile:** when `sources/pool.lock.json` exists, run `pool.py freshness <project>` first (exit 2 → theme checks `unverified`). A printing is in the official pool only if its entry is `accepted`; `pending` is `unverified` with the question, never a pass. Art claims cite `sources/art_notes.json` when its note was made from the image (`verified_by` not `scryfall-tagger`, not `stale`); otherwise open the image.
 
 ## Commander eligibility (CR 903.3, 702.124; rules effective 2026-09-25)
 - A commander is a legendary creature, legendary Vehicle, or legendary Spacecraft with power/toughness, or a card that says it can be your commander. Not banned in Commander.

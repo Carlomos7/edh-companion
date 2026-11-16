@@ -9,7 +9,7 @@ argument-hint: "[nothing, or what to change, e.g. 'workspace D:/MTG']"
 
 Nothing requires setup: every skill works without it, using defaults. This only saves preferences and tells the player what their tools can do. Replies follow [writing.md](../../references/writing.md).
 
-**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py` and `candidates.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py` and `art_sheet.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
 
 Request: $ARGUMENTS
 

@@ -2,6 +2,15 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.5.0
+A franchise theme's card pool becomes a reviewed lockfile instead of a fresh search every session. In the Spider-Man project, 29 Marvel Secret Lair bonus cards had no drop name anywhere and were found only by reading their footers.
+- **`pool.py sweep <project>`:** discovers printings through several channels: set names from Scryfall's default_cards bulk file, which is fetched only when Scryfall's `updated_at` changes (bulk hosts have no rate limit); MTGJSON Secret Lair drop names; Secret Lair cards with no drop name; and a `date>now` search for cards newer than the bulk file. It writes `sources/pool.lock.json`, keyed by Scryfall id, with the evidence and a status (accepted, pending, rejected or removed) for each card, plus `pool.diff.md` listing what changed. Brew and audit use only accepted entries.
+- **`sources/theme-rule.json`:** the theme rule as data. It holds the patterns, which evidence is strong, weak or rejecting, and which evidence wins a conflict (the player's call, then the footer).
+- **Footers and art:** `art_sheet.py` builds contact sheets of footer strips or art crops for the cards that are still unchecked. `pool.py footer` and `pool.py art` record what was read. `sources/art_notes.json` is keyed by `illustration_id`; `art-seed` adds Scryfall Art Tags as unverified hints, and a note is marked stale when Scryfall gets a better scan.
+- **`pool.py freshness <project>`:** reports the bulk and MTGJSON dates, changes to the Game Changers and banned lists (by hash), theme sets that grew, Scryfall ID migrations (merges re-key the entry, deletes mark it removed), stale art notes and the pool's age against `sources/freshness.json`. It exits with 2 on an error, which makes theme checks unverified.
+- **Conditional downloads:** `Client.snapshot` sends If-None-Match / If-Modified-Since and records the sha256 of each snapshot.
+- 221 unit tests, plus a live regression (`EDHC_LIVE=1`): the 29 bonus Secret Lair cards and the Marvel: Darkhold Destiny card are in the pool.
+
 ## 8.4.0
 Fixes from a review of every skill: instructions that contradicted each other, a scoped re-audit that left its bookkeeping to the model, and paths that might not resolve.
 - **Contradictions resolved:**

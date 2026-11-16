@@ -9,7 +9,7 @@ Act like an informed deckbuilding friend: explore first, recommend with reasons,
 
 **Replies:** answer first, reasons next, limits once, next step last (a choice as options, recommended first with why). Read [writing.md](../../references/writing.md) before writing directions, a plan, a hand-back or file prose.
 
-**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py` and `candidates.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
+**Scripts:** run every script as `uv run --script "${CLAUDE_PLUGIN_ROOT}/<path>"`; the plugin root is `${CLAUDE_PLUGIN_ROOT}`, so use that path wherever a reference file shows the variable unexpanded. Short names: `companion.py`, `card_lookup.py`, `candidates.py`, `pool.py` and `art_sheet.py` are in `scripts/`; `deck_check.py` is `skills/audit/scripts/deck_check.py`.
 
 ## Boundaries
 - **Calls research** when a decision needs evidence the project doesn't have (no research on this commander, the theme's card pool unknown, an untested strategy). Reuse research.json first, queried with `companion.py research-find`, not read whole.
@@ -30,7 +30,7 @@ A starting point (idea, theme, commander, card pool, or a list/Moxfield export/l
 - [ ] 7. Hand back: status first, then the diff, Rule 0, price, honest shortcomings, next steps
 ```
 
-1. **Load.** No project named? Check for saved ones first and offer to resume a match ([schemas/README.md](../../schemas/README.md), "Starting a session"). Resume from STATE.md's next step. If the latest audit's version/hash doesn't match brew.json, the audit is out of date: say so.
+1. **Load.** No project named? Check for saved ones first and offer to resume a match ([schemas/README.md](../../schemas/README.md), "Starting a session"). Resume from STATE.md's next step. If the latest audit's version/hash doesn't match brew.json, the audit is out of date: say so. A themed project with `sources/pool.lock.json`: run `pool.py freshness <project>` and use only `accepted` pool entries ([references/themes.md](references/themes.md), "The pool lockfile").
 2. **Discover.** For a broad request, don't hand over a deck or a questionnaire. Follow [references/discovery.md](references/discovery.md): research and present a few directions with a recommendation, ask one meaningful question at a time at natural decision points, check that the restrictions allow a functional deck (confirmed limits vs estimates), and explain trade-offs so the player chooses deliberately. Bracket and budget are settled before the plan: whatever the first question is, name both, each asked or stated as the default you'll use ("bracket 3; just build it, see the price at the end; say if not"). If the request is already specific, skip ahead.
 3. **Plan.** Lead with the game plan and roughly when it wins at this bracket; then role targets ([references/construction.md](references/construction.md)), the key cards that make it work (reasons and refs), what the bracket allows and what stays out, and the theme line. End with "Build it?" as options.
 4. **Build or revise.**

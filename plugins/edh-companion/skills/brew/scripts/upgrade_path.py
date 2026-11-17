@@ -9,7 +9,7 @@
                   [--fresh|--offline]
 
 Value of a swap = role gain + synergy gain. Role gain: +1 when the add fills a role below its floor
-(references/roles.json), -1 when the cut takes a role to below its floor. Synergy gain: the add's lift lower bound
+(brew.json role_targets, else references/roles.json), -1 when the cut takes a role to below its floor. Synergy gain: the add's lift lower bound
 minus the cut's (candidates.py score; 1 = no association, also for cards without numbers). Spells swap for spells,
 lands for lands; among equal swaps the least-played card is cut (EDHREC inclusion lower bound; unknown counts as
 50%, then Scryfall's overall EDHREC rank decides); Game Changers aren't added past the bracket's limit. Price: $0 when the collection has the card
@@ -192,7 +192,8 @@ def main():
     prices = deck_check.cheapest([p["card"]["name"] for p in pool])
     bracket = (brew.get("target_bracket") or {}).get("bracket")
     combos, combo_note = combos_for(s, commanders, [e["card"]["name"] for e in deck + pool], bracket)
-    doc = plan(deck, pool, load(ROLES_FILE), bracket=bracket, combos=combos, commanders=commanders,
+    from autobuild import with_targets
+    doc = plan(deck, pool, with_targets(load(ROLES_FILE), brew.get("role_targets")), bracket=bracket, combos=combos, commanders=commanders,
                commander_gc=sum(bool(c.get("game_changer")) for c in cmd_cards),
                ident=sorted({x for c in cmd_cards for x in c.get("color_identity", [])}),
                owned=lambda c: col.state({"oracle_id": c.get("oracle_id")}, have) != "missing",

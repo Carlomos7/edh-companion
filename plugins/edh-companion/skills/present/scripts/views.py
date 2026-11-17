@@ -721,6 +721,15 @@ def identity_name(identity):
     return f"{name} ({ci})" if ci else name
 
 
+def lands_context(d):
+    """The lands tile's range: the build's own target (template check rows from role_targets) or the typical 35–38."""
+    t = (d["stats"].get("template") or {}).get("lands")
+    if d["stats"].get("template_kind") == "yours" and t:
+        lo, hi = t[1], t[2]
+        return "your target " + (f"{lo}+" if hi is None else f"{lo}" if lo == hi else f"{lo}–{hi}")
+    return "typical 35–38"
+
+
 def hero(cm, identity, art_crop=None, d=None):
     """Hero facts for a commander and one build (default: its first): name, one metadata line, the audit verdict, 4 key stats."""
     d = d or cm["decks"][0]
@@ -737,7 +746,7 @@ def hero(cm, identity, art_crop=None, d=None):
             "stats": [{"label": "Value", "value": None if s.get("price") is None else f"${s['price']:,.2f}",
                        "context": "listed printings" + (f", Scryfall {s['price_as_of']}" if s.get("price_as_of") else "")},
                       {"label": "Average mana value", "value": f"{s['avg_mv']}", "context": "nonland cards"},
-                      {"label": "Lands", "value": f"{s['lands']}" + (f" + {mdfc} MDFC" if mdfc else ""), "context": "typical 35–38"},
+                      {"label": "Lands", "value": f"{s['lands']}" + (f" + {mdfc} MDFC" if mdfc else ""), "context": lands_context(d)},
                       {"label": "Game Changers", "value": f"{len(s['game_changers'])}", "context": f"{gc_rule} at bracket {b}" if gc_rule else None}]
             + ([{"label": "Missing cards", "value": f"{m['cards']}", "context": (f"about ${m['usd']:,.2f} to buy; " if m.get("usd") else "") + "against your collection"}]
                if (m := d.get("missing")) else []),

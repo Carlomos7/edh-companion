@@ -3,7 +3,7 @@
 You don't write the page. Two scripts turn project files into data, and a fixed template renders it, so every page is consistent and every number comes from a file or a script.
 
 - `${CLAUDE_PLUGIN_ROOT}/skills/present/scripts/site_data.py`: reads one project (`from-workspace`) or a showcase of several (`from-showcase`) and writes `page-data.json` (or `summary.md`). Card facts, images, prices, Oracle-text roles, mana sources, cast-by-turn odds and the price ladder come from the audit skill's `deck_check.py` (Scryfall). The presentation views (findings, disagreements, sources, audit, recommendations, notices, hero, card types) come from `scripts/views.py`; colours from `scripts/palette.py`. Both are deterministic: no model call at build time, project files are only read.
-- `${CLAUDE_PLUGIN_ROOT}/skills/present/scripts/build_site.py`: validates the data, packs card images into WebP atlases (plus one WebP art crop per commander for the hero), renders `assets/template.html` and checks the artifact limits.
+- `${CLAUDE_PLUGIN_ROOT}/skills/present/scripts/build_site.py`: validates the data, packs card images into WebP atlases (plus one WebP art crop per commander for the hero), assembles the template folder (`assets/template/`: index.html, page.css, page.js; `--template DIR` swaps in another folder with the same placeholders) into one self-contained page and checks the artifact limits.
 
 Page design and the data-to-section mapping: [page-spec.md](page-spec.md). Read it only when changing the template.
 
@@ -68,5 +68,5 @@ The audit state is derived, never upgraded: no paired audit file is `not audited
 ## Don't
 - Hand-edit `page-data.json` or the generated HTML. Fix the project file and re-run.
 - Edit a player's research, decisions or decks to make a page look better; the views derive presentation from the files as they are.
-- Edit `assets/template.html` for one page's needs. Template changes are for every page.
+- Edit `assets/template/` (index.html, page.css, page.js) for one page's needs. Template changes are for every page.
 - Hotlink Scryfall images in a published page. Atlases (and the hero WebP) are the fix.

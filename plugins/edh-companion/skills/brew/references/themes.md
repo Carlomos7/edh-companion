@@ -46,6 +46,8 @@ If the player keeps an infeasible hard rule, don't fabricate a compliant deck. O
 - Art-based themes need a `printing_id` and `(SET) number` for every themed card; the art is looked at, not assumed from the name or set.
 - Finding printings: Scryfall `unique:prints` with `e:`, `art:`, `ft:`; Secret Lair and promos carry many franchise arts. Unplayable printings (gold border, digital, oversized) never count.
 
+Preference inside the theme (e.g. "Spider-Verse first, other Marvel when stronger"): list it as `theme_policy.tiers` in order (`[{id, label}]`) and tag each on-theme card's `deck[].theme_tier`. It's shown on pages and counted; it never makes a card off theme.
+
 ## 6. When the rules change
 "Actually, let's loosen it" (or tighten it): update PROJECT.md and add a dated DECISIONS.md line; re-check the cards the change affects (newly allowed upgrades become *proposals*; newly forbidden cards become required fixes); treat earlier audits as stale; tell the player what changed.
 

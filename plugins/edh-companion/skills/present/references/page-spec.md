@@ -59,9 +59,16 @@ One question per chart, 4 px rounded bar ends, ticks at least 11 px, a tooltip o
 ## Images
 WebP atlases only, cut with CSS `background-position`, 488 px cells; the hero art crop is one WebP file per commander in `img/`. Never base64, never hotlinked in a published page.
 
+## Template folder (swappable)
+`assets/template/` holds `index.html` (markup), `page.css` (styles) and `page.js` (behaviour). `build_site.py` assembles them into one self-contained page through four placeholders in index.html: `__TITLE__`, `/*__CSS__*/`, `/*__JS__*/` and `/*__DATA__*/` (the page data, `window.SITE_DATA`, inserted last). Another look or layout is another folder with the same three files and placeholders, used with `build_site.py --template DIR`; it reads the same page data, so nothing upstream changes. build_site refuses a folder that's missing a file or a placeholder. Keep JS in page.js (never in Python strings: that's where line breaks broke pages before); `node --check page.js` and the browser test in test_present.py catch syntax and runtime errors.
+
+## Project conventions on the page
+- `brew.json role_targets` (lands and per-role `{min, max}`, `max` null = open-ended) replace the typical ranges in the role check ("Against your targets") and the lands tile ("your target 36–37"). Without them the page shows the typical ranges and says so.
+- `theme_policy.tiers` plus `deck[].theme_tier` add a preference sub-label to on-theme cards (e.g. Spider-Verse, Other Marvel) and a count per tier in the theme line. On theme stays on theme: the percentage and filters don't change.
+
 ## Accessibility and phones
 Every card is a button, tabs take arrow keys, scrollable tables are focusable regions, 390 px has no horizontal scroll, fixed aspect boxes prevent layout shift. Target: axe-core wcag2a, wcag2aa and wcag22aa clean in light and dark.
 
 ## Tests (maintainers only: `tests/` is in the repo, not the installed plugin)
-Edit `assets/template.html` only for something every page needs, keep existing behaviour working, and re-run `tests/unit/test_present.py` plus the browser check on the fixture project.
+Edit `assets/template/` (index.html, page.css, page.js) only for something every page needs, keep existing behaviour working, and re-run `tests/unit/test_present.py` plus the browser check on the fixture project.
 `tests/unit/test_present.py` builds `tests/fixtures/krenko` and the showcase `tests/fixtures/showcase/showcases/test-showcase` (krenko and spider-gwen reused, a short padded talrand list, a research-only project) across the three modes (needs uv and network), plus offline tests for theme precedence and contrast. `tests/unit/test_views.py` covers the view model offline (legacy citation forms, timestamp links, headlines, grouping, audit splitting and labels, applied recommendations, notices, card types, palette contrast for many hues and odd artwork, privacy) and, with `EDHC_REAL_PROJECT=<project folder>`, a temporary copy of a real project (completeness, type counts, privacy). The browser check is step 3 of [pages.md](pages.md).

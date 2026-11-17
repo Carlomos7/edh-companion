@@ -96,6 +96,37 @@ class Pipeline(unittest.TestCase):
             self.assertIn("Scryfall", x["attribution"])                  # attribution travels with the data
             self.assertIn(f, self.build["supporting_files"])
 
+    def test_page_runs_without_js_errors(self):
+        """The built page in a real browser: any uncaught JS error (a broken template edit) fails here."""
+        try:
+            from playwright.sync_api import sync_playwright
+        except ImportError:
+            self.skipTest("playwright not installed")
+        errors = []
+        try:
+            with sync_playwright() as p:
+                try:
+                    browser = p.chromium.launch()
+                except Exception:
+                    browser = p.chromium.launch(channel="chrome")
+                page = browser.new_page()
+                page.on("pageerror", lambda e: errors.append(str(e)))
+                page.goto("file:///" + os.path.join(self.tmp, "site", "index.html").replace(os.sep, "/"))
+                page.wait_for_timeout(1500)
+                tabs = page.locator("#tabs button, #tabs a").count()
+                browser.close()
+        except Exception as e:  # no browser available on this machine
+            self.skipTest(f"no browser: {e}")
+        self.assertEqual(errors, [])
+        self.assertGreater(tabs, 0)
+
+    def test_template_js_parses(self):
+        node = shutil.which("node")
+        if not node:
+            self.skipTest("node not installed")
+        p = subprocess.run([node, "--check", os.path.join(HERE, "..", "assets", "template", "page.js")], capture_output=True, text=True)
+        self.assertEqual(p.returncode, 0, p.stderr)
+
     def test_audit_states_derived_never_upgraded(self):
         b3, b4 = self.decks["b3"]["audit_view"], self.decks["b4"]["audit_view"]
         self.assertEqual((b3["verdict"], b3["verdict_label"]), ("pass_with_warnings", "Pass with warnings"))
@@ -620,6 +651,55 @@ class CacheReuse(unittest.TestCase):
             d = D["groups"][0]["commanders"][0]["decks"][0]
             self.assertIsNone(d["missing"])                              # a shared page never shows ownership
             self.assertTrue(all(c["owned"] is None for c in d["cards"]))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_template_folder_is_swappable(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            tpl = os.path.join(tmp, "tpl")
+            shutil.copytree(os.path.join(HERE, "..", "assets", "template"), tpl)
+            with open(os.path.join(tpl, "page.css"), "a", encoding="utf-8") as h:
+                h.write("/* my-house-style */\n")
+            _, D, _ = build_pipeline(tmp, "from-workspace", WS, site=False)
+            b = run(os.path.join(HERE, "build_site.py"), os.path.join(tmp, "page-data.json"), "--out", os.path.join(tmp, "site"), "--template", tpl)
+            self.assertTrue(json.loads(b.stdout)["pass"], b.stdout)
+            self.assertIn("/* my-house-style */", open(os.path.join(tmp, "site", "index.html"), encoding="utf-8").read())
+            with open(os.path.join(tpl, "index.html"), encoding="utf-8") as h:
+                broken = h.read().replace("/*__JS__*/", "")
+            with open(os.path.join(tpl, "index.html"), "w", encoding="utf-8") as h:
+                h.write(broken)
+            b = run(os.path.join(HERE, "build_site.py"), os.path.join(tmp, "page-data.json"), "--out", os.path.join(tmp, "site2"), "--template", tpl)
+            self.assertNotEqual(b.returncode, 0)
+            self.assertIn("lacks /*__JS__*/", b.stderr)
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_project_conventions_on_the_page(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            ws = os.path.join(tmp, "ws")
+            shutil.copytree(WS, ws)
+            f = next(os.path.join(ws, n) for n in sorted(os.listdir(ws)) if n.startswith("brew"))
+            with open(f, encoding="utf-8") as h:
+                b = json.load(h)
+            b["role_targets"] = {"lands": {"min": 36, "max": 37}, "roles": {"ramp": {"min": 10, "max": 12}, "protection": {"min": 7, "max": None}},
+                                 "note": "PROJECT.md role targets"}
+            b["theme_policy"] = dict(b.get("theme_policy") or {"mode": "prefer"}, tiers=[{"id": "goblin", "label": "Goblins"}, {"id": "red", "label": "Other red"}])
+            themed = [c for c in b["deck"] if c.get("theme") == "on_theme"]
+            themed[0]["theme_tier"], themed[1]["theme_tier"] = "goblin", "red"
+            with open(f, "w", encoding="utf-8") as h:
+                json.dump(b, h)
+            _, D, html = build_pipeline(tmp, "from-workspace", ws)
+            d = next(x for c in D["groups"][0]["commanders"] for x in c["decks"] if x["id"] in os.path.basename(f))
+            self.assertEqual(d["stats"]["template_kind"], "yours")
+            self.assertEqual(d["stats"]["template"]["lands"][1:], [36, 37])
+            self.assertEqual(d["stats"]["template"]["protection"][1:], [7, None])   # open-ended "7+"
+            self.assertIn("your target 36–37", [x.get("context") for x in d["hero"]["stats"]])
+            by = {c["name"]: c for c in d["cards"]}
+            self.assertEqual((by[themed[0]["name"]]["tier"], by[themed[1]["name"]]["tier"]), ("Goblins", "Other red"))
+            self.assertEqual([t["label"] for t in d["theme"]["tiers"]], ["Goblins", "Other red"])
+            self.assertIn("Against your targets", html)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

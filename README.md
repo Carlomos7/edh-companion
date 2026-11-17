@@ -145,7 +145,6 @@ Known limits we hit while testing (Nov 2026): the MTG MCP's deck validator was d
 
 ## How it works
 - [Architecture](docs/architecture.md): skills, project files, scripts and why each exists.
-- [Research notes](docs/research/): the conventions and sources the design is based on.
 
 ## Contributing
 See [CLAUDE.md](CLAUDE.md) for layout, tests and release rules. Try local changes with `claude --plugin-dir ./plugins/edh-companion`.

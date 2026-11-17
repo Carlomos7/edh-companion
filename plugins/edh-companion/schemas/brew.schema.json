@@ -459,6 +459,14 @@
       },
       "description": "Known gameplay compromises of this build (often theme- or budget-driven): consistency, interaction, mana, win conditions, achievable bracket."
     },
+    "label": {
+      "type": [
+        "string",
+        "null"
+      ],
+      "maxLength": 40,
+      "description": "Display name for this build on pages, e.g. 'B3 Upgraded'. Files keep the variant id; null shows the bracket (B3)."
+    },
     "group": {
       "type": [
         "string",

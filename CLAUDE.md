@@ -1,6 +1,6 @@
 # Developing edh-companion
 
-This repo is a Claude Code plugin marketplace with one plugin, `plugins/edh-companion/`. Only that folder ships to players; `docs/`, `tests/` and `examples/` stay in the repo.
+This repo is a Claude Code plugin marketplace with one plugin, `plugins/edh-companion/`. Only that folder ships to players; `docs/architecture.md`, `tests/` and `examples/` stay in the repo. Research notes, benchmark write-ups and other reports are kept outside the repo, not committed here.
 
 - Skills: `plugins/edh-companion/skills/<name>/SKILL.md` (research, brew, audit, present, setup). Keep each SKILL.md short; details go in its `references/`, one level deep. Descriptions say what the skill does, when to use it and when not to.
 - Shared contract: `plugins/edh-companion/schemas/README.md` (project files) and the JSON schemas next to it. Change them together with `scripts/companion.py` and the tests.

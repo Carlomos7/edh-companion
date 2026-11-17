@@ -1,0 +1,91 @@
+{
+ "schema_version": "1.0",
+ "project": "partners",
+ "version": 1,
+ "deck_hash": "5f64b41fbc54",
+ "variant": null,
+ "updated": "2026-11-17",
+ "commander": {
+  "cards": [
+   {
+    "name": "Tymna the Weaver"
+   },
+   {
+    "name": "Thrasios, Triton Hero"
+   }
+  ],
+  "rationale": "Test fixture: two commanders with Partner."
+ },
+ "theme_policy": null,
+ "target_bracket": {
+  "bracket": 4,
+  "restrictions": []
+ },
+ "strategy": {
+  "archetype": "four-color value",
+  "game_plan": "Draw cards with both commanders and answer threats."
+ },
+ "deck": [
+  {
+   "name": "Sol Ring",
+   "qty": 1,
+   "role": "ramp"
+  },
+  {
+   "name": "Arcane Signet",
+   "qty": 1,
+   "role": "ramp"
+  },
+  {
+   "name": "Command Tower",
+   "qty": 1,
+   "role": "land"
+  },
+  {
+   "name": "Counterspell",
+   "qty": 1,
+   "role": "interaction"
+  },
+  {
+   "name": "Swords to Plowshares",
+   "qty": 1,
+   "role": "interaction"
+  },
+  {
+   "name": "Llanowar Elves",
+   "qty": 1,
+   "role": "ramp"
+  },
+  {
+   "name": "Doom Blade",
+   "qty": 1,
+   "role": "interaction"
+  },
+  {
+   "name": "Rhystic Study",
+   "qty": 1,
+   "role": "draw"
+  },
+  {
+   "name": "Plains",
+   "qty": 23,
+   "role": "land"
+  },
+  {
+   "name": "Island",
+   "qty": 23,
+   "role": "land"
+  },
+  {
+   "name": "Swamp",
+   "qty": 22,
+   "role": "land"
+  },
+  {
+   "name": "Forest",
+   "qty": 22,
+   "role": "land"
+  }
+ ],
+ "recommendations": []
+}

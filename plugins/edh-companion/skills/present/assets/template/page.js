@@ -36,24 +36,37 @@ const isDefaultTheme=l=>/^on[ -]?theme$/i.test(String(l||""));
 function pill(label){if(!D.theme||!label)return null;return el("span",{class:"pill",style:`--c:${themeColor(label)}`},el("i"),label==="off-theme"?"Off-theme":label)}
 
 /* ---------- tabs and routing ---------- */
-function tabsList(){const t=[];if((D.overview||[]).length)t.push({id:"overview",title:"Overview",render:renderOverview});
- D.groups.forEach(g=>t.push({id:"decks-"+g.id,title:g.title,render:h=>renderGroup(g,h)}));
- D.research.forEach(r=>t.push({id:r.id,title:r.title,render:h=>renderResearch(r,h)}));
- if(!IN_DECK)D.research_tab.filter(x=>!D.research.some(r=>(r.project||null)===(x.project||null))).forEach(x=>t.push({id:x.id,title:x.title,render:h=>renderResearch({...x,commanders:[]},h)}));
- D.rankings.forEach(r=>t.push({id:"rank-"+r.id,title:r.title,render:h=>renderRanking(r,h)}));
- if(SHOW.sources&&!IN_DECK)t.push({id:"sources",title:"Sources & accuracy",render:renderSources});return t}
+function tabsList(){const t=[];
+ if(D.groups.length)t.push({id:"decks",view:"decks",title:"Decks",render:renderDecks});
+ D.research.forEach(r=>t.push({id:r.id,view:"research",title:r.title,render:h=>renderResearch(r,h)}));
+ if(!IN_DECK)D.research_tab.filter(x=>!D.research.some(r=>(r.project||null)===(x.project||null))).forEach(x=>t.push({id:x.id,view:"research",title:x.title,render:h=>renderResearch({...x,commanders:[]},h)}));
+ D.rankings.forEach(r=>t.push({id:"rank-"+r.id,view:"rankings",title:r.title,render:h=>renderRanking(r,h)}));
+ if(SHOW.sources&&!IN_DECK)t.push({id:"sources",view:"sources",title:"Sources & accuracy",render:renderSources});return t}
+// One page with at most four views (decks, research, rankings, sources); pages inside a view switch in place
+const VIEW_TITLE={decks:"Decks",research:"Research",rankings:"Rankings",sources:"Sources & accuracy"};
+// short labels for sibling pages: drop the words every title starts with ("... inclusion, Bracket 2" -> "Bracket 2")
+function shortLabels(ts){if(ts.length<2)return ts;const w=ts.map(t=>String(t).split(" "));let n=0;while(w.every(x=>x.length>n+1&&x[n]===w[0][n]))n++;
+ return w.map(x=>x.slice(n).join(" ").replace(/^[,:·-]\s*/,"")).map(x=>x.charAt(0).toUpperCase()+x.slice(1))}
+function subSwitch(sibs,tab){const lb=shortLabels(sibs.map(x=>x.title));
+ return el("div",{class:"panel subswitch"},el("div",{class:"seg",role:"group","aria-label":VIEW_TITLE[tab.view]},...sibs.map((x,i)=>el("button",{type:"button",class:"btn","aria-pressed":x===tab,onclick:()=>go(x.id)},el("b",{},lb[i])))))}
 let TABS=[],secObs=null;
-function go(id,push=true){hideTip();hidePop();const tab=TABS.find(t=>t.id===id)||TABS.find(t=>t.id===anchorTab(id))||TABS[0];
- document.querySelectorAll("#tabs button").forEach(b=>b.dataset.id===tab.id?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
+function go(id,push=true){hideTip();hidePop();
+ if(/^build=/.test(id||"")){store.set("build",decodeURIComponent(id.slice(6)));id="decks"}  // #build=<commander>/<build> opens that build
+ const tab=TABS.find(t=>t.id===id)||TABS.find(t=>t.id===anchorTab(id))||TABS[0];
+ document.querySelectorAll("#tabs button").forEach(b=>b.dataset.view===tab.view?b.setAttribute("aria-current","page"):b.removeAttribute("aria-current"));
  charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}
  document.body.classList.remove("herotitle","has-secnav");placeTheme(null);
- const m=$("#main");m.replaceChildren();applyLook(D.look);tab.render(m);store.set("tab",tab.id);
+ const m=$("#main");m.replaceChildren();applyLook(D.look);
+ const sibs=TABS.filter(t=>t.view===tab.view);if(sibs.length>1)m.append(subSwitch(sibs,tab));
+ tab.render(m);store.set("tab",tab.id);store.set("view:"+tab.view,tab.id);
  const t=id&&id!==tab.id?document.getElementById(id):null;
- if(push)history.replaceState(null,"","#"+(t?id:tab.id));
+ if(push)history.replaceState(null,"","#"+(t?id:tab.view==="decks"&&CUR.key?"build="+encodeURIComponent(CUR.key):tab.id));
  if(t)requestAnimationFrame(()=>jumpTo(t))}
 function jumpTo(t){document.querySelectorAll(".src.hl").forEach(x=>x.classList.remove("hl"));openTo(t);t.scrollIntoView();if(t.tabIndex===-1)t.focus({preventScroll:true});if(t.classList.contains("src"))t.classList.add("hl")}
-function buildTabs(){TABS=tabsList();const bar=$("#tabs");bar.replaceChildren(...TABS.map(t=>el("li",{},el("button",{type:"button","data-id":t.id,onclick:()=>{go(t.id);scrollTo(0,0)}},t.title))));
- $("#tabsNav").hidden=TABS.length<2}
+function buildTabs(){TABS=tabsList();const views=[...new Set(TABS.map(t=>t.view))];
+ const open=v=>{const last=store.get("view:"+v,"");go(TABS.some(t=>t.id===last&&t.view===v)?last:TABS.find(t=>t.view===v).id);scrollTo(0,0)};
+ $("#tabs").replaceChildren(...views.map(v=>el("li",{},el("button",{type:"button","data-view":v,onclick:()=>open(v)},VIEW_TITLE[v]))));
+ $("#tabsNav").hidden=views.length<2}
 // the theme button sits in the sticky section nav when there is one, else in the masthead
 function placeTheme(host){const b=$("#themeBtn");if(b)(host||$("#mast")).append(b)}
 
@@ -152,15 +165,6 @@ const researchTabFor=proj=>D.research_tab.find(x=>(x.project||null)===(proj||nul
 const hasHome=proj=>D.research.some(r=>(r.project||null)===(proj||null))||(!IN_DECK&&!!researchTabFor(proj));
 function feasibility(F){if(!F||typeof F!=="object")return null;const rest=Object.entries(F).filter(([k,v])=>!["question","verdict"].includes(k)&&typeof v==="string");
  return el("div",{class:"empty",style:"margin-top:var(--sp-3)"},el("p",{},el("b",{},"Feasibility: "),F.verdict||""),F.question?el("p",{class:"note"},F.question):null,...rest.map(([k,v])=>el("p",{class:"note"},cap(k.replace(/_/g," "))+": "+v)))}
-function renderOverview(host){const O=D.overview||[];
- host.append(el("section",{class:"panel"},el("h2",{},"Every build"),el("p",{class:"note"},"Each build keeps its own project files, decisions and audit; open a group to see it."),
-  el("div",{class:"strip",tabindex:0,role:"region","aria-label":"Builds table"},el("table",{},el("thead",{},el("tr",{},...["Group","Commander","Project","Build","Bracket",SHOW.prices?"Value":null,"Audit"].filter(Boolean).map(h=>el("th",{scope:"col",class:/Bracket|Value/.test(h)?"n":""},h)))),
-   el("tbody",{},...O.map(r=>el("tr",{},el("td",{},el("a",{href:"#"+r.tab,onclick:e=>{e.preventDefault();go(r.tab);scrollTo(0,0)}},r.group)),el("td",{},r.commander),el("td",{},r.project||""),el("td",{},r.build),
-    el("td",{class:"n"},"B"+r.bracket),SHOW.prices?el("td",{class:"n"},money(r.price)):null,el("td",{},stateTag(r.audit)))))))));
- const nn=noticesNode(null,undefined);if(nn)host.prepend(nn);
- if(D.rankings.length||D.research.length||D.research_tab.length)host.append(el("section",{class:"panel"},el("h2",{},"Research and rankings"),el("div",{class:"row"},
-  ...TABS.filter(t=>/^rank-/.test(t.id)||D.research.some(r=>r.id===t.id)||D.research_tab.some(r=>r.id===t.id)).map(t=>el("button",{class:"btn",type:"button",onclick:()=>{go(t.id);scrollTo(0,0)}},"Open "+t.title)))))}
-
 /* ---------- deck tabs ---------- */
 const BR={1:"Exhibition",2:"Core",3:"Upgraded",4:"Optimized",5:"cEDH"};
 const PIP_NM={W:"white",U:"blue",B:"black",R:"red",G:"green",C:"colorless",S:"snow",P:"Phyrexian"};
@@ -185,37 +189,55 @@ function themeLine(d){const t=d.theme_stats;if(!t)return null;const n=(t.on||0)+
  return `${t.on||0} of ${n} themed cards on theme`+(t.exception?`, ${plural(t.exception,"exception")}`:"")+(t.off?`, ${t.off} off-theme`:"")+(t.exempt?`; ${t.exempt} exempt (lands, utility) unmarked`:"")+((d.theme&&d.theme.tiers||[]).length?" ("+d.theme.tiers.map(x=>`${x.label} ${x.count}`).join(", ")+")":"")}  // "On theme" on 89 of 100 cards is noise; the theme filter still has it
 const did=d=>d.id||"b"+d.bracket;  // a deck is a build variant (b3, b4-budget...)
 const norm=s=>String(s||"").toLowerCase().replace(/[^a-z0-9]+/g,"");
-function renderGroup(G,host){const key="grp:"+G.id,st=store.get(key,{});
- const cmdrs=G.commanders;let cur=cmdrs.find(c=>c.slug===st.cmdr)||cmdrs[0];
- const defB=D.default_bracket;
- if(cmdrs.length>1){const rows=cmdrs.map(c=>{const d=c.decks.find(x=>x.bracket===defB)||c.decks[0];const s=d.stats||{};
-   return el("tr",{},el("th",{scope:"row"},c.name+(c.project&&D.multi?` (${c.project})`:"")),el("td",{class:"n"},"B"+d.bracket),SHOW.prices?el("td",{class:"n"},money(s.price)):null,el("td",{class:"n"},s.avg_mv??"—"),el("td",{class:"n"},(s.game_changers||[]).length),el("td",{},stateTag(d.audit_view.verdict)))});
-  const pick=el("div",{class:"cmdrs",role:"group","aria-label":"Choose a commander"},...cmdrs.map(c=>el("button",{type:"button",class:"tile cmdr","aria-pressed":c===cur,onclick:e=>{cur=c;store.set(key,{...store.get(key,{}),cmdr:c.slug});pick.querySelectorAll(".cmdr").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));redraw('.cmdr[aria-pressed="true"]')}},art(c.img,"",c.name),el("div",{class:"nm"},c.name),c.project&&D.multi?el("div",{class:"meta"},c.project):null)));
-  host.append(el("section",{class:"panel"},el("h2",{},G.title+": compare commanders"),el("div",{class:"strip",tabindex:0,role:"region","aria-label":"Compare commanders"},el("table",{},el("thead",{},el("tr",{},el("th",{scope:"col"},"Commander"),el("th",{scope:"col",class:"n"},"Bracket"),SHOW.prices?el("th",{scope:"col",class:"n"},"Price"):null,el("th",{scope:"col",class:"n"},"Avg mana value"),el("th",{scope:"col",class:"n"},"Game Changers"),el("th",{scope:"col"},"Audit"))),el("tbody",{},rows))),
-   el("h3",{},"Choose a commander"),pick))}
+// Every build of every group and commander behind one build bar; picking one redraws in place (no reload, no tabs).
+function renderDecks(host){
+ const E=D.groups.flatMap(G=>G.commanders.flatMap(c=>c.decks.map(d=>({G,c,d,key:c.slug+"/"+did(d)}))));
+ const many=new Set(E.map(x=>x.c.slug)).size>1,defB=D.default_bracket;
+ let cur=E.find(x=>x.key===store.get("build"))||E.find(x=>x.d.bracket===defB)||E[0];
  const body=el("div");host.append(body);
- // switching build or commander keeps the reading position and puts focus back on the control that was used
- const redraw=sel=>{const y=scrollY;drawC();scrollTo(0,y);const f=sel&&host.querySelector(sel);if(f)f.focus({preventScroll:true})};
- function drawC(){charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}hidePop();placeTheme(null);body.replaceChildren();applyLook(cur.look);
-  const b=store.get(key+":"+cur.slug,did(cur.decks.find(d=>d.bracket===defB)||cur.decks[0]));
-  const deck=cur.decks.find(d=>did(d)===b)||cur.decks[0];
-  const flat=orderedCards(deck);CUR={G,slug:cur.slug,b:did(deck),deck};
-  const asTitle=heroOwnsTitle(G);  // one h1: the hero carries the page title
+ const pick=x=>{cur=x;store.set("build",x.key);history.replaceState(null,"","#build="+encodeURIComponent(x.key));
+  const y=scrollY;draw();scrollTo(0,y);const f=body.querySelector('.buildbar [aria-pressed="true"]');if(f)f.focus({preventScroll:true})};
+ function draw(){charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}hidePop();placeTheme(null);body.replaceChildren();
+  const {G,c,d:deck}=cur;applyLook(c.look);
+  const flat=orderedCards(deck);CUR={G,slug:c.slug,b:did(deck),deck,key:cur.key};
+  const asTitle=heroOwnsTitle();  // one h1: the hero carries the page title
   document.body.classList.toggle("herotitle",asTitle);document.body.classList.add("has-secnav");
+  const other=E.find(x=>x.key===store.get("cmp:"+cur.key)&&x!==cur);
   const secs=[["sec-overview","Overview"]],parts=[];
   const add=(id,label,node)=>{if(node){secs.push([id,label]);parts.push(node)}};
+  if(other)add("sec-diff","Differences",diffSection(deck,other));
   add("sec-cards","Cards",deckList(deck));
   add("sec-stats","Stats",statsSection(deck));
   add("sec-plan","Plan",planSection(deck));
-  add("sec-changes","Changes",changesSection(G,cur,deck));
+  add("sec-changes","Changes",changesSection(G,c,deck));
   if(IN_DECK)add("sec-research","Research",researchSection(deck));
   add("sec-audit","Audit",auditSection(deck));
   if((G.alts||[]).length)add("sec-alts","Alternatives",el("section",{class:"sec",id:"sec-alts","aria-labelledby":"h-alts"},el("div",{class:"sec-head"},el("h2",{id:"h-alts"},"Commanders compared"),el("p",{class:"lede"},"Alternatives from the research file, as recorded there; built ones are marked.")),commanderRows(G.alts)));
   if(IN_DECK&&SHOW.sources)add("sec-sources","Sources",sourcesSection());
   const nav=secNav(secs);
-  body.append(...[hero(cur,deck,flat,asTitle,redraw,key),nav,noticesNode(deck),...parts].filter(Boolean));
+  body.append(...[E.length>1?buildBar(E,cur,pick,many):null,hero(c,deck,flat,asTitle),nav,noticesNode(deck),...parts].filter(Boolean));
   placeTheme(nav.querySelector(".in"));watchSections(nav)}
- drawC()}
+ draw()}
+// the build bar: one segmented control per group (a labelled select past 12 builds), plus "Compare with"
+function buildBar(E,cur,pick,many){const groups=[...new Set(E.map(x=>x.G))];
+ const name=x=>(many&&x.G.commanders.length>1?x.c.name+" · ":"")+(x.d.label||"B"+x.d.bracket);
+ const sub=x=>[(x.d.label||"").includes(BR[x.d.bracket]||"~")?"":BR[x.d.bracket],SHOW.prices&&(x.d.stats||{}).price!=null?money(x.d.stats.price):"",(x.d.audit_view||{}).verdict_label||""].filter(Boolean).join(" · ");
+ const pickers=E.length>12
+  ?[el("div",{class:"bgrp"},el("label",{class:"bgl",for:"bsel"},"Build"),el("select",{id:"bsel",onchange:e=>pick(E[+e.target.value])},...groups.map(G=>el("optgroup",{label:G.title},...E.map((x,i)=>x.G===G?el("option",{value:i,selected:x===cur},`${name(x)} (${sub(x)})`):null).filter(Boolean)))))]
+  :groups.map(G=>el("div",{class:"bgrp"},groups.length>1?el("span",{class:"bgl",id:"bg-"+G.id},G.title):null,
+    el("div",{class:"seg",role:"group","aria-label":groups.length>1?G.title:"Builds"},...E.filter(x=>x.G===G).map(x=>el("button",{type:"button",class:"btn","aria-pressed":x===cur,onclick:()=>pick(x)},el("b",{},name(x)),el("small",{},sub(x)))))));
+ const ck="cmp:"+cur.key,others=E.filter(x=>x!==cur);
+ const cmp=el("div",{class:"bgrp bcmp"},el("label",{class:"bgl",for:"cmpsel"},"Compare with"),el("select",{id:"cmpsel",onchange:e=>{store.set(ck,e.target.value);pick(cur)}},el("option",{value:""},"Nothing"),
+  ...others.map(x=>el("option",{value:x.key,selected:store.get(ck)===x.key},(groups.length>1?x.G.title+": ":"")+name(x)))));
+ return el("nav",{class:"buildbar","aria-label":"Builds"},el("div",{class:"in"},...pickers,cmp))}
+// what changes between two builds: cards only in one of them, and copies that differ (basics)
+function diffSection(deck,o){const m=d=>new Map(d.cards.filter(c=>!c.commander).map(c=>[c.name,c])),A=m(deck),B=m(o.d),lab=o.d.label||"B"+o.d.bracket;
+ const only=[...A.values()].filter(c=>!B.has(c.name)),theirs=[...B.values()].filter(c=>!A.has(c.name)),qty=[...A.values()].filter(c=>B.has(c.name)&&B.get(c.name).qty!==c.qty);
+ const s=section("sec-diff","Compared with "+lab,`${plural(only.length,"card")} only in this build and ${plural(theirs.length,"card")} only in ${lab}; everything else is in both.`);
+ const col=(h,cs,list)=>el("div",{},el("h3",{},h+" ",el("span",{class:"cn"},String(cs.length))),cs.length?el("div",{class:"row"},...cs.map(c=>cardChip(c,list))):el("p",{class:"note"},"None."));
+ s.append(el("div",{class:"two"},col("Only in this build",only,orderedCards(deck)),col("Only in "+lab,theirs,orderedCards(o.d))));
+ if(qty.length)s.append(el("p",{class:"note"},"Different counts: "+qty.map(c=>`${c.name} ${B.get(c.name).qty} → ${c.qty}`).join(", ")+"."));
+ return s}
 let CUR={};
 // proposed recommendations that would cut this card (the decklist marks them with a swap sign)
 function swapsFor(name){return ((CUR.deck||{}).recs_view||{proposed:[]}).proposed.filter(r=>r.cut===name)}
@@ -239,23 +261,23 @@ function heroStats(deck){const s=deck.stats||{},out=[];
   out.push({label:"On theme",value:deck.theme.on_theme_pct+"%",context:ex?`${ex} marked as exception or off-theme`:"every card"})}
  else{const g=s.game_changers||[];out.push({label:"Game Changers",value:g.length,context:g.length?g.join(", "):"none in this list"})}
  return out.slice(0,4)}
-const heroOwnsTitle=G=>IN_DECK&&D.groups.length===1&&G.commanders.length===1;
-function hero(cur,deck,flat,asTitle,redraw,key){const hTag=asTitle?"h1":"h2";const H=cur.hero||{},n=deck.cards.reduce((a,c)=>a+c.qty,0),AV=deck.audit_view;
+// one commander on the page (however many builds or projects): its hero carries the h1 and the masthead hides
+const heroOwnsTitle=()=>D.groups.length>0&&new Set(D.groups.flatMap(g=>g.commanders.map(c=>c.name))).size===1;
+function hero(cur,deck,flat,asTitle){const hTag=asTitle?"h1":"h2";const H=cur.hero||{},n=deck.cards.reduce((a,c)=>a+c.qty,0),AV=deck.audit_view;
  const B=deck.hero||(cur.decks.length===1?H:{});  // the selected build's facts (meta, stats, verdict); H keeps the commander's name and art
  const meta=B.meta?B.meta:[`Bracket ${deck.bracket}${BR[deck.bracket]?", "+BR[deck.bracket]:""}`,plural(n,"card"),deck.version?`Version ${deck.version}`:null,deck.project&&D.multi?deck.project:null].filter(Boolean);
  const stats=B.stats&&B.stats.length?B.stats:heroStats(deck);
  const vl=AV.verdict_label,pitch=deck.summary.pitch||null;
  const verdict=B.verdict&&!(vl&&String(B.verdict).startsWith(vl))?B.verdict:pitch;  // a verdict that only repeats the audit label + counts is already the status row
- const cmd=deck.cards.find(c=>c.commander),artKey=H.art||cur.img||(cmd||{}).img,cname=H.name||cur.name,name=asTitle&&D.title?D.title:cname;
+ const cmds=deck.cards.filter(c=>c.commander),cmd=cmds[0],artKey=H.art||cur.img||(cmd||{}).img,cname=cmds.length>1?cmds.map(c=>c.name).join(" + "):H.name||cur.name,name=asTitle&&D.title?D.title:cname;
  const sub=asTitle?[norm(D.title).includes(norm(cname))?null:"Commander: "+cname,D.subtitle&&!meta.some(m=>norm(D.subtitle).includes(norm(m)))?D.subtitle:null].filter(Boolean):[];
  const crop=MODE==="showcase"&&H.art_crop&&(IMG==="cdn"||!/^https?:/i.test(H.art_crop))?H.art_crop:null;  // artifact pages block outside images: a remote crop only in cdn mode
- const artBox=IMG!=="none"&&artKey?el("div",{class:"hero-art"},VIEW()&&cmd?el("button",{type:"button",class:"hero-card","aria-label":`${cmd.name}, open card`,"data-img":cmd.img,onclick:e=>openViewer(cmd,flat,e.currentTarget)},art(artKey,"",name)):art(artKey,name)):null;
+ const duo=cmds.length>1;  // partners, a background, a Doctor's companion: both cards side by side
+ const artBox=IMG!=="none"&&artKey?el("div",{class:"hero-art"+(duo?" duo":"")},...(duo?cmds:[cmd]).map(cc=>VIEW()&&cc?el("button",{type:"button",class:"hero-card","aria-label":`${cc.name}, open card`,"data-img":cc.img,onclick:e=>openViewer(cc,flat,e.currentTarget)},art(duo?cc.img:artKey,"",cc.name)):art(artKey,name))):null;
  const counts=AV.groups.length?AV.counts:null;
  const status=el("div",{class:"hstatus"},el("span",{class:"lbl"},"Audit"),stateTag(AV.verdict),
   counts?el("span",{},[counts.fail?plural(counts.fail,"fail"):null,counts.warning?plural(counts.warning,"warning"):null,counts.unverified?`${counts.unverified} unverified`:null].filter(Boolean).join(", ")||"no issues"):null,
   el("a",{href:"#sec-audit"},"See the audit"));
- const seg=cur.decks.length>1?el("div",{class:"seg",role:"group","aria-label":"Choose a build"},...cur.decks.map(d=>el("button",{type:"button",class:"btn","aria-pressed":d===deck,onclick:()=>{store.set(key+":"+cur.slug,did(d));redraw('.seg .btn[aria-pressed="true"]')}},
-   el("b",{},d.label||"B"+d.bracket),el("small",{},[(d.label||"").includes(BR[d.bracket])?"":BR[d.bracket]||"",SHOW.prices?money((d.stats||{}).price):""].filter(Boolean).join(", "))))):null;
  const copy=el("button",{type:"button",class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
  const r0=deck.rule0_items||[];
  return el("section",{class:"hero",id:"sec-overview","aria-labelledby":"hero-name"},crop?el("div",{class:"hero-bg",style:`background-image:url("${crop.replace(/"/g,"%22")}")`}):null,
@@ -263,7 +285,7 @@ function hero(cur,deck,flat,asTitle,redraw,key){const hTag=asTitle?"h1":"h2";con
    el("div",{class:"hero-head"},el(hTag,{class:"hname",id:"hero-name"},name),...sub.map(x=>el("p",{class:"hsub"},x)),el("ul",{class:"meta"},...meta.map(m=>el("li",{},m)))),
    el("div",{class:"hero-body"},verdict?el("p",{class:"verdict"},verdict):null,status,
     el("dl",{class:"tiles"},...stats.map(x=>el("div",{class:"stat"},el("dt",{},x.label),el("dd",{class:"v"},x.value==null||x.value===""?"—":String(x.value)),x.value==null||x.value===""?el("dd",{class:"ctx"},"Not recorded"+(x.context?": "+x.context:"")):x.context?el("dd",{class:"ctx"},x.context):null))),
-    el("div",{class:"hactions"},seg,copy),
+    el("div",{class:"hactions"},copy),
     r0.length?el("div",{class:"rule0"},el(asTitle?"h2":"h3",{class:"lbl"},"Rule 0"),el("dl",{},...r0.flatMap((x,i)=>[el("dt",{},i&&r0[i-1].label===x.label?"":x.label),el("dd",{},x.value)]))):null)))}
 
 /* ---------- notices: research older than the deck, stale data, notes left out ---------- */
@@ -488,7 +510,7 @@ function findIndex(){if(FIND)return FIND;FIND={};D.findings_view.forEach(t=>t.it
 const fAnchor=(p,id)=>(findIndex()[(p||"")+"|"+id]||{a:"f-"+id}).a;
 const srcAnchor=x=>x.anchor||"src-"+x.n;
 // the tab showing an anchor: a finding's project research tab (else the deck page or the sources tab); sources: their list
-function anchorTab(id){const has=t=>TABS.some(x=>x.id===t),deckTab=IN_DECK&&(TABS.find(t=>/^decks-/.test(t.id))||{}).id;
+function anchorTab(id){const has=t=>TABS.some(x=>x.id===t),deckTab=IN_DECK&&(TABS.find(t=>t.view==="decks")||{}).id;
  if(/^(s|src)-/.test(id))return has("sources")?"sources":deckTab||null;
  const f=/^f-/.test(id)&&findIndex()[id];if(!f)return null;
  const r=D.research.find(x=>(x.project||null)===f.p)||(!IN_DECK&&researchTabFor(f.p));return r?r.id:deckTab||(has("sources")?"sources":null)}
@@ -738,7 +760,7 @@ async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-d
  document.body.classList.toggle("noimg",IMG==="none");applyLook(D.look);document.body.classList.toggle("noprice",!SHOW.prices);
  if(SHOW.charts)await loadScript(CHART_URL).catch(()=>{});  // charts degrade to their data tables when offline
  document.title=D.title||document.title;$("#title").textContent=D.title||"";$("#subtitle").textContent=D.subtitle||"";if(!D.subtitle)$("#subtitle").remove();
- const heroTitle=IN_DECK&&D.groups.length===1&&D.groups[0].commanders.length===1;
+ const heroTitle=heroOwnsTitle();
  mastFan(SHOW.fan&&!heroTitle?fanKeys():[]);initTip();initPop();
  $("#foot").textContent="Card data and images from Scryfall; popularity numbers from EDHREC and combos from Commander Spellbook where cited. Magic card names and art © Wizards of the Coast. Unofficial Fan Content permitted under the Fan Content Policy; not approved or endorsed by Wizards.";
  const t=store.get("theme",null);if(t)document.documentElement.dataset.theme=t;setThemeLabel();

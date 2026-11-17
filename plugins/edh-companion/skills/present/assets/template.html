@@ -961,7 +961,7 @@ function changesSection(G,cur,deck){if(!SHOW.swaps)return null;const RV=deck.rec
  if(proposed.length)sec.append(el("h3",{},"To decide"),el("ul",{class:"recs"},...proposed.map(r=>row(r,"proposed"))));
  if(rejected.length)sec.append(el("details",{class:"more",style:"margin-top:var(--sp-5)"},el("summary",{},el("h3",{},"Rejected"),el("span",{class:"cn"},rejected.length)),el("ul",{class:"recs"},...rejected.map(r=>row(r,"rejected")))));
  return sec}
-const moxLine=c=>`${c.qty||1} ${c.name}${c.set&&c.cn?` (${c.set.toUpperCase()}) ${c.cn}`:""}`;  // one Moxfield import line; filtered-out cards never reach it
+const moxLine=c=>`${c.qty||1} ${c.name}${c.set&&c.cn?` (${c.set.toUpperCase()}) ${c.cn}${{foil:" *F*",etched:" *E*"}[c.finish]||""}`:""}`;  // one Moxfield import line with its finish; filtered-out cards never reach it
 function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1500)};
  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
  function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}

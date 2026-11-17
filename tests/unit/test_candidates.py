@@ -159,6 +159,34 @@ class Candidates(unittest.TestCase):
         self.assertEqual(gc["edhrec"], {"inclusion_pct": 60.0, "decks": 600, "total_decks": 1000})
         self.assertEqual(sorted(x["inclusion_pct"] for x in gc["edhrec_conflict"]), [40.0, 60.0])
 
+    def test_edhrec_stats_kept_and_inclusion_derived(self):
+        r = json.loads(json.dumps(RESEARCH))
+        r["card_candidates"][0].update(decks=210, total_decks=1000, lift=2.1, baseline_pct=10.0, window="2y", as_of="2026-11-01")
+        r["rankings"] = []
+        _, by = self.run_build(research=r)
+        gc = by["Goblin Chieftain"]
+        self.assertEqual(gc["edhrec"], {"inclusion_pct": 21.0, "decks": 210, "total_decks": 1000, "lift": 2.1, "baseline_pct": 10.0,
+                                        "window": "2y", "as_of": "2026-11-01"})  # inclusion = decks / total_decks
+        self.assertEqual(gc["data_strength"], "ok")
+
+    def test_data_strength(self):
+        r = json.loads(json.dumps(RESEARCH))
+        r["rankings"] = [{"group": "G", "method": "EDHREC", "cards": [{"card": {"name": "Goblin Chieftain"}, "rank": 1, "why": "", "evidence": ["src-001"],
+                                                                       "inclusion_pct": 50.0, "decks": 40, "total_decks": 80}]}]
+        _, by = self.run_build(research=r)
+        self.assertEqual(by["Goblin Chieftain"]["data_strength"], "thin")
+        self.assertEqual(by["Goblin Chieftain"]["verdict"], "needs_review")
+        self.assertIn("EDHREC sample thin (80 decks): treat the numbers as a hint", by["Goblin Chieftain"]["reasons"])
+        self.assertEqual(by["Sol Ring"]["data_strength"], "none")
+        self.assertEqual(by["Sol Ring"]["verdict"], "eligible")  # no numbers is not a reason to review
+
+    def test_edhrec_conflict_uses_intervals(self):
+        e = lambda pct, n=None, tot=None: {"inclusion_pct": pct, "decks": n, "total_decks": tot}
+        self.assertIsNone(cand.edhrec([e(60.0, 600, 1000), e(57.0, 57, 100)])[1])  # 3 points apart, but the intervals overlap
+        self.assertIsNotNone(cand.edhrec([e(60.0, 6000, 10000), e(55.0, 5500, 10000)])[1])  # large samples, no overlap
+        self.assertIsNotNone(cand.edhrec([e(60.0), e(57.0)])[1])  # no counts: the 2-point rule
+        self.assertIsNone(cand.edhrec([e(60.0), e(58.5)])[1])
+
     def test_added_card_needs_review(self):
         _, by = self.run_build(add_name=["Goblin Recruiter"])
         gr = by["Goblin Recruiter"]

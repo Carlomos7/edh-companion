@@ -260,6 +260,50 @@ def evidence_lists(doc):
         yield "feasibility", doc["feasibility"]["commanders"]  # names, but any src-/fnd- ref there must resolve
 
 
+def src_key(s):
+    """Key for spotting the same source twice: its URL, else its saved content, else its id."""
+    return norm_url(s["url"]) if s.get("url") else "sha256:" + s["content_sha256"] if s.get("content_sha256") else "id:" + str(s.get("id"))
+
+
+def roots(sid, by_src, seen=None):
+    """Source ids at the bottom of sid's derived_from chain (itself when it derives from nothing known)."""
+    seen = seen or set()
+    s = by_src.get(sid)
+    up = [x for x in (s or {}).get("derived_from") or [] if x in by_src and x not in seen]
+    if not up:
+        return {sid}
+    seen.add(sid)
+    return set().union(*(roots(x, by_src, seen) for x in up))
+
+
+MACHINE_ONLY_BANNED = ("verified_fact", "community_opinion", "popularity_metric")
+
+
+def provenance_problems(doc, d):
+    out, by_src = [], {s.get("id"): s for s in doc.get("sources", [])}
+    for s in doc.get("sources", []):
+        sid = s.get("id")
+        for x in s.get("derived_from") or []:
+            if x not in by_src:
+                out.append(f"sources: {sid}: derived_from {x} is not a defined source")
+        if s.get("origin") in ("pasted", "file"):
+            path = s.get("path")
+            full = os.path.join(d, path) if path and d else None
+            if not path:
+                out.append(f"sources: {sid}: a {s['origin']} source needs a path (sources/pasted/{sid}.txt)")
+            elif d and not os.path.isfile(full):
+                out.append(f"sources: {sid}: path {path} not found")
+            elif d and s.get("content_sha256"):
+                with open(full, "rb") as h:
+                    if hashlib.sha256(h.read()).hexdigest() != s["content_sha256"]:
+                        out.append(f"sources: {sid}: content_sha256 does not match {path}")
+    for f in doc.get("findings", []):
+        ev = [e for e in f.get("evidence") or [] if e in by_src]
+        if ev and f.get("class") in MACHINE_ONLY_BANNED and                 all(by_src[r].get("authorship") == "machine_generated" for e in ev for r in roots(e, by_src)):
+            out.append(f"findings: {f.get('id')}: {f['class']} backed only by machine-generated sources (use model_assessment or unresolved)")
+    return out
+
+
 def edhrec_problems(c):
     pct, n, tot = (c.get(k) for k in EDHREC)
     if tot is not None and tot <= 0:
@@ -268,13 +312,18 @@ def edhrec_problems(c):
         return [f"decks {n} > total_decks {tot}"]
     if None not in (pct, n, tot) and abs(pct - 100 * n / tot) > 2:
         return [f"inclusion_pct {pct} != {100 * n / tot:.1f} (decks/total_decks)"]
+    lift, base = c.get("lift"), c.get("baseline_pct")
+    if pct is None and n is not None and tot:
+        pct = 100 * n / tot
+    if None not in (lift, base, pct) and base > 0 and abs(lift - pct / base) > 0.1 * pct / base + 0.05:  # rounding slack
+        return [f"lift {lift} != {pct / base:.1f} (inclusion_pct/baseline_pct)"]
     return []
 
 
 HARD_REF_SECTIONS = ("findings", "commanders", "card_candidates", "alternatives", "recommendations")  # checked since 7.8
 
 
-def research_problems(doc, known=(), soft=None):
+def research_problems(doc, known=(), soft=None, d=None):
     """Consistency problems schemas can't express: duplicate IDs/URLs, dangling refs, future dates, EDHREC maths.
     With a `soft` list, checks newer than 7.8 go there instead (warnings), so existing projects stay valid."""
     out, now = [], today()
@@ -297,9 +346,9 @@ def research_problems(doc, known=(), soft=None):
                 warn.append(f"findings: {f.get('id')}: locator source {s} is not in its evidence")
     first = {}
     for s in doc.get("sources", []):
-        k = norm_url(s.get("url", ""))
+        k = src_key(s)
         if k in first:
-            warn.append(f"sources: {s.get('id')} has the same URL as {first[k]}")
+            warn.append(f"sources: {s.get('id')} has the same {'URL' if s.get('url') else 'content'} as {first[k]}")
         first.setdefault(k, s.get("id"))
         for f in ("accessed", "published"):
             if isinstance(s.get(f), str) and s[f] > now:
@@ -309,6 +358,7 @@ def research_problems(doc, known=(), soft=None):
             warn += [f"rankings: {r.get('group')}: {(c.get('card') or {}).get('name')}: {m}" for m in edhrec_problems(c)]
     for c in doc.get("card_candidates", []) or []:
         warn += [f"card_candidates: {(c.get('card') or {}).get('name')}: {m}" for m in edhrec_problems(c)]
+    warn += provenance_problems(doc, d)
     return out
 
 
@@ -320,7 +370,7 @@ def validate(d):
         research = check_schema(p, "research", reg, errors)
     if research:
         warns = []
-        errors += [f"{p}: {m}" for m in research_problems(research, known=archived_ids(d), soft=warns)]
+        errors += [f"{p}: {m}" for m in research_problems(research, known=archived_ids(d), soft=warns, d=d)]
         notes += [f"WARN  {p}: {m}" for m in warns]
     pp = os.path.join(d, PLAN)
     if os.path.exists(pp):
@@ -627,12 +677,12 @@ def disagree(doc, topic, a, ev_a, b, ev_b):
 def merge_part(doc, part, remap, stats):
     seen = {}
     for s in doc["sources"]:
-        seen.setdefault(norm_url(s["url"]), s)
+        seen.setdefault(src_key(s), s)
     for s in part["sources"]:
-        keep = seen.get(norm_url(s["url"]))
+        keep = seen.get(src_key(s))
         if keep is None:
             doc["sources"].append(s)
-            seen[norm_url(s["url"])] = s
+            seen[src_key(s)] = s
             stats["sources added"] += 1
             continue
         remap[s["id"]] = keep["id"]
@@ -696,7 +746,7 @@ def merge_research(d, allow_partial=False):
         print("\n".join(["cannot merge, fix first:"] + errs[:8]))
         return 1
     base_ids = {x["id"] for x in (base or {}).get("sources", []) + (base or {}).get("findings", [])}
-    base_urls = {norm_url(s["url"]) for s in (base or {}).get("sources", [])}
+    base_urls = {src_key(s) for s in (base or {}).get("sources", [])}
     merged, tidy, short, conflicts = [], [], [], []
     for w in plan["workers"]:
         slug, name = w["slug"], f"research.part-{w['slug']}.json"
@@ -721,7 +771,7 @@ def merge_research(d, allow_partial=False):
             # a crash after research.json was replaced but before the plan was saved: every finding is there and every
             # source is there or was folded into an existing one by URL; anything less is a new part and is checked in full
             if prefixed and base_ids & set(own) and all(f["id"] in base_ids for f in part["findings"]) and \
-                    all(s["id"] in base_ids or norm_url(s["url"]) in base_urls for s in part["sources"]):
+                    all(s["id"] in base_ids or src_key(s) in base_urls for s in part["sources"]):
                 tidy.append((w, path, digest))
                 continue
             perrs += [f"id {i} must start with {i[:3]}-{slug}-" for i in own if not re.fullmatch(rf"(src|fnd)-{re.escape(slug)}-[0-9]{{3,}}", i)]
@@ -832,25 +882,30 @@ def archived_ids(d):
 
 def research_summary(r):
     """Findings grouped by facet and evidence class, deterministic. Creators are counted, not videos: one creator with
-    five videos is one voice."""
+    five videos is one voice. A source that copies another (derived_from) counts as its root; machine-generated roots
+    are counted apart, never as creators."""
     by_src = {s["id"]: s for s in r.get("sources", [])}
     groups = {}
     for f in r.get("findings", []):
         if f.get("status") == "superseded":
             continue
-        g = groups.setdefault((f.get("facet") or "unfaceted", f["class"]), {"ids": [], "creators": set(), "conf": {}})
+        g = groups.setdefault((f.get("facet") or "unfaceted", f["class"]), {"ids": [], "creators": set(), "generated": set(), "conf": {}})
         g["ids"].append(f["id"])
         g["conf"][f["confidence"]] = g["conf"].get(f["confidence"], 0) + 1
         for e in f.get("evidence") or []:
-            s = by_src.get(e)
-            if s:
-                g["creators"].add((s.get("author") or urlsplit(s.get("url") or "").netloc.replace("www.", "") or e).strip().lower())
+            for r in roots(e, by_src) if e in by_src else ():
+                s = by_src[r]
+                if s.get("authorship") == "machine_generated":
+                    g["generated"].add(r)
+                else:
+                    g["creators"].add((s.get("author") or urlsplit(s.get("url") or "").netloc.replace("www.", "") or r).strip().lower())
     order = {f: i for i, f in enumerate(FACETS + ("unfaceted",))}
     lines = []
     for (facet, cls), g in sorted(groups.items(), key=lambda kv: (order.get(kv[0][0], 99), kv[0][1])):
         conf = ", ".join(f"{k} {v}" for k, v in sorted(g["conf"].items()))
         ids = ", ".join(g["ids"][:6]) + (f" +{len(g['ids']) - 6} more" if len(g["ids"]) > 6 else "")
-        lines.append(f"{facet} · {cls}: {len(g['ids'])} finding(s) from {len(g['creators'])} creator(s) ({conf}) | {ids}")
+        gen = f" + {len(g['generated'])} generated" if g["generated"] else ""
+        lines.append(f"{facet} · {cls}: {len(g['ids'])} finding(s) from {len(g['creators'])} creator(s){gen} ({conf}) | {ids}")
     return lines
 
 

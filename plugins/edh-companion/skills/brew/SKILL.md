@@ -55,4 +55,4 @@ Resume, rename, archive or delete a saved project only by name and only after th
 - Some names exist as paper and as digital-only Alchemy cards: make sure it's the paper card.
 - Commander + 2 cards counts as a two-card combo for bracket rules (Azula + Frantic Search + Narset's Reversal slipped past a check once).
 - Arguing the theme made players angry: say a trade-off once, then drop it.
-- No EDHREC data available? Say so; don't fill "popular" from memory.
+- No EDHREC data available? Say so; don't fill "popular" from memory. Quoting a number: counts, baseline, window and date, called an association, not strength (research [method.md](../research/references/method.md), "Explaining a number"). A candidate with `data_strength: thin` is a hint, not a reason.

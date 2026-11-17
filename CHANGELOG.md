@@ -2,6 +2,23 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.10.0
+Honest numbers and honest sources: EDHREC statistics are stored with their sample and baseline, generated lists are labelled as generated, and a few mana-count bugs are fixed.
+- **EDHREC stats:** `card_candidates` and `rankings` cards take `lift` (preferred; EDHREC replaced synergy with lift on 2025-12-15), `baseline_pct`, `synergy_pct`, `window`, `as_of` and `trend_zscore` next to `decks`/`total_decks`/`inclusion_pct`. `validate` warns when lift doesn't match inclusion / baseline.
+- **candidates.py:**
+  - Keeps the stats, and computes inclusion from decks / total decks when it's missing.
+  - New `data_strength` per card: `ok`, `thin` (under 100 decks, needs review) or `none`.
+  - EDHREC conflicts use 95% intervals instead of a fixed 2-point gap (2 points still when counts are missing).
+- **Source provenance:** sources take `origin` (fetched, pasted, file, generated_by_us), `authorship`, `generator`, `derived_from`, `path` and `content_sha256`. Pasted and file sources need no URL and are saved to `sources/pasted/<id>.txt`.
+  - `validate` warns when a pasted file is missing or its hash differs, and when a `verified_fact`, `community_opinion` or `popularity_metric` finding rests only on machine-generated sources.
+  - `research-find --summary` counts independent roots (a copy counts as its original) and shows generated sources apart.
+- **Skills:** research asks whether a pasted list was played or generated and labels it; method.md gets the field list, an explanation template ("association, not strength") and the too-new-for-statistics rule; audit checks popularity numbers for sample, date and baseline.
+- **Mana fixes (analytics):**
+  - Fetch lands count only the colors of the land types they find (Bloodstained Mire: B and R). True fetches used to count as no color at all, and color-source checks ignored them.
+  - A spell with a land back face (Valakut Awakening) no longer counts as ramp.
+- **Moxfield lines** on the deck page (whole deck, Copy, Copy shown, Copy for Moxfield) carry `*F*` / `*E*` for foil and etched printings, like export_deck.py.
+- 243 unit tests.
+
 ## 8.9.0
 Build names on pages and copy buttons for card lists.
 - **Build labels:** brew.json takes an optional `label` (up to 40 characters, e.g. "B3 Upgraded"). The page's build switch shows it; without one it shows the bracket (B3) as before, and the page no longer repeats the bracket name next to it.

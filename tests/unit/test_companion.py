@@ -169,6 +169,38 @@ class Companion(unittest.TestCase):
         self.assertEqual(self.research()[0], 0)
         code, out = self.research(rankings=[{"group": "G", "method": "m", "cards": [card(inclusion_pct=26.5, decks=10, total_decks=40)]}])
         self.assertEqual(code, 0, out)                              # within 2 points
+        code, out = self.research(card_candidates=[{"card": {"name": "Sol Ring"}, "relevance": "r", "evidence": ["src-001"], "inclusion_pct": 21.0, "decks": 21,
+                                                    "total_decks": 100, "lift": 2.1, "baseline_pct": 10.0, "window": "2y", "as_of": "2026-11-01", "trend_zscore": 1.2}])
+        self.assertEqual((code, "WARN" in out), (0, False), out)   # structured EDHREC stats on candidates
+        code, out = self.research(rankings=[{"group": "G", "method": "m", "cards": [card(inclusion_pct=20.0, baseline_pct=10.0, lift=5.0)]}])
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"WARN .*lift 5.0 != 2.0 \(inclusion_pct/baseline_pct\)")
+        self.assertEqual(self.research(rankings=[{"group": "G", "method": "m", "cards": [card(lift=0)]}])[0], 1)  # lift must be > 0
+
+    def test_source_provenance(self):
+        gen = {"id": "src-002", "title": "pasted list", "type": "decklist", "accessed": "2026-11-01", "origin": "pasted",
+               "authorship": "machine_generated", "generator": "a deck generator", "path": "sources/pasted/src-002.txt"}
+        base = lambda *extra: [{"id": "src-001", "title": "t", "url": "https://example.com/a", "type": "stats", "accessed": "2026-11-01"}, *extra]
+        code, out = self.research(sources=base(gen), findings=[])
+        self.assertEqual(code, 0, out)                              # pasted sources need no URL
+        self.assertIn("src-002: path sources/pasted/src-002.txt not found", out)
+        os.makedirs(os.path.join(self.p, "sources", "pasted"))
+        with open(os.path.join(self.p, "sources", "pasted", "src-002.txt"), "w", encoding="utf-8") as h:
+            h.write("1 Sol Ring\n")
+        code, out = self.research(sources=base(dict(gen, content_sha256="0" * 64), dict(gen, id="src-003", path=None)), findings=[])
+        self.assertIn("src-002: content_sha256 does not match", out)
+        self.assertIn("src-003: a pasted source needs a path", out)
+        self.assertNotIn("same URL", out)                           # two URL-less sources aren't duplicates
+        code, out = self.research(sources=base(gen, {"id": "src-004", "title": "t", "url": "https://example.com/c", "type": "article",
+                                                     "accessed": "2026-11-01", "derived_from": ["src-404"]}),
+                                  findings=[{"id": "fnd-w1-001", "claim": "c", "class": "community_opinion", "confidence": "low", "evidence": ["src-002"]},
+                                            {"id": "fnd-w1-002", "claim": "c", "class": "model_assessment", "confidence": "low", "evidence": ["src-002"]}])
+        self.assertEqual(code, 0, out)
+        self.assertRegex(out, r"WARN .*fnd-w1-001: community_opinion backed only by machine-generated sources")
+        self.assertNotIn("fnd-w1-002", out)
+        self.assertIn("src-004: derived_from src-404 is not a defined source", out)
+        no_url = {"id": "src-001", "title": "t", "type": "stats", "accessed": "2026-11-01"}
+        self.assertEqual(self.research(sources=[no_url], findings=[])[0], 1)   # fetched sources still need a URL
 
     def test_research_incomplete_and_stale_candidates(self):
         self.research()

@@ -18,7 +18,7 @@ otherwise. With art_required, choosing a printing is not a verdict reason: each 
 needed|done|n/a (done = brew.json already names a printing) next to printings_on_theme, and the top-level
 printing_choice sums them. Prints a short summary; the full result is in candidates.json.
 """
-import argparse, glob, json, os, re, sys, time
+import argparse, glob, json, math, os, re, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from edhcore.http import RequestError, Unavailable  # noqa: E402
@@ -32,7 +32,9 @@ SOURCE_CLASS = {"card_data": "verified_fact", "official": "verified_fact", "rule
                 "article": "community_opinion"}
 GC_NOTE = {1: "bracket 1 allows no Game Changers", 2: "bracket 2 allows no Game Changers", 3: "bracket 3 allows up to 3 per deck",
            4: "bracket 4 allows any", 5: "bracket 5 allows any"}
-EDHREC_TOLERANCE = 2.0  # inclusion % points; wider differences are a conflict, never averaged
+EDHREC_TOLERANCE = 2.0  # inclusion % points when deck counts are missing; wider differences are a conflict, never averaged
+STATS = ("inclusion_pct", "decks", "total_decks", "lift", "baseline_pct", "synergy_pct", "window", "as_of", "trend_zscore")
+THIN = 100  # fewer decks behind the numbers than this is a thin sample
 
 
 def load(path):
@@ -66,19 +68,25 @@ def gather(research, added):
             elif sclass.get(i):
                 e["classes"].append((sclass[i], None))
 
+    def stats(e, c, **extra):
+        x = {k: c[k] for k in STATS if c.get(k) is not None}
+        if "inclusion_pct" not in x and x.get("decks") is not None and x.get("total_decks"):
+            x["inclusion_pct"] = round(100 * x["decks"] / x["total_decks"], 1)
+        if "inclusion_pct" in x:
+            e["classes"].append(("popularity_metric", None))
+            e["edhrec"].append({**x, **extra})
+
     for c in research.get("card_candidates", []):
         e = entry(c["card"]["name"])
         cite(e, c.get("evidence"))
+        stats(e, c)
         if c.get("theme_fit"):
             e["theme_fit"].add(c["theme_fit"])
     for r in research.get("rankings", []):
         for c in r.get("cards", []):
             e = entry(c["card"]["name"])
             cite(e, c.get("evidence"))
-            if c.get("inclusion_pct") is not None:
-                e["classes"].append(("popularity_metric", None))
-                e["edhrec"].append({"inclusion_pct": c["inclusion_pct"], "decks": c.get("decks"), "total_decks": c.get("total_decks"),
-                                    "group": r.get("group"), "tier": c.get("tier"), "research_status": c.get("status")})
+            stats(e, c, group=r.get("group"), tier=c.get("tier"), research_status=c.get("status"))
     for f in research.get("findings", []):
         for n in f.get("cards") or []:
             cite(entry(n), [f["id"]])
@@ -95,13 +103,33 @@ def strongest(classes):
                                        CONF_RANK.index(x[1]) if x[1] in CONF_RANK else 9))
 
 
+def wilson(n, tot, z=1.96):
+    """95% Wilson score interval for n of tot, in % points."""
+    p, d = n / tot, 1 + z * z / tot
+    mid, half = (p + z * z / (2 * tot)) / d, z * math.sqrt(p * (1 - p) / tot + z * z / (4 * tot * tot)) / d
+    return 100 * (mid - half), 100 * (mid + half)
+
+
+def interval(x):
+    if x.get("decks") is not None and x.get("total_decks"):
+        return wilson(x["decks"], x["total_decks"])
+    return x["inclusion_pct"] - EDHREC_TOLERANCE / 2, x["inclusion_pct"] + EDHREC_TOLERANCE / 2
+
+
 def edhrec(entries):
+    """(best entry's stats, [best + entries whose interval misses best's] or None). Never averaged."""
     if not entries:
         return None, None
     best = max(entries, key=lambda x: (x.get("total_decks") or 0, x.get("decks") or 0))
-    conflict = [x for x in entries if abs(x["inclusion_pct"] - best["inclusion_pct"]) > EDHREC_TOLERANCE]
-    pick = {k: best.get(k) for k in ("inclusion_pct", "decks", "total_decks")}
+    lo, hi = interval(best)
+    conflict = [x for x in entries if x is not best and (interval(x)[1] < lo or interval(x)[0] > hi)]
+    pick = {k: best[k] for k in STATS if k in best}
     return pick, ([best] + conflict if conflict else None)
+
+
+def data_strength(pick):
+    n = (pick or {}).get("total_decks")
+    return "none" if not pick else "thin" if n is None or n < THIN else "ok"
 
 
 def status_of(card, today):
@@ -181,6 +209,9 @@ def build(project, a, s, today=None):
                "legal": None, "game_changer": None, "status": None, "in_identity": None, "evidence": e["evidence"],
                "evidence_class": cls, "evidence_confidence": conf, "edhrec": pick, "theme": {"fit": "unchecked", "how": None},
                "printings_on_theme": None, "printing_choice": "n/a", "added": e["added"], "verdict": None, "reasons": why}
+        rec["data_strength"] = data_strength(pick)
+        if rec["data_strength"] == "thin":
+            why.append(f"EDHREC sample thin ({pick.get('total_decks') or 'unknown'} decks): treat the numbers as a hint")
         if conflict:
             rec["edhrec_conflict"] = conflict
         if not e["evidence"]:

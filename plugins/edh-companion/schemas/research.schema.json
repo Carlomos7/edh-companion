@@ -178,7 +178,6 @@
         "required": [
           "id",
           "title",
-          "url",
           "type",
           "accessed"
         ],
@@ -191,7 +190,8 @@
           },
           "url": {
             "type": "string",
-            "pattern": "^https?://"
+            "pattern": "^https?://",
+            "description": "Required unless origin is pasted or file."
           },
           "type": {
             "enum": [
@@ -238,7 +238,73 @@
           "primary": {
             "type": "boolean",
             "description": "true for authoritative/primary data (Scryfall, Wizards, Spellbook, tournament results, a decklist itself); false for commentary."
+          },
+          "origin": {
+            "enum": [
+              "fetched",
+              "pasted",
+              "file",
+              "generated_by_us"
+            ],
+            "description": "How the content reached us. Missing = fetched. pasted/file sources are saved under sources/pasted/ and need no URL."
+          },
+          "authorship": {
+            "enum": [
+              "human_played",
+              "human_commentary",
+              "machine_generated",
+              "aggregate_statistic",
+              "unknown"
+            ],
+            "description": "Who made the content: a list people played, people talking about it, a tool's output (a deck generator, an AI), counts over many decks (EDHREC), or unknown. Findings backed only by machine_generated sources can't be verified_fact, community_opinion or popularity_metric."
+          },
+          "generator": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Tool that produced machine_generated content, e.g. 'a web deck generator'."
+          },
+          "derived_from": {
+            "type": "array",
+            "items": {
+              "$ref": "common.schema.json#/$defs/source_id"
+            },
+            "description": "Sources this one copies or summarises; corroboration counts their roots once."
+          },
+          "path": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "Saved copy inside the project, e.g. sources/pasted/src-012.txt."
+          },
+          "content_sha256": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9a-f]{64}$",
+            "description": "SHA-256 of the saved copy at path."
           }
+        },
+        "if": {
+          "properties": {
+            "origin": {
+              "enum": [
+                "pasted",
+                "file"
+              ]
+            }
+          },
+          "required": [
+            "origin"
+          ]
+        },
+        "else": {
+          "required": [
+            "url"
+          ]
         }
       }
     },
@@ -429,7 +495,12 @@
           "evidence": {
             "$ref": "common.schema.json#/$defs/evidence_refs"
           }
-        }
+        },
+        "allOf": [
+          {
+            "$ref": "common.schema.json#/$defs/edhrec_stats"
+          }
+        ]
       }
     },
     "alternatives": {
@@ -661,24 +732,6 @@
                   ],
                   "description": "Optional S/A/B/C/D from the stated method's cutoffs."
                 },
-                "inclusion_pct": {
-                  "type": [
-                    "number",
-                    "null"
-                  ]
-                },
-                "decks": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
-                "total_decks": {
-                  "type": [
-                    "integer",
-                    "null"
-                  ]
-                },
                 "why": {
                   "type": "string"
                 },
@@ -698,7 +751,12 @@
                 "releases": {
                   "$ref": "common.schema.json#/$defs/date"
                 }
-              }
+              },
+              "allOf": [
+                {
+                  "$ref": "common.schema.json#/$defs/edhrec_stats"
+                }
+              ]
             }
           }
         }

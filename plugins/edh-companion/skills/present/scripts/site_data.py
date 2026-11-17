@@ -117,6 +117,7 @@ def note_unavailable(site, res, where):
 
 
 video_link = views.time_url  # one link rule for every timestamp on the page
+FIN = {"foil": " *F*", "etched": " *E*"}  # Moxfield finish markers, as in export_deck.py
 
 
 def theme_setup(brews):
@@ -400,21 +401,21 @@ def research_parts(site, research, proj):
     for s in research["sources"]:
         src_by_id[s["id"]] = s
         loc = [s.get("author"), f"{s['sample_size']:,} decks" if s.get("sample_size") else None, "primary source" if s.get("primary") else None]
-        D["sources"].append({"title": s["title"], "url": s["url"], "kind": s["type"], "date": s.get("published") or s.get("accessed"), "project": proj,
+        D["sources"].append({"title": s["title"], "url": s.get("url"), "kind": s["type"], "date": s.get("published") or s.get("accessed"), "project": proj,
                              "locator": " · ".join(x for x in loc if x), "used_for": "; ".join(cites.get(s["id"], [])) or None,
-                             "links": [{"label": t, "url": video_link(s["url"], t)} for t in s.get("timestamps", [])]})
+                             "links": [{"label": t, "url": video_link(s.get("url"), t)} for t in s.get("timestamps", [])]})
         if s["type"] == "video":
-            youtube.append({"title": s["title"], "url": s["url"], "channel": s.get("author"), "date": s.get("published")})
+            youtube.append({"title": s["title"], "url": s.get("url"), "channel": s.get("author"), "date": s.get("published")})
     for f in research["findings"]:
         A["counts"][CLASS_LABEL[f["class"]]] = A["counts"].get(CLASS_LABEL[f["class"]], 0) + 1
         srcs = [src_by_id[e] for e in f["evidence"] if e in src_by_id]
         if f["class"] == "community_opinion" and srcs:
             s = srcs[0]
-            url = video_link(s["url"], s["timestamps"][0]) if s.get("timestamps") else s["url"]
+            url = video_link(s.get("url"), s["timestamps"][0]) if s.get("timestamps") else s.get("url")
             community.append({"text": f["claim"], "source": f"{s['title']} · {f['confidence']} confidence", "url": url, "date": s.get("published")})
         elif f["class"] != "unresolved":
             A["findings"].append({"id": f["id"], "claim": f["claim"], "class": CLASS_LABEL[f["class"]], "confidence": f["confidence"], "project": proj,
-                                  "sources": [{"title": s["title"], "url": s["url"]} for s in srcs]})
+                                  "sources": [{"title": s["title"], "url": s.get("url")} for s in srcs]})
     A["unverified"] += [{"text": f["claim"], "where": f["id"] + (f" ({proj})" if proj else "")} for f in research["findings"] if f["class"] == "unresolved"]
     A["unverified"] += [{"text": g, "where": "research gap" + (f" ({proj})" if proj else "")} for g in research.get("gaps", [])]
     D["data_dates"]["research" + (f" ({proj})" if proj else "")] = research.get("created")
@@ -427,7 +428,7 @@ def research_parts(site, research, proj):
             for x in ([r] if r in src_by_id else fnd.get(r, {}).get("evidence", [])):
                 if x in src_by_id and x not in ids:
                     ids.append(x)
-        return [{"title": src_by_id[x]["title"], "url": src_by_id[x]["url"]} for x in ids]
+        return [{"title": src_by_id[x]["title"], "url": src_by_id[x].get("url")} for x in ids]
     return community, youtube, links
 
 
@@ -567,7 +568,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             st, rel = status_of(c)
             cards.append({"name": c["name"], "qty": c["qty"], "type": c.get("type_line"), "mv": int(c.get("cmc") or 0),
                           "land": "Land" in (c.get("type_line") or "").split("//")[0], "commander": c["commander"],
-                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "price": price(c), "theme": tlabel.get(bc.get("theme")),
+                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "finish": bc.get("finish"), "price": price(c), "theme": tlabel.get(bc.get("theme")),
                           "img": f, "back": b, "roles": c.get("roles") or {}, "label": bc.get("role"), "flags": fails.get(c["name"], []),
                           "mana": c.get("mana_cost"), "gc": c["game_changer"], "status": st, "releases": rel, "cheapest": c.get("cheapest"),
                           "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None, **views.card_types(c)})
@@ -625,7 +626,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             if rc["card"]["name"] in cmd_names:
                 summary.update(strengths=rc.get("advantages", []), disadvantages=rc.get("disadvantages", []))
         val = shown_validation(brew, audit, res["deck_hash"])
-        lines = [f"{c['qty']} {c['name']} ({c['set'].upper()}) {c['cn']}" for c in cards]
+        lines = [f"{c['qty']} {c['name']} ({c['set'].upper()}) {c['cn']}{FIN.get(c['finish'] or '', '')}" for c in cards]
         ncmd = sum(c["commander"] for c in cards)
         rule0_items = rule0_rows(tb, s["game_changers"])
         by_label = {}

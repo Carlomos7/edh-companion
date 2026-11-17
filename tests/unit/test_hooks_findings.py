@@ -43,6 +43,7 @@ class Findings(unittest.TestCase):
                                                                          "collector_number": "IFIYW-2", "evidence": ["fnd-4"]}],
                                                  "recommendations": [{"id": "rec-1", "add": "Galvanic Discharge", "cut": "Lightning Bolt", "status": "proposed"}]})
         put(os.path.join(self.d, "DECISIONS.md"), "- D-1 2026-11-16 Kept Lightning Bolt for now.\n")
+        put(os.path.join(self.d, "candidates.json"), {"cards": [{"name": "Lightning Bolt", "verdict": "eligible", "evidence": ["fnd-1"]}]})
 
     def tearDown(self):
         shutil.rmtree(self.d, ignore_errors=True)
@@ -60,7 +61,7 @@ class Findings(unittest.TestCase):
 
     def test_card_report_finds_every_place(self):
         rows = "\n".join(co.card_report(self.d, "Lightning Bolt"))
-        for frag in ("deck     brew.json v2: 1 Lightning Bolt (SLD IFIYW-2)", "rec      brew.json rec-1 [proposed]", "finding  fnd-1", "decision D-1"):
+        for frag in ("deck     brew.json v2: 1 Lightning Bolt (SLD IFIYW-2)", "rec      brew.json rec-1 [proposed]", "finding  fnd-1", "decision D-1", "candidate candidates.json: eligible fnd-1"):
             self.assertIn(frag, rows)
 
     def test_archive_keeps_cited_findings_and_ids_stay_known(self):

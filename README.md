@@ -150,7 +150,7 @@ Known limits we hit while testing (Nov 2026): the MTG MCP's deck validator was d
 See [CLAUDE.md](CLAUDE.md) for layout, tests and release rules. Try local changes with `claude --plugin-dir ./plugins/edh-companion`.
 
 ## Credits and license
-Card data from [Scryfall](https://scryfall.com), combos from [Commander Spellbook](https://commanderspellbook.com), statistics from [EDHREC](https://edhrec.com), rules from [Wizards of the Coast](https://magic.wizards.com/en/rules).
+Card data from [Scryfall](https://scryfall.com), combos from [Commander Spellbook](https://commanderspellbook.com), statistics from [EDHREC](https://edhrec.com), rules from [Wizards of the Coast](https://magic.wizards.com/en/rules). Mana math (land count, color sources, the cast-by-turn model) follows Frank Karsten's published Commander analyses. Pages use [Chart.js](https://www.chartjs.org) and [three.js](https://threejs.org) (both MIT).
 
 Unofficial Fan Content permitted under the [Fan Content Policy](https://company.wizards.com/en/legal/fancontentpolicy). Not approved or endorsed by Wizards. Portions of the materials used are property of Wizards of the Coast. ©Wizards of the Coast LLC.
 

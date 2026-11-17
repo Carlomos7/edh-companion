@@ -42,6 +42,11 @@ When PROJECT.md sets budgets: run deck_check with `--cheapest --budget --aesthet
 ## Acquisition claims
 When an acquisition plan is checked: products really contain the cards claimed (Scryfall `e:` search or the official list), prices have a source and date and match that printing and finish, availability claims (out of print, reprint announced, sold out) are cited, owned cards are excluded only if the player listed them. Unsupported claims are warnings; a wrong product content or price is a fail.
 
+## Collection and upgrade claims
+- "Owned" or "you can make this today": the card is in `collection.json` (oracle_id); a claimed printing must be that printing. Otherwise `fail`.
+- Upgrade totals recompute: each step's price is the dated cheapest-printing price, and the running total matches their sum and stays within the stated budget.
+- Rows in `collection.json` `unmatched` are listed as a limitation, never counted as owned or missing.
+
 ## Artwork and printings
 - When the theme depends on art, every themed card must have a `printing_id` (or set + collector number). Missing → `fail` ("printing not specified, art can't be verified").
 - Open the image (`art_crop` from deck_check.py JSON, or the Scryfall card page) and describe what it shows in `detail` ("Spider-Man swinging past a skyline"). A name or set alone doesn't prove the art.

@@ -18,7 +18,7 @@ ROLE_RULES = [
     ("ramp", "makes Treasure", r"create[^.]*treasure token"),
     ("draw", "draws cards", r"\bdraws? (?:a|an|one|two|three|four|x|that many|cards?)\b"),
     ("draw", "plays cards from exile or the top", r"exile the top [^.]*(?:you may (?:play|cast)|until end of turn, you may)|you may (?:play|cast) [^.]*from the top of your library|look at the top \w+ cards[^.]*put (?:one|two|\w+) of them into your hand"),
-    ("removal", "destroys or exiles a target", r"(?:destroy|exile) (?:another )?target (?:creature|artifact|enchantment|planeswalker|permanent|nonland permanent|battle|land)"),
+    ("removal", "destroys or exiles a target", r"(?:destroy|exile) (?:another )?target (?:creature|artifact|enchantment|planeswalker|permanent|nonland permanent|battle|land)(?! you control)"),
     ("removal", "damages a target", r"deals? (?:\d+|x|that much) damage to (?:any target|target creature|target planeswalker|target player or planeswalker|another target)"),
     ("removal", "shrinks a target", r"target creature gets -\d+/-\d+|target creature gets -x/-x"),
     ("removal", "bounces a target", r"return target (?:creature|nonland permanent|permanent|artifact|enchantment)[^.]* to its owner's hand"),

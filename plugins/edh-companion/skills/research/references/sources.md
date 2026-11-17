@@ -80,6 +80,11 @@ research:
 - **No invented URLs.** Don't guess EDHREC (or any) page paths. Find the page through search, or build it only from a pattern you've just verified loads (e.g. the commander page `edhrec.com/commanders/<slug>` with the slug from that page or a search result), and record the URL actually opened.
 - **Gaps are findings.** Every failure, fallback and the evidence it left missing goes in `methodology.tools_failed` and `gaps`, and into the reply.
 
+## Site terms and automated access
+- Before reading a new site in a research task, check its robots.txt and skim its terms for bans on scripts or scraping (once per site per day is enough). Prefer official APIs and bulk data (Scryfall, Commander Spellbook).
+- A site that disallows the path or bans automated access: don't fetch it. Record it in `methodology.excluded` (`host`, `reason`) and say what the gap costs.
+- **EDHREC:** its terms allow personal, non-commercial use and ban automated scripts. Use the MTG MCP tools or the page the player could open themselves. Reading its JSON directly (`json.edhrec.com`, including the per-bracket files) only happens when the player asks for it in this task, for a few commanders, cached and reused, and never republished in bulk: pages show the numbers they cite, not the data files.
+
 ## Parallel research (only when subjects are independent)
 Spawn workers only for genuinely independent subjects or source types; a single commander at Quick depth runs inline. The lead owns the plan, the merge and research.json; workers own only their part file.
 1. **Plan first:** `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" research-plan <project> --worker cards:card-data:<subjects> --worker yt:sources:<subjects> …` writes `research.plan.json` with each worker's slug, role and ID prefix (`src-<slug>-001`, `fnd-<slug>-001`), so IDs never collide.

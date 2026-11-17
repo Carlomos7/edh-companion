@@ -1,0 +1,12 @@
+{
+ "_note": "Role floors and caps for autobuild.py, from the role table in construction.md (100-card decks; starting points, not laws). Role names are analytics.py's. ramp_high_cost: the ramp floor when the commander costs 4 or more.",
+ "roles": {
+  "ramp": {"min": 10, "max": 14},
+  "draw": {"min": 10, "max": 14},
+  "removal": {"min": 8, "max": 12},
+  "wipe": {"min": 2, "max": 4}
+ },
+ "ramp_high_cost": 12,
+ "game_changers": {"1": 0, "2": 0, "3": 3, "4": 99, "5": 99},
+ "cast_target": {"turn_after_mv": 1, "probability": 0.5}
+}

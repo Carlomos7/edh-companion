@@ -949,7 +949,7 @@ def card_report(d, name):
                 out.append(f"rec      {f} {r['id']} [{r['status']}]: +{r.get('add') or '-'} / -{r.get('cut') or '-'}")
     cp = os.path.join(d, "candidates.json")
     if os.path.exists(cp):
-        for c in load(cp).get("candidates", []):
+        for c in load(cp).get("cards", []):
             if has((c.get("card") or {}).get("name") or c.get("name")):
                 out.append(f"candidate candidates.json: {c.get('verdict') or c.get('status') or ''} {', '.join(c.get('evidence') or [])[:60]}")
     rp = os.path.join(d, "research.json")

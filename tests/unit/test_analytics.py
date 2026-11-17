@@ -44,6 +44,10 @@ class Roles(unittest.TestCase):
                      "Return target nonland permanent to its owner's hand."):
             self.assertIn("removal", self.r("X", "Instant", text), text)
 
+    def test_blinking_your_own_creature_is_not_removal(self):
+        self.assertNotIn("removal", self.r("Ephemerate", "Instant", "Exile target creature you control, then return it to the battlefield under its owner's control."))
+        self.assertIn("removal", self.r("Swords to Plowshares", "Instant", "Exile target creature. Its controller gains life equal to its power."))
+
     def test_wipe_is_not_targeted_removal(self):
         self.assertEqual(self.r("Wrath", "Sorcery", "Destroy all creatures. They can't be regenerated."), {"wipe"})
 

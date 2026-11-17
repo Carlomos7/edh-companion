@@ -2,6 +2,23 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.14.0
+One page for every build: a build bar replaces per-group tabs, and two-commander decks show both commanders.
+- **Build bar:** every build of every group and commander sits in one bar on the Decks view, one segmented control per group, with label, bracket name, price and audit verdict on each button. Past 12 builds it becomes a grouped select.
+  - Picking a build redraws the page in place.
+  - `#build=<commander>/<build>` links reopen that build.
+- **Compare with:** pick another build to add a Differences section listing the cards only in each build and any changed counts (e.g. B2 → B4).
+- **At most four views:** Decks, Research, Rankings and Sources & accuracy. The view bar appears only with two or more views.
+  - Every rankings group sits behind one in-page switch with short labels ("All decks", "Bracket 2"...), instead of one tab each.
+  - The Overview tab is gone; the build bar does its job.
+- **Two commanders** (Partner, Background, Doctor's companion): both cards side by side in the hero, named "A + B", each opening the card viewer.
+- **One commander across several projects:** the hero carries the page title, so the masthead no longer repeats it.
+- **Phones:** each build group is one swipeable row, so the commander stays near the top.
+- **Tests:**
+  - a two-commander fixture (`tests/fixtures/partners`)
+  - browser tests for the build bar (all builds, grouped, one selected, at most four views) and for the two-commander hero
+- 272 unit tests.
+
 ## 8.13.0
 The page template is a swappable folder, and pages (plus autobuild and upgrade_path) follow each project's own conventions.
 - **Template folder:** `skills/present/assets/template/` is now `index.html`, `page.css` and `page.js`.

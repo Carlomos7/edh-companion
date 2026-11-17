@@ -16,6 +16,7 @@ HERE = os.path.join(ROOT, "plugins", "edh-companion", "skills", "present", "scri
 WS = os.path.join(ROOT, "tests", "fixtures", "krenko")
 SC_ROOT = os.path.join(ROOT, "tests", "fixtures", "showcase")
 SHOWCASE = os.path.join(SC_ROOT, "showcases", "test-showcase")
+PARTNERS = os.path.join(ROOT, "tests", "fixtures", "partners")
 RESEARCH_ONLY = os.path.join(SC_ROOT, "projects", "spider-research")
 TALRAND = os.path.join(SC_ROOT, "projects", "talrand")
 BENCH = os.path.join(ROOT, "tests", "bench")  # its sitecustomize.py logs every urlopen of every subprocess
@@ -24,6 +25,30 @@ site_data = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(site_data)
 sys.path.insert(0, os.path.join(ROOT, "plugins", "edh-companion", "scripts"))
 from edhcore.cards import record  # noqa: E402
+
+
+def browse(case, html, script):
+    """Load a built page in Chromium and return (uncaught JS errors, the value of `script`). Skips without a browser."""
+    try:
+        from playwright.sync_api import sync_playwright
+    except ImportError:
+        case.skipTest("playwright not installed")
+    errors = []
+    try:
+        with sync_playwright() as p:
+            try:
+                browser = p.chromium.launch()
+            except Exception:
+                browser = p.chromium.launch(channel="chrome")
+            page = browser.new_page(viewport={"width": 1280, "height": 900})
+            page.on("pageerror", lambda e: errors.append(str(e)))
+            page.goto("file:///" + html.replace(os.sep, "/"))
+            page.wait_for_timeout(1500)
+            value = page.evaluate(script)
+            browser.close()
+    except Exception as e:
+        case.skipTest(f"no browser: {e}")
+    return errors, value
 
 
 def build_pipeline(tmp, cmd, path, *flags, site=True):
@@ -293,6 +318,20 @@ class Showcase(unittest.TestCase):
     @classmethod
     def tearDownClass(cls):
         shutil.rmtree(cls.tmp, ignore_errors=True)
+
+    def test_one_page_build_bar(self):
+        """Every build behind one build bar (grouped), at most four views, ranking pages behind one switch."""
+        errors, v = browse(self, os.path.join(self.tmp, "site", "index.html"), """({
+            views: [...document.querySelectorAll('#tabs button')].map(b => b.dataset.view),
+            groups: [...document.querySelectorAll('.buildbar .bgl')].map(b => b.textContent).filter(t => t !== 'Compare with'),
+            builds: document.querySelectorAll('.buildbar .seg .btn').length,
+            pressed: document.querySelectorAll('.buildbar [aria-pressed="true"]').length})""")
+        self.assertEqual(errors, [])
+        self.assertLessEqual(len(v["views"]), 4)
+        self.assertEqual(v["views"][0], "decks")
+        self.assertEqual(v["groups"], [g["title"] for g in self.D["groups"]])
+        self.assertEqual(v["builds"], sum(len(c["decks"]) for g in self.D["groups"] for c in g["commanders"]))
+        self.assertEqual(v["pressed"], 1)
 
     def test_groups_and_picker(self):
         g = {x["title"]: x for x in self.D["groups"]}
@@ -651,6 +690,20 @@ class CacheReuse(unittest.TestCase):
             d = D["groups"][0]["commanders"][0]["decks"][0]
             self.assertIsNone(d["missing"])                              # a shared page never shows ownership
             self.assertTrue(all(c["owned"] is None for c in d["cards"]))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
+
+    def test_two_commanders_side_by_side(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            _, D, _ = build_pipeline(tmp, "from-workspace", PARTNERS)
+            errors, v = browse(self, os.path.join(tmp, "site", "index.html"), """({
+                cards: [...document.querySelectorAll('.hero-art.duo .hero-card')].map(b => b.getAttribute('aria-label')),
+                text: document.querySelector('.hero').innerText})""")
+            self.assertEqual(errors, [])
+            self.assertEqual(v["cards"], ["Tymna the Weaver, open card", "Thrasios, Triton Hero, open card"])
+            self.assertIn("Tymna the Weaver + Thrasios, Triton Hero", v["text"])
+            self.assertEqual(sum(c["qty"] for c in D["groups"][0]["commanders"][0]["decks"][0]["cards"]), 100)
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

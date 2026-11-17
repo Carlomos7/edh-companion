@@ -1118,7 +1118,7 @@ function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);$("#viewer").setAttribute("aria-label",`${c.name}, card ${V.i+1} of ${V.list.length}`);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
  if(V3.on)V3.show(c.img,c.back||D.default_back);
- const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},el("button",{type:"button",class:"gcopy",title:moxLine(c),onclick:e=>copyText(moxLine(c),e.currentTarget)},"Copy for Moxfield")),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),c.artist?el("p",{class:"note"},"Illustrated by "+c.artist):null,c.owned?el("p",{class:"note"},{owned:"In your collection",other_printing:"In your collection (another printing)",missing:"Not in your collection"}[c.owned]):null,linkRow(c),el("p",{},el("button",{type:"button",class:"gcopy",title:moxLine(c),onclick:e=>copyText(moxLine(c),e.currentTarget)},"Copy for Moxfield")),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
  if(c.type)side.append(el("p",{class:"muted"},c.type+(c.mdfc_land?" (modal double-faced: the back is a land)":"")));
  if(c.why)side.append(el("p",{},c.why));
  if(c.tradeoffs)side.append(el("p",{class:"muted"},"Trade-off: "+c.tradeoffs));

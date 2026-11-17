@@ -315,8 +315,10 @@ def edhrec_problems(c):
     lift, base = c.get("lift"), c.get("baseline_pct")
     if pct is None and n is not None and tot:
         pct = 100 * n / tot
-    if None not in (lift, base, pct) and base > 0 and abs(lift - pct / base) > 0.1 * pct / base + 0.05:  # rounding slack
-        return [f"lift {lift} != {pct / base:.1f} (inclusion_pct/baseline_pct)"]
+    if None not in (lift, base, pct) and base > 0:
+        lo, hi = pct / (base + 0.5), pct / max(base - 0.5, 0.05)  # EDHREC shows the baseline rounded to a whole percent
+        if not lo * 0.9 - 0.05 <= lift <= hi * 1.1 + 0.05:
+            return [f"lift {lift} != {pct / base:.1f} (inclusion_pct/baseline_pct)"]
     return []
 
 

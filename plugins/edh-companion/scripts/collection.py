@@ -41,7 +41,7 @@ def parse(text):
     if not any(h in COLUMNS["name"] for h in head):
         cards, cmd = parse_text(text)
         return [dict(e, row=i, id=None) for i, e in enumerate(cmd + cards, 1)], []
-    col = {f: next((h for h in head if h in names), None) for f, names in COLUMNS.items()}
+    col = {f: next((n for n in names if n in head), None) for f, names in COLUMNS.items()}  # alias order: "edition code" before "edition"
     rows, bad = [], []
     for i, r in enumerate(csv.DictReader(io.StringIO(text.lstrip("﻿")), fieldnames=head), 0):
         if i == 0:
@@ -71,7 +71,13 @@ def ident(r):
 
 def resolve(rows, s):
     """(cards, unmatched): rows matched to Scryfall cards, added up per printing and finish."""
-    found, _, unavail = s.scryfall.collection([ident(r) for r in rows], need="oracle") if rows else ([], [], [])
+    found, missing, unavail = s.scryfall.collection([ident(r) for r in rows], need="oracle") if rows else ([], [], [])
+    retry = [i for i in missing if "name" not in ident(rows[i])]  # a wrong set code or number: try the card by name
+    if retry:
+        again, _, _ = s.scryfall.collection([{"name": rows[i]["name"].split(" // ")[0]} for i in retry], need="oracle")
+        for i, c in zip(retry, again):
+            if c:
+                found[i], rows[i] = c, dict(rows[i], id=None, set=None, cn=None)
     cards, unmatched = {}, []
     for i, r in enumerate(rows):
         c = found[i]

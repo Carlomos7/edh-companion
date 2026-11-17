@@ -175,6 +175,8 @@ class Companion(unittest.TestCase):
         code, out = self.research(rankings=[{"group": "G", "method": "m", "cards": [card(inclusion_pct=20.0, baseline_pct=10.0, lift=5.0)]}])
         self.assertEqual(code, 0, out)
         self.assertRegex(out, r"WARN .*lift 5.0 != 2.0 \(inclusion_pct/baseline_pct\)")
+        code, out = self.research(rankings=[{"group": "G", "method": "m", "cards": [card(decks=208, total_decks=1040, baseline_pct=1.0, lift=14.3)]}])
+        self.assertNotIn("lift 14.3", out)                                        # EDHREC rounds the baseline: 1% may be 1.4%
         self.assertEqual(self.research(rankings=[{"group": "G", "method": "m", "cards": [card(lift=0)]}])[0], 1)  # lift must be > 0
 
     def test_source_provenance(self):

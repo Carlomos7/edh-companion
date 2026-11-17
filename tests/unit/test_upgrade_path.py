@@ -48,6 +48,35 @@ class Upgrade(unittest.TestCase):
         doc = up.plan(ranked, [e("Goblin Synergist", lift=3.0)], CFG, price=lambda c: 1.0)
         self.assertEqual(doc["steps"][0]["cut"], "Bear 4")              # no deck numbers: the least played overall goes
 
+    def test_combos_protect_complete_and_package(self):
+        deck = [dict(x, inclusion_lb=1.0) if x["card"]["name"] in ("Bear 1", "Bear 2") else x for x in DECK]  # least played: first to go
+        combos = [{"cards": ["Bear 1", "Bear 2", "Bear 3"], "id": "1-2-3", "result": "Infinite tokens"},       # already in the deck
+                  {"cards": ["Bear 5", "Combo Finisher"], "id": "5-f", "result": "Infinite damage"},           # one piece missing
+                  {"cards": ["Piece A", "Piece B", "Bear 6"], "id": "a-b-6", "result": "Infinite mana"}]       # two pieces missing
+        pool = [e("Combo Finisher"), e("Piece A"), e("Piece B"), e("Goblin Synergist", lift=1.2)]
+        doc = up.plan(deck, pool, CFG, price=lambda c: 1.0, combos=combos)
+        cuts = " + ".join(s["cut"] for s in doc["steps"]).split(" + ")
+        self.assertFalse({"Bear 1", "Bear 2", "Bear 3"} & set(cuts))       # never breaks a combo the deck has
+        by = {s["add"]: s for s in doc["steps"]}
+        self.assertIn("completes a combo", by["Combo Finisher"]["why"])
+        self.assertTrue(by["Piece A + Piece B"]["package"])                  # bought together or not at all
+        self.assertNotIn("Piece A", by)
+        self.assertEqual(by["Piece A + Piece B"]["price_usd"], 2.0)
+        self.assertFalse({"Bear 5", "Bear 6"} & set(cuts))                   # completed combos protect their pieces too
+
+    def test_review_fixes(self):
+        tower = e("Command Tower", "{T}: Add one mana of any color in your commander's color identity.", lift=0.95, type_line="Land")
+        doc = up.plan(DECK + [dict(tower, inclusion_lb=80.0)], [e("Random Land", type_line="Land")], CFG, price=lambda c: 1.0)
+        self.assertFalse(any(s["cut"] == "Command Tower" for s in doc["steps"]))  # no numbers on the add: no lift claim
+        dual = e("Azorius Dual", "{T}: Add {W} or {U}.", type_line="Land")
+        dual["card"]["produced_mana"] = ["W", "U"]
+        plains = e("Plains", type_line="Basic Land — Plains")
+        plains["card"]["produced_mana"] = ["W"]
+        doc = up.plan(DECK[:-10] + [plains] * 5, [dual], CFG, price=lambda c: 3.0, ident=["W", "U"])
+        self.assertEqual((doc["steps"][0]["add"], doc["steps"][0]["cut"]), ("Azorius Dual", "Plains"))  # dual for a basic
+        doc = up.plan(DECK, [e("Big Gamble", "Draw seven cards.", gc=True)], CFG, bracket=3, commander_gc=3, price=lambda c: 1.0)
+        self.assertEqual(doc["steps"], [])                                         # the commander's Game Changers count
+
     def test_budget_is_a_running_total(self):
         doc = self.run_plan(budget=5)
         self.assertLessEqual(doc["total_usd"], 5)

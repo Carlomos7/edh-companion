@@ -205,6 +205,15 @@ class Candidates(unittest.TestCase):
         self.assertEqual(doc["ranking"]["coverage"], "2 of the top 4 under 20% inclusion")
         self.assertNotIn("rank", by["Mana Crypt"])  # ineligible cards aren't ranked
 
+    def test_scoring_review_fixes(self):
+        from edhcore.scoring import rank_key, score
+        staple, fringe = score({"decks": 8000, "total_decks": 10000, "baseline_pct": 85.0}), score({"decks": 4, "total_decks": 1000})
+        self.assertLess(rank_key(staple), rank_key(fringe))                         # a staple with lift < 1 isn't buried
+        self.assertIsNone(score({"decks": 120, "total_decks": 100}))                # impossible counts: no score, no crash
+        r = json.loads(json.dumps(RESEARCH))
+        r["rankings"][0]["cards"][0].update(decks=1200, total_decks=1000)
+        self.run_build(research=r)
+
     def test_added_card_needs_review(self):
         _, by = self.run_build(add_name=["Goblin Recruiter"])
         gr = by["Goblin Recruiter"]

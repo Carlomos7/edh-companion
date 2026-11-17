@@ -78,6 +78,42 @@ class Autobuild(unittest.TestCase):
         self.assertGreaterEqual(last["probability"], first["probability"])
         self.assertEqual(doc["cards"], 100)
 
+    def test_mana_check_swaps_in_a_land_that_fixes(self):
+        esper = card("Esper Boss", "", "{W}{W}{U}", 3, "Legendary Creature", ("W", "U"))
+        p = [dict(e, card=dict(e["card"], mana_cost="{1}{U}{U}", color_identity=["U"])) for e in pool() if e["card"]["type_line"] != "Land"]
+        islands = [{"card": card(f"Island Land {i}", "{T}: Add {U}.", "", 0, "Land", ("U",), produced=["U"]), "rank": 200 + i, "evidence": [], "status": "legal"} for i in range(25)]
+        dual = {"card": card("Azorius Dual", "{T}: Add {W} or {U}.", "", 0, "Land", ("W", "U"), produced=["W", "U"]), "rank": 999, "evidence": [], "status": "legal"}
+        doc = ab.build([esper], p + islands + [dual], CFG, runs=1000)
+        d = next(x for x in doc["deck"] if x["name"] == "Azorius Dual")    # ranked last, left out by the land picks, swapped in
+        self.assertIn("mana check: makes W", d["why"])
+        self.assertEqual(doc["cards"], 100)
+
+
+    def test_review_fixes(self):
+        gc_cmd = dict(KRENKO, game_changer=True)
+        doc = ab.build([gc_cmd], pool(), CFG, bracket=2, runs=300)
+        self.assertEqual(doc["game_changers"], 1)                                  # the commander counts
+        self.assertTrue(any("commander is a Game Changer" in w for w in doc["weak_spots"]))
+        doc = ab.build([KRENKO], pool(), CFG, budget=50, price=lambda c: None, runs=300)  # nothing priced: no crash
+        self.assertTrue(doc["weak_spots"])
+        lands = [{"card": card(f"Locked Land {i}", "{T}: Add {R}.", "", 0, "Land", (), produced=["R"]), "rank": 500 + i, "evidence": [], "status": "legal"} for i in range(40)]
+        doc = ab.build([KRENKO], pool() + lands, CFG, locks=[f"Locked Land {i}" for i in range(40)], runs=300)
+        self.assertEqual(sum(d["qty"] for d in doc["deck"]) + 1, 100)               # 40 locked lands still make 100 cards
+        self.assertTrue(all(d["qty"] > 0 for d in doc["deck"]))
+        doc = ab.build([KRENKO], pool(), CFG, bracket=2, locks=["Big Gamble", "Goblin 50", "Not A Candidate"], budget=60,
+                       price=lambda c: 150.0 if c["name"] == "Goblin 50" else 0.5, runs=300)
+        weak = " | ".join(doc["weak_spots"])
+        self.assertIn("lock goblin 50 not used", weak)
+        self.assertIn("lock not a candidate not used: not in candidates.json", weak)
+        self.assertIn("Game Changers with your locks", weak)
+        doc = ab.build([dict(KRENKO, name="Krenko, Mob Boss")], pool(), CFG, budget=200, price=lambda c: 20.0 if c["name"] == "Krenko, Mob Boss" else 1.0, runs=300)
+        self.assertGreaterEqual(doc["total_usd"], 20.0)                            # the budget includes the commander
+        themed = [dict(e, theme_fit="on_theme" if e["card"]["name"] != "Goblin 1" else "off_theme") for e in pool()]
+        doc = ab.build([KRENKO], themed, CFG, strict_theme=True, runs=300)
+        self.assertIn({"name": "Goblin 1", "why": "off theme or theme unchecked"}, doc["left_out"])
+        dfc = pool() + [{"card": card("Fable // Reflection"), "rank": 0, "evidence": [], "status": "legal"}]
+        self.assertIn({"name": "Fable // Reflection", "why": "banned by you"}, ab.build([KRENKO], dfc, CFG, bans=["Fable"], runs=300)["left_out"])
+
 
 if __name__ == "__main__":
     unittest.main()

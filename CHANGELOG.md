@@ -2,6 +2,33 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.12.0
+Fixes from an independent review of 8.9–8.11, plus the features 8.11 left out.
+- **Ranking:** a lift under 1 now counts as 1, so staples with high baselines (Sol Ring, Command Tower) are no longer ranked below cards nobody has measured. Impossible counts (decks > total decks) give no score instead of crashing candidates.py.
+- **autobuild.py:**
+  - Fixes:
+    - Counts a commander that is a Game Changer, and warns when locks push past the bracket.
+    - Includes the commanders in the budget.
+    - Keeps a strict or prefer theme (off-theme or unchecked candidates are left out, and it says how many).
+    - Matches locks and bans on the front-face name, and reports every lock that didn't make it in.
+    - No longer crashes when nothing is priced.
+    - Keeps 100 cards with many locked lands.
+    - Keeps totals right after the mana check.
+  - New swap step: when a color is short, an unused candidate land that makes it replaces a basic.
+- **upgrade_path.py:**
+  - Cutting a measured card for an unmeasured one makes no lift claim, so Command Tower is no longer cut for a card with no numbers.
+  - Basic lands can be cut, so it can suggest a dual land for a basic. A land that makes more of the deck's colors is worth 0.5 per extra color.
+  - The commander's Game Changers count.
+  - Commander Spellbook combos: a piece of a combo the deck already has is never cut; an add that completes a combo gains 1; two or more missing pieces come as one package step. Two-card combos aren't promoted at brackets 1–3.
+- **collection.py:** reads "Edition Code" before "Edition" (Deckbox), and finds a card by name when its set and number don't match.
+- **validate:** the lift check allows for EDHREC rounding the baseline, so merge-research no longer refuses good data.
+- **Pages:** the card viewer names the artist ("Illustrated by"). Your own copy (`--include-notes --collection`) shows owned or missing per card and a "Missing cards" tile; shared pages never show it.
+- **Docs:**
+  - brew: how an autobuild draft becomes brew.json v1, and the budget is in USD.
+  - research: compute `content_sha256` from the saved file, and use `authorship: unknown` when unsure.
+  - The low-confidence cutoff is 100 decks everywhere.
+- 265 unit tests.
+
 ## 8.11.0
 Ranking, a first-draft deck builder, collections and upgrade paths, plus machine-readable page exports.
 - **Ranking (`edhcore/scoring.py`, candidates.py):** cards with EDHREC counts get a `score` (95% Wilson lower bound of inclusion, and lift = that ÷ baseline, capped at 8, only with 100+ decks and 10%+ inclusion) and a `rank`. `ranking.coverage` says how many top picks are niche; `--surprise N` marks high-lift picks most lists miss. The thresholds are untuned starting points.

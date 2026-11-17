@@ -105,7 +105,7 @@ def strongest(classes):
 
 
 def interval(x):
-    if x.get("decks") is not None and x.get("total_decks"):
+    if x.get("decks") is not None and x.get("total_decks") and 0 <= x["decks"] <= x["total_decks"]:
         return wilson(x["decks"], x["total_decks"])
     return x["inclusion_pct"] - EDHREC_TOLERANCE / 2, x["inclusion_pct"] + EDHREC_TOLERANCE / 2
 

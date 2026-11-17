@@ -35,7 +35,7 @@ Each finding is one claim the player could act on or dispute, written so a page 
 
 ## Evidence rules
 - **Opinion claims** (must-play, trap, best line) need two independent sources (different creators, or creator + data). One source: say "one source suggests" and set confidence low.
-- **Statistics** always carry the sample ("in 312 of 1,040 decks on EDHREC"). Under ~50 decks: low confidence.
+- **Statistics** always carry the sample ("in 312 of 1,040 decks on EDHREC"). Under ~100 decks: low confidence (`data_strength: thin`).
 - **EDHREC numbers** go in the structured fields on `card_candidates` and `rankings` cards: `decks` (EDHREC `num_decks`), `total_decks` (`potential_decks`), `inclusion_pct` (computed as decks / total_decks; EDHREC has no inclusion field), `lift` (preferred: EDHREC replaced synergy with lift on 2025-12-15), `baseline_pct` (share of all decks of these colors), `synergy_pct` (old pages only), `window`, `as_of`, `trend_zscore`. Copy what the page shows; leave a field out rather than guess it. The text `synergy` on a candidate stays a note.
 - **Explaining a number:** counts, baseline, window and date, then what it means: "in 312 of 1,040 Krenko decks (30%) vs 4% of red decks, lift 7.5, last 2 years, as of 2026-11-01. That's an association, not proof the card is strong." "High synergy" or "high lift" without the baseline is not enough.
 - **Too new for statistics:** a card released in the last few weeks, or with fewer than ~100 decks behind it, is `unresolved` for popularity. Never extrapolate from a small or early sample; `candidates.py` marks these `data_strength: thin`.

@@ -42,26 +42,32 @@ def basic(col):
     return {"name": BASICS[col], "type_line": f"Basic Land — {BASICS[col]}", "produced_mana": [col], "cmc": 0, "basic": True}
 
 
-def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), price=lambda c: None, runs=4000):
-    """commanders: Scryfall cards. pool: [{card, rank, evidence, status}] (eligible/needs_review candidates).
+def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), price=lambda c: None, runs=4000, strict_theme=False):
+    """commanders: Scryfall cards. pool: [{card, rank, evidence, status, theme_fit}] (eligible/needs_review candidates).
+    strict_theme: only on_theme / exception cards (a strict or prefer theme). The budget includes the commanders.
     Returns the autobuild document (without file metadata)."""
     ident = sorted({x for c in commanders for x in c.get("color_identity", [])}) or ["C"]
     slots = 100 - len(commanders)
+    names = lambda n: {n.lower(), n.split(" // ")[0].lower()}  # full name or front face
     locks, bans = {n.lower() for n in locks}, {n.lower() for n in bans}
-    cmd_names = {c["name"].lower() for c in commanders}
+    cmd_names = set().union(*[names(c["name"]) for c in commanders])
     gc_max = cfg["game_changers"].get(str(bracket), 99) if bracket else 99
     roles_cfg = {k: dict(v) for k, v in cfg["roles"].items()}
     cmd_mv = max(int(c.get("cmc") or 0) for c in commanders)
     if cmd_mv >= 4:
         roles_cfg["ramp"]["min"] = cfg["ramp_high_cost"]
     picked, left_out, weak, binding = [], [], [], set()
-    spent, gc = 0.0, 0
+    spent = sum(price(c) or 0.0 for c in commanders)  # the budget is the whole deck, commanders included
+    gc = sum(bool(c.get("game_changer")) for c in commanders)
+    if gc > gc_max:
+        weak.append(f"the commander is a Game Changer: bracket {bracket} allows {gc_max}")
 
     usable = []
     for e in sorted(pool, key=lambda e: (e.get("rank") or 10 ** 6, e["card"]["name"])):
-        c, n = e["card"], e["card"]["name"].lower()
-        why = "banned by you" if n in bans else "a commander" if n in cmd_names else "not released yet" if e.get("status") == "upcoming" else \
-            "no price (can't be counted against the budget)" if budget is not None and price(c) is None else None
+        c, n = e["card"], names(e["card"]["name"])
+        why = ("banned by you" if n & bans else "a commander" if n & cmd_names else "not released yet" if e.get("status") == "upcoming" else
+               "off theme or theme unchecked" if strict_theme and e.get("theme_fit") not in ("on_theme", "exception") else
+               "no price (can't be counted against the budget)" if budget is not None and price(c) is None else None)
         if why:
             left_out.append({"name": c["name"], "why": why})
         else:
@@ -97,8 +103,16 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
     lands_target = 37
     spells = [e for e in usable if "Land" not in front_type(e["card"])]
     for e in usable:
-        if e["card"]["name"].lower() in locks:
+        if names(e["card"]["name"]) & locks:
             take(e, "locked by you", force=True)
+    landed = set().union(*[names(p["name"]) for p in picked])
+    for n in sorted(locks - landed):
+        out = next((x["why"] for x in left_out if n in names(x["name"])), None)
+        weak.append(f"lock {n} not used: " + (out or ("over the budget" if any(n in names(e["card"]["name"]) for e in usable) else "not in candidates.json")))
+    if gc > gc_max:
+        weak.append(f"{gc} Game Changers with your locks and commander: bracket {bracket} allows {gc_max}")
+    locked_lands = sum("Land" in front_type(p["e"]["card"]) for p in picked)
+    spell_slots = lambda: slots - max(lands_target, locked_lands)
     for role, lim in roles_cfg.items():
         for e in spells:
             if count(role) >= lim["min"]:
@@ -110,21 +124,24 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
     for _ in range(2):  # fill, then settle the land count from the chosen spells and refill
         nonland = [p for p in picked if "Land" not in front_type(p["e"]["card"])]
         for e in spells:
-            if len(nonland) >= slots - lands_target:
+            if len(nonland) >= spell_slots():
                 break
             if take(e, f"rank {e['rank']}" if e.get("rank") else "candidate without numbers"):
                 nonland.append(picked[-1])
         rows = [(1, p["e"]["card"]) for p in nonland]
         lc = analytics.land_count(rows + [(lands_target, basic(ident[0]))])
-        lands_target = min(MAX_LANDS, max(MIN_LANDS, round(lc["recommended"])))
-        extra = len(nonland) - (slots - lands_target)
+        if lc:  # None when no spell could be picked
+            lands_target = min(MAX_LANDS, max(MIN_LANDS, round(lc["recommended"])))
+        extra = len(nonland) - spell_slots()
         for p in sorted((p for p in nonland if p["why"].startswith(("rank", "candidate"))), key=lambda p: -(p["e"].get("rank") or 10 ** 6))[:max(0, extra)]:
             picked.remove(p)
             spent -= p["price"] or 0
             gc -= bool(p["e"]["card"].get("game_changer"))
     nonland = [p for p in picked if "Land" not in front_type(p["e"]["card"])]
-    if len(nonland) < slots - lands_target:
-        weak.append(f"only {len(nonland)} spells for {slots - lands_target} slots: add candidates (research) and rerun")
+    if len(nonland) < spell_slots():
+        off = sum(x["why"] == "off theme or theme unchecked" for x in left_out)
+        weak.append(f"only {len(nonland)} spells for {spell_slots()} slots: add candidates (research) and rerun"
+                    + (f"; {off} candidates left out as off theme or theme unchecked (rerun candidates.py with --theme-sets)" if off else ""))
     land_slots = slots - len(nonland)
     for e in usable:
         if sum("Land" in front_type(p["e"]["card"]) for p in picked) >= min(land_slots - 10, land_slots // 2):
@@ -133,6 +150,9 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
             take(e, f"land, rank {e['rank']}" if e.get("rank") else "land")
     pips = {k: v for k, v in analytics.mana([(1, p["e"]["card"]) for p in nonland], ident)["pips"].items() if k in ident} or {ident[0]: 1}
     n_basic = slots - len(picked)
+    if n_basic < 0:
+        weak.append(f"{-n_basic} card(s) over 100: your locks don't fit; unlock some")
+        n_basic = 0
     split = {k: int(n_basic * v / max(1, sum(pips.values()))) for k, v in pips.items()}
     for k in sorted(pips, key=lambda k: -pips[k])[: n_basic - sum(split.values())]:
         split[k] += 1
@@ -152,6 +172,18 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
         if p >= cfg["cast_target"]["probability"] or not sim["bottleneck"] or attempt == 3:
             break
         short = sim["bottleneck"]
+        binding.add(f"mana check: {short} sources")
+        used = {x["name"].lower() for x in picked}
+        fixer = next((e for e in usable if e["card"]["name"].lower() not in used and "Land" in front_type(e["card"])
+                      and short in analytics.made_colors(e["card"], ident)), None)  # usable is in rank order
+        give = max((k for k in basics if k != short and basics[k] > 1), key=lambda k: basics[k], default=None)
+        fix_cost = price(fixer["card"]) if fixer else None
+        if fixer and give and (budget is None or (fix_cost is not None and spent + fix_cost <= budget)):
+            basics[give] -= 1  # swap: a candidate land that makes the short color replaces a basic of the most plentiful one
+            picked.append({"name": fixer["card"]["name"], "e": fixer, "why": f"land, mana check: makes {short} (replaces a {BASICS[give]})",
+                           "price": fix_cost})
+            spent += fix_cost or 0
+            continue
         was_short = {g["bottleneck"] for g in gate}
         most = max((k for k in basics if k not in was_short and basics[k] > 1), key=lambda k: basics[k], default=None)
         if most:
@@ -160,9 +192,11 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
             filler = [x for x in picked if x["why"].startswith(("rank", "candidate"))]
             if not filler:
                 break
-            picked.remove(max(filler, key=lambda x: x["e"].get("rank") or 10 ** 6))
+            gone = max(filler, key=lambda x: x["e"].get("rank") or 10 ** 6)
+            picked.remove(gone)
+            spent -= gone["price"] or 0
+            gc -= bool(gone["e"]["card"].get("game_changer"))
         basics[short] = basics.get(short, 0) + 1
-        binding.add(f"mana check: {short} sources")
     if gate[-1]["probability"] < cfg["cast_target"]["probability"]:
         weak.append(f"commander castable by turn {turn} in only {gate[-1]['probability']:.0%} of games"
                     + (f" (short of {gate[-1]['bottleneck']})" if gate[-1]["bottleneck"] else "") + ": add ramp or fixing")
@@ -209,10 +243,12 @@ def main():
     commanders = [c for c in found[len(pool):] if c]
     if len(commanders) != len(cand["commanders"]):
         sys.exit("commander card data unavailable")
-    entries = [{"card": found[i], "rank": c.get("rank"), "evidence": c["evidence"], "status": c["status"]} for i, c in enumerate(pool) if found[i]]
-    prices = deck_check.cheapest([e["card"]["name"] for e in entries]) if a.budget is not None else {}
+    entries = [{"card": found[i], "rank": c.get("rank"), "evidence": c["evidence"], "status": c["status"], "theme_fit": c["theme"]["fit"]}
+               for i, c in enumerate(pool) if found[i]]
+    prices = deck_check.cheapest([e["card"]["name"] for e in entries] + [c["name"] for c in commanders]) if a.budget is not None else {}
     doc = build(commanders, entries, load(ROLES_FILE), bracket=a.bracket or cand.get("bracket"), budget=a.budget, locks=a.lock, bans=a.ban,
-                price=lambda c: (prices.get(c["name"]) or {}).get("usd"))
+                price=lambda c: (prices.get(c["name"]) or {}).get("usd"),
+                strict_theme=(cand.get("theme_policy") or {}).get("mode") in ("strict", "prefer"))
     doc = {"schema_version": "1.0", "generated": time.strftime("%Y-%m-%d"), "candidates_generated": cand.get("generated"), "data": s.data_block(), **doc}
     now = {d["name"].lower() for d in brew.get("deck", [])}
     new = {d["name"].lower(): d["name"] for d in doc["deck"]}

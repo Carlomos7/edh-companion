@@ -87,6 +87,14 @@ class Collection(unittest.TestCase):
         self.assertEqual([(c["name"], c["finish"], c["qty"]) for c in doc["cards"]], [("Sol Ring", "foil", 1)])
         self.assertEqual(doc["unmatched"][0]["reason"], "card data unavailable (try again online)")
 
+    def test_set_code_column_wins_and_name_retry(self):
+        deckbox = "Count,Tradelist Count,Name,Edition,Edition Code,Card Number\n1,0,Sol Ring,Mirage,c21,263\n1,0,Arcane Signet,Exodus,zzz,999\n"
+        doc = self.run_files(deckbox)
+        by = {c["name"]: c for c in doc["cards"]}
+        self.assertEqual(by["Sol Ring"]["printing_id"], "p-sol-c21")               # "Edition Code", not "Edition"
+        self.assertIsNone(by["Arcane Signet"]["printing_id"])                     # wrong printing: found by name instead
+        self.assertEqual(doc["unmatched"], [])
+
     def test_states(self):
         have = col.owned({"cards": [{"oracle_id": "o-sol", "printing_id": "p-sol-c21", "qty": 1}, {"oracle_id": "o-sig", "printing_id": None, "qty": 1}]})
         self.assertEqual(col.state({"oracle_id": "o-sol", "printing_id": "p-sol-c21"}, have), "owned")

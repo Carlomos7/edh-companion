@@ -76,6 +76,8 @@ class Pipeline(unittest.TestCase):
         for d in self.decks.values():
             self.assertEqual(sum(c["qty"] for c in d["cards"]), 100)
             self.assertNotIn("errors", d)  # internal deck_check failures go to presentation-checks.md, not the page
+        self.assertTrue(any(c.get("artist") for d in self.decks.values() for c in d["cards"]))  # artist credit next to the art
+        self.assertIn("Illustrated by", self.html)
         for t in ("Copy shown", "Copy for Moxfield", "gcopy"):  # per-section, filtered and single-card copy
             self.assertIn(t, self.html)
 
@@ -599,6 +601,27 @@ class Atlas(unittest.TestCase):
 @LIVE
 class CacheReuse(unittest.TestCase):
     """A 2-variant page built twice in one cache: each card is looked up once, and the rebuild needs no card lookups."""
+
+    def test_collection_only_in_the_private_copy(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            cf = os.path.join(tmp, "collection.json")
+            with open(cf, "w", encoding="utf-8") as h:
+                json.dump({"cards": [{"name": "Nothing Owned", "oracle_id": "none", "printing_id": None, "qty": 1}]}, h)
+            _, D, html = build_pipeline(tmp, "from-workspace", WS, "--include-notes", "--collection", cf)
+            d = D["groups"][0]["commanders"][0]["decks"][0]
+            self.assertEqual(d["missing"]["cards"], sum(c["qty"] for c in d["cards"] if not c["commander"]))
+            self.assertTrue(all(c["owned"] == "missing" for c in d["cards"]))
+            self.assertIn("Not in your collection", html)
+            self.assertIn("Missing cards", [x["label"] for x in d["hero"]["stats"]])
+            shared = os.path.join(tmp, "shared")
+            os.makedirs(shared)
+            _, D, _ = build_pipeline(shared, "from-workspace", WS, "--collection", cf)
+            d = D["groups"][0]["commanders"][0]["decks"][0]
+            self.assertIsNone(d["missing"])                              # a shared page never shows ownership
+            self.assertTrue(all(c["owned"] is None for c in d["cards"]))
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_build_label_overrides_variant_id(self):
         tmp = tempfile.mkdtemp()

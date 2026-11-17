@@ -84,6 +84,26 @@ def slug(s):
     return re.sub(r"[^a-z0-9]+", "-", s.lower()).strip("-")[:40]
 
 
+def owned_cards(site, ws):
+    """The collection as collection.owned() when this is the player's own copy (--include-notes) and a collection.json
+    exists (--collection, else <workspace>/collection.json); otherwise None. Shared pages never show ownership."""
+    p = site.collection or os.path.join(ws, "..", "..", "collection.json")
+    if not site.notes or not os.path.exists(p):
+        return None
+    sys.path.insert(0, PLUGIN_SCRIPTS)
+    import collection
+    with open(p, encoding="utf-8") as h:
+        return collection.owned(json.load(h))
+
+
+def col_state(card, have):
+    if have is None:
+        return None
+    sys.path.insert(0, PLUGIN_SCRIPTS)
+    import collection
+    return collection.state(card, have)
+
+
 def contract_errors(ws):
     """Run the plugin's project validator (scripts/companion.py validate)."""
     sys.path.insert(0, PLUGIN_SCRIPTS)
@@ -185,7 +205,7 @@ def card_names(o):
 
 
 # not page text, or not from research, audit or recommendations (accuracy is walked for "unverified" only)
-PRIVATE_SKIP = {"images", "look", "page", "viewer", "fan", "data_dates", "notices", "sources", "tiers", "validation", "errors",
+PRIVATE_SKIP = {"artist", "images", "look", "page", "viewer", "fan", "data_dates", "notices", "sources", "tiers", "validation", "errors",
                 "community", "youtube", "moxfield", "url", "img", "back", "accuracy", "title"}
 PRIVATE_NOTICE = ("Private notes (DECISIONS.md, PROJECT.md text, STATE.md) are not included in this page{}; "
                   "rebuild with --include-notes for your own copy.")
@@ -347,6 +367,7 @@ class Site:
         self.swaps, self.swap_cards, self.cms, self.slugs, self.titles = {}, {}, {}, set(), []
         self.brews, self.researches, self.recs, self.hero_in = [], [], [], {}
         self.notes = bool(getattr(a, "include_notes", False))
+        self.collection = getattr(a, "collection", None)
         self.rslug, self.private, self.public, self.names = {}, [], [], set()  # anchors; quote hiding (views.Redactor)
         self.fetch_art = self.D["page"]["mode"] != "summary"
 
@@ -545,6 +566,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
     deck_names = set()
     price = lambda card: float(card["price_usd"]) if card.get("price_usd") else None
     used_groups, built = [], set()
+    have = owned_cards(site, ws)
     for B in builds:
         brew, audit = B["brew"], B["audit"]
         res = deck_check(B["file"], site.tmp, ws, cheapest=True)
@@ -568,7 +590,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             st, rel = status_of(c)
             cards.append({"name": c["name"], "qty": c["qty"], "type": c.get("type_line"), "mv": int(c.get("cmc") or 0),
                           "land": "Land" in (c.get("type_line") or "").split("//")[0], "commander": c["commander"],
-                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "finish": bc.get("finish"), "price": price(c), "theme": tlabel.get(bc.get("theme")),
+                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "finish": bc.get("finish"), "artist": c.get("artist"), "owned": col_state(c, have), "price": price(c), "theme": tlabel.get(bc.get("theme")),
                           "img": f, "back": b, "roles": c.get("roles") or {}, "label": bc.get("role"), "flags": fails.get(c["name"], []),
                           "mana": c.get("mana_cost"), "gc": c["game_changer"], "status": st, "releases": rel, "cheapest": c.get("cheapest"),
                           "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None, **views.card_types(c)})
@@ -636,7 +658,10 @@ def add_project(site, ws, group_override=None, look_cands=()):
         site.public.append(rule0)  # from brew.json: never a private quote
         label = brew.get("label") or (B["id"].upper() if re.fullmatch(r"b\d", B["id"])
                  else f"B{tb['bracket']}" if B["id"] == "main" and brackets.count(tb["bracket"]) == 1 else B["id"])  # "main" says nothing; its bracket does
-        deck = {"id": B["id"], "label": label, "bracket": tb["bracket"], "project": proj, "rule0": rule0, "rule0_items": rule0_items, "future": brew.get("future"),
+        if have is not None:  # the player's own copy only (--include-notes): never on a shared page
+            miss = [c for c in cards if c["owned"] == "missing" and not c["commander"]]
+            missing = {"cards": sum(c["qty"] for c in miss), "usd": round(sum((c["cheapest"] or {}).get("usd") or c["price"] or 0 for c in miss), 2)}
+        deck = {"id": B["id"], "label": label, "bracket": tb["bracket"], "project": proj, "rule0": rule0, "rule0_items": rule0_items, "future": brew.get("future"), "missing": missing if have is not None else None,
                 "cards": cards, "stats": stats, "theme": theme, "theme_stats": theme_stats, "validation": val, "summary": summary, "version": brew["version"],
                 "archetype": st["archetype"], "audit_view": views.audit_view(audit, val),
                 "moxfield": "Commander\n" + "\n".join(lines[:ncmd]) + "\n\nDeck\n" + "\n".join(lines[ncmd:]),
@@ -1077,6 +1102,7 @@ def main():
         s.add_argument("--viewer", choices=["simple", "3d"], help="card viewer: simple (CSS) or 3d (three.js). Default: the mode's")
         s.add_argument("--show", help=f"comma list of sections to turn on ({', '.join(SECTIONS)})")
         s.add_argument("--hide", help="comma list of sections to turn off")
+        s.add_argument("--collection", help="collection.json to mark owned and missing cards (needs --include-notes; default <workspace>/collection.json)")
         s.add_argument("--include-notes", action="store_true",
                        help="include DECISIONS.md lines and PROJECT.md text (the player's own copy; shared pages leave them out)")
     a = ap.parse_args()

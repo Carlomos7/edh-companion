@@ -22,7 +22,7 @@ def score(stats):
     inclusion_lb: Wilson lower bound of inclusion (%). lift_lb: inclusion_lb / baseline_pct, capped, only with a
     baseline, at least N_FLOOR decks and inclusion_lb >= LIFT_MIN_PCT; else None."""
     n, tot = (stats or {}).get("decks"), (stats or {}).get("total_decks")
-    if n is None or not tot:
+    if n is None or not tot or not 0 <= n <= tot:  # decks > total_decks is bad data (validate warns): no score
         return None
     lb = wilson(n, tot)[0]
     base = stats.get("baseline_pct")
@@ -32,7 +32,7 @@ def score(stats):
 
 def rank_key(s):
     """Sort key (ascending = best first): lift lower bound, then inclusion lower bound. No lift counts as 1 (no
-    association); no numbers at all sorts last."""
+    association, and a lift under 1 counts as 1 so high-baseline staples aren't pushed down); no numbers sorts last."""
     if not s:
         return (1, 0, 0)
-    return (0, -(s["lift_lb"] or 1.0), -s["inclusion_lb"])
+    return (0, -max(s["lift_lb"] or 1.0, 1.0), -s["inclusion_lb"])  # lift under 1 ties with none: inclusion decides

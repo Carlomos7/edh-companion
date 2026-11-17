@@ -320,18 +320,19 @@ class Showcase(unittest.TestCase):
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
     def test_one_page_build_bar(self):
-        """Every build behind one build bar (grouped), at most four views, ranking pages behind one switch."""
+        """Every build in one dropdown ("Bracket 3 · name", grouped), at most four views, ranking pages behind one switch."""
         errors, v = browse(self, os.path.join(self.tmp, "site", "index.html"), """({
             views: [...document.querySelectorAll('#tabs button')].map(b => b.dataset.view),
-            groups: [...document.querySelectorAll('.buildbar .bgl')].map(b => b.textContent).filter(t => t !== 'Compare with'),
-            builds: document.querySelectorAll('.buildbar .seg .btn').length,
-            pressed: document.querySelectorAll('.buildbar [aria-pressed="true"]').length})""")
+            groups: [...document.querySelectorAll('#bsel optgroup')].map(g => g.label),
+            builds: [...document.querySelectorAll('#bsel option')].map(o => o.textContent),
+            selected: document.querySelectorAll('#bsel option[selected]').length})""")
         self.assertEqual(errors, [])
         self.assertLessEqual(len(v["views"]), 4)
         self.assertEqual(v["views"][0], "decks")
         self.assertEqual(v["groups"], [g["title"] for g in self.D["groups"]])
-        self.assertEqual(v["builds"], sum(len(c["decks"]) for g in self.D["groups"] for c in g["commanders"]))
-        self.assertEqual(v["pressed"], 1)
+        self.assertEqual(len(v["builds"]), sum(len(c["decks"]) for g in self.D["groups"] for c in g["commanders"]))
+        self.assertTrue(all(b.startswith("Bracket ") or ": Bracket " in b for b in v["builds"]), v["builds"])  # the bracket comes first
+        self.assertEqual(v["selected"], 1)
 
     def test_groups_and_picker(self):
         g = {x["title"]: x for x in self.D["groups"]}

@@ -9,7 +9,7 @@ The template answers, in reading order: which deck and how strong, is it checked
 | views | One page, at most four views, and the view bar only when there are two or more: Decks (every build of every group and commander), Research (one page per research project, switched in place), Rankings (one page per research.json `rankings` group, switched in place with short labels), Sources & accuracy. A single project keeps research and sources inside the deck page. |
 | notices | `notices[]` (`level` info or warn): research written for an older deck version, stale or missing card data, private notes left out (with the number of quotes hidden). Shown near the top, never hidden |
 | hero | `groups[].commanders[].hero`: name, one metadata line (bracket, color identity, archetype, version), the audit verdict with counts, 4 stats (value, average mana value, lands + MDFC lands, Game Changers with the bracket's limit), the card image key and the art crop (`img/art_*.webp` after build_site; Scryfall URL with `--images cdn`; null without images) |
-| build bar | Every build on the page, one segmented control per group (group label shown when there are 2+ groups; commander name added when a group has 2+ commanders); past 12 builds a grouped select. Each button: label, bracket name, price, audit verdict. Picking one redraws in place and sets `#build=<commander>/<build>` (a shareable link that reopens it). "Compare with" adds a Differences section: cards only in each build and different counts |
+| build picker | Every build on the page in one dropdown, each option "Bracket N · name" (the label without its leading "B3"; the bracket's name when nothing else is left; the commander first when a group has 2+ commanders), grouped by build group when there are 2+. Picking one redraws in place and sets `#build=<commander>/<build>` (a shareable link that reopens it). "Compare with" (same naming) adds a Differences section: cards only in each build and different counts |
 | two commanders | Partners, a Background, a Doctor's companion: both cards side by side in the hero, named "A + B", each opening the viewer; identity is the pair's |
 | Rule 0 line, planned-for-release note | `decks[].rule0_items` `[{label, value}]`: Bracket, Game Changers (deck_check's list; a restriction about them folds in as "(max 3)", a bare "no Game Changers" with none in the list is dropped), one Restrictions row each, Win turn; `brew.json.future` |
 | audit | `decks[].audit_view` (below); the older `validation` (state, checks with raw `detail`) stays for old templates |
@@ -28,13 +28,13 @@ The template answers, in reading order: which deck and how strong, is it checked
 | research tab | `research_tab[]` plus `findings_view`, `disagreements_view` and `sources_view` filtered by `project` |
 | Sources & accuracy | `sources_view` (numbered, grouped by kind, `cited_by`, `moments`); audit state per build; finding counts by evidence class; unresolved findings and gaps as "still unverified"; data dates. The older `sources[]` (with `used_for`, `links`) stays but isn't rendered |
 
-Hidden when there's no data for them (never estimated): rankings and research views, cast-by-turn and mana charts and the price ladder (each with a short "not available" note), status pills, the build bar (only with 2+ builds), the view bar (only with 2+ views), the hero art. The page computes no tier and no number: tiers come only from a research ranking's `tier`. Top-level `tiers` is a legacy field that site_data always leaves empty; build_site still accepts it for old page data.
+Hidden when there's no data for them (never estimated): rankings and research views, cast-by-turn and mana charts and the price ladder (each with a short "not available" note), status pills, the build dropdown (only with 2+ builds), the view bar (only with 2+ views), the hero art. The page computes no tier and no number: tiers come only from a research ranking's `tier`. Top-level `tiers` is a legacy field that site_data always leaves empty; build_site still accepts it for old page data.
 
 ## View model (page-data additions; all old fields stay)
 Built by `scripts/views.py` from the project files, deterministically; every field is described in its module docstring.
 
 ## Deck tab, top to bottom
-1. build bar (2+ builds) with Compare with
+1. build dropdown (2+ builds) with Compare with
 2. hero: name ("A + B" for two commanders, both cards shown), project and version (showcase), bracket, card count, audit pill, Rule 0, planned-for-release note, Copy for Moxfield; the Differences section follows when comparing
 3. overview (plan, how it wins, Game Changers, theme counts, commander image) next to the numbers (stat tiles, price note, template check)
 4. decklist (group, sort, chip filters, Cards/List toggle, pips, GC pills, theme tags, ⇄ swap marks, price = buy link, ↗ Scryfall)

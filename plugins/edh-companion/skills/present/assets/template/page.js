@@ -196,7 +196,7 @@ function renderDecks(host){
  let cur=E.find(x=>x.key===store.get("build"))||E.find(x=>x.d.bracket===defB)||E[0];
  const body=el("div");host.append(body);
  const pick=x=>{cur=x;store.set("build",x.key);history.replaceState(null,"","#build="+encodeURIComponent(x.key));
-  const y=scrollY;draw();scrollTo(0,y);const f=body.querySelector('.buildbar [aria-pressed="true"]');if(f)f.focus({preventScroll:true})};
+  const y=scrollY;draw();scrollTo(0,y);const f=body.querySelector('#bsel');if(f)f.focus({preventScroll:true})};
  function draw(){charts.forEach(c=>c.destroy());charts=[];if(secObs){secObs.disconnect();secObs=null}hidePop();placeTheme(null);body.replaceChildren();
   const {G,c,d:deck}=cur;applyLook(c.look);
   const flat=orderedCards(deck);CUR={G,slug:c.slug,b:did(deck),deck,key:cur.key};
@@ -218,20 +218,19 @@ function renderDecks(host){
   body.append(...[E.length>1?buildBar(E,cur,pick,many):null,hero(c,deck,flat,asTitle),nav,noticesNode(deck),...parts].filter(Boolean));
   placeTheme(nav.querySelector(".in"));watchSections(nav)}
  draw()}
-// the build bar: one segmented control per group (a labelled select past 12 builds), plus "Compare with"
-function buildBar(E,cur,pick,many){const groups=[...new Set(E.map(x=>x.G))];
- const name=x=>(many&&x.G.commanders.length>1?x.c.name+" · ":"")+(x.d.label||"B"+x.d.bracket);
- const sub=x=>[(x.d.label||"").includes(BR[x.d.bracket]||"~")?"":BR[x.d.bracket],SHOW.prices&&(x.d.stats||{}).price!=null?money(x.d.stats.price):"",(x.d.audit_view||{}).verdict_label||""].filter(Boolean).join(" · ");
- const pickers=E.length>12
-  ?[el("div",{class:"bgrp"},el("label",{class:"bgl",for:"bsel"},"Build"),el("select",{id:"bsel",onchange:e=>pick(E[+e.target.value])},...groups.map(G=>el("optgroup",{label:G.title},...E.map((x,i)=>x.G===G?el("option",{value:i,selected:x===cur},`${name(x)} (${sub(x)})`):null).filter(Boolean)))))]
-  :groups.map(G=>el("div",{class:"bgrp"},groups.length>1?el("span",{class:"bgl",id:"bg-"+G.id},G.title):null,
-    el("div",{class:"seg",role:"group","aria-label":groups.length>1?G.title:"Builds"},...E.filter(x=>x.G===G).map(x=>el("button",{type:"button",class:"btn","aria-pressed":x===cur,onclick:()=>pick(x)},el("b",{},name(x)),el("small",{},sub(x)))))));
- const ck="cmp:"+cur.key,others=E.filter(x=>x!==cur);
- const cmp=el("div",{class:"bgrp bcmp"},el("label",{class:"bgl",for:"cmpsel"},"Compare with"),el("select",{id:"cmpsel",onchange:e=>{store.set(ck,e.target.value);pick(cur)}},el("option",{value:""},"Nothing"),
-  ...others.map(x=>el("option",{value:x.key,selected:store.get(ck)===x.key},(groups.length>1?x.G.title+": ":"")+name(x)))));
- return el("nav",{class:"buildbar","aria-label":"Builds"},el("div",{class:"in"},...pickers,cmp))}
+// the build picker: one dropdown, "Bracket 3 · Upgraded", grouped by build group when there are several; plus "Compare with"
+function buildName(x,many){const rest=String(x.d.label||"").replace(new RegExp("^B"+x.d.bracket+"\\b\\s*"),"").trim()||BR[x.d.bracket]||"";
+ return (many&&x.G.commanders.length>1?x.c.name+": ":"")+`Bracket ${x.d.bracket}`+(rest?` · ${rest}`:"")}
+function buildBar(E,cur,pick,many){const groups=[...new Set(E.map(x=>x.G))],grouped=groups.length>1;
+ const opts=(skip,sel)=>grouped?groups.map(G=>el("optgroup",{label:G.title},...E.filter(x=>x.G===G&&x!==skip).map(x=>el("option",{value:x.key,selected:sel(x)},buildName(x,many)))))
+  :E.filter(x=>x!==skip).map(x=>el("option",{value:x.key,selected:sel(x)},buildName(x,many)));
+ const byKey=k=>E.find(x=>x.key===k);
+ const build=el("div",{class:"bgrp"},el("label",{class:"bgl",for:"bsel"},"Build"),el("select",{id:"bsel",onchange:e=>pick(byKey(e.target.value))},...opts(null,x=>x===cur)));
+ const ck="cmp:"+cur.key;
+ const cmp=el("div",{class:"bgrp bcmp"},el("label",{class:"bgl",for:"cmpsel"},"Compare with"),el("select",{id:"cmpsel",onchange:e=>{store.set(ck,e.target.value);pick(cur)}},el("option",{value:""},"Nothing"),...opts(cur,x=>store.get(ck)===x.key)));
+ return el("nav",{class:"buildbar","aria-label":"Builds"},el("div",{class:"in"},build,cmp))}
 // what changes between two builds: cards only in one of them, and copies that differ (basics)
-function diffSection(deck,o){const m=d=>new Map(d.cards.filter(c=>!c.commander).map(c=>[c.name,c])),A=m(deck),B=m(o.d),lab=o.d.label||"B"+o.d.bracket;
+function diffSection(deck,o){const m=d=>new Map(d.cards.filter(c=>!c.commander).map(c=>[c.name,c])),A=m(deck),B=m(o.d),lab=buildName(o,false);
  const only=[...A.values()].filter(c=>!B.has(c.name)),theirs=[...B.values()].filter(c=>!A.has(c.name)),qty=[...A.values()].filter(c=>B.has(c.name)&&B.get(c.name).qty!==c.qty);
  const s=section("sec-diff","Compared with "+lab,`${plural(only.length,"card")} only in this build and ${plural(theirs.length,"card")} only in ${lab}; everything else is in both.`);
  const col=(h,cs,list)=>el("div",{},el("h3",{},h+" ",el("span",{class:"cn"},String(cs.length))),cs.length?el("div",{class:"row"},...cs.map(c=>cardChip(c,list))):el("p",{class:"note"},"None."));

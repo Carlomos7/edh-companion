@@ -21,7 +21,7 @@ With research.json (or EDHREC/decklist data gathered via the research skill): ro
 - Each swap is a `recommendations` entry: `rec-NNN`, add + cut, reason, evidence refs, theme status, trade-off, `status: proposed`.
 - Respect the change budget, locked cards, and every decision in DECISIONS.md (rejected recommendations stay rejected).
 - Theme on: every add stays inside the theme rules; an off-theme idea is only offered if they asked what the theme costs.
-- Order by impact. Close calls become a multiple-choice question.
+- Order by impact. Close calls become a multiple-choice question. With a budget, start from `upgrade_path.py` (acquisition.md, "Upgrade paths"); with a collection, owned swaps come first.
 
 ## 6. Apply what they accept
 Accepted → change `deck`, bump `version`, new `deck_hash`, save a new decklists/<variant>-v<N>.txt and note what changed in STATE.md. Rejected → `status: rejected` plus a dated DECISIONS.md line with their reason. Then the boundary audit (brew workflow step 6).

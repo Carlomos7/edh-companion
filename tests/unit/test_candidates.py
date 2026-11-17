@@ -76,7 +76,7 @@ class FakeSession:
 
 
 def args(**kw):
-    base = dict(commander=None, bracket=None, theme_sets=None, add=None, add_name=None)
+    base = dict(commander=None, bracket=None, theme_sets=None, add=None, add_name=None, surprise=0)
     return SimpleNamespace(**{**base, **kw})
 
 
@@ -186,6 +186,24 @@ class Candidates(unittest.TestCase):
         self.assertIsNotNone(cand.edhrec([e(60.0, 6000, 10000), e(55.0, 5500, 10000)])[1])  # large samples, no overlap
         self.assertIsNotNone(cand.edhrec([e(60.0), e(57.0)])[1])  # no counts: the 2-point rule
         self.assertIsNone(cand.edhrec([e(60.0), e(58.5)])[1])
+
+    def test_ranking_by_lift_then_inclusion(self):
+        r = json.loads(json.dumps(RESEARCH))
+        stat = lambda name, n, tot, base: {"card": {"name": name}, "rank": 1, "why": "", "evidence": ["src-001"], "decks": n, "total_decks": tot, "baseline_pct": base}
+        r["rankings"] = [{"group": "Krenko", "method": "EDHREC", "cards": [
+            stat("Sol Ring", 900, 1000, 80.0),          # a staple: lift about 1.1
+            stat("Goblin Chieftain", 300, 1000, 5.0),   # niche and strongly associated: lift about 5.4
+            stat("Coat of Arms", 150, 1000, 4.0),       # below the median inclusion, lift about 3.2
+            stat("Hellrider", 40, 1000, 1.0)]}]         # under 10% inclusion: lift doesn't count
+        doc, by = self.run_build(research=r, surprise=1)
+        self.assertEqual(by["Goblin Chieftain"]["score"], {"inclusion_lb": 27.2, "lift_lb": 5.45})
+        self.assertIsNone(by["Hellrider"]["score"]["lift_lb"])
+        order = sorted((c for c in doc["cards"] if c.get("rank")), key=lambda c: c["rank"])
+        self.assertEqual([c["name"] for c in order], ["Goblin Chieftain", "Coat of Arms", "Sol Ring", "Hellrider"])
+        self.assertEqual(doc["ranking"]["surprise"], ["Coat of Arms"])
+        self.assertTrue(by["Coat of Arms"]["surprise"])
+        self.assertEqual(doc["ranking"]["coverage"], "2 of the top 4 under 20% inclusion")
+        self.assertNotIn("rank", by["Mana Crypt"])  # ineligible cards aren't ranked
 
     def test_added_card_needs_review(self):
         _, by = self.run_build(add_name=["Goblin Recruiter"])

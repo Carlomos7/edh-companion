@@ -16,6 +16,9 @@ Config file: `~/.config/edh-companion/config.yaml` (optional; see the setup skil
 - **Creating and resuming is conversational.** "Start a Spider-Man project" creates `<workspace>/projects/<slug>/` (writing the first file creates the folder); "let's get back to my Doom deck" finds it by name. Players never need to make or open folders themselves.
 - Otherwise, when a request is about a deck, commander or report and no project is named, check what exists first: `uv run --script "${CLAUDE_PLUGIN_ROOT}/scripts/companion.py" projects` (without a shell: list the folders in `<workspace>/projects/` directly, using the workspace order above, and read each STATE.md first line; don't search by guessed names). If something matches, offer to resume it in one line ("You have a Spider-Gwen project from Nov 4, last step: upgrade pass. Continue that?"). Unrelated projects stay separate unless the player asks to combine them.
 
+## Collection (optional, one per workspace)
+`EDHCompanion/collection.json`: the player's cards, from `collection.py FILE …` (ManaBox, Moxfield, Deckbox or Archidekt CSV, or a text list). Each row resolved to `oracle_id` (+ `printing_id`, `set`, `collector_number` when the export names the printing), `finish` and `qty`; rows that didn't resolve are in `unmatched` with the row and reason. Private: never published, never copied into a page or report. Re-run the script after a new export; don't edit it by hand.
+
 ## Showcases (several projects in one report)
 ```text
 EDHCompanion/showcases/<name>/

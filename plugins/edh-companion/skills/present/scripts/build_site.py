@@ -104,6 +104,38 @@ def hero_art(D, out_dir, mode, raw_dir=None):
     return warns
 
 
+ATTRIBUTION = ("Card data and images from Scryfall (scryfall.com); popularity numbers from EDHREC and combos from Commander "
+               "Spellbook where cited. Magic: The Gathering card names and art are © Wizards of the Coast; unofficial Fan Content "
+               "permitted under the Fan Content Policy, not approved or endorsed by Wizards.")
+
+
+def extras(D, out):
+    """llms.txt and one export-<project>-<build>.json per build next to the page; returns the head tags and file names."""
+    esc = lambda t: re.sub(r"[<>&\"]", "", str(t or ""))
+    dated = max((v for v in (D.get("data_dates") or {}).values() if v), default=None)
+    lines, files = [f"# {D['title']}", "", f"> {D.get('subtitle') or 'Commander deck notes'}", "", "## Builds"], []
+    for g in D.get("groups", []):
+        for c in g.get("commanders", []):
+            for d in c.get("decks", []):
+                f = f"export-{d.get('project') or 'deck'}-{d['id']}.json".lower()
+                verdict = (d.get("audit_view") or {}).get("verdict")
+                doc = {"name": f"{c['name']}: {d['label']}", "commander": c["name"], "build": d["label"], "bracket": d.get("bracket"),
+                       "version": d.get("version"), "dateModified": dated, "audit": verdict, "decklist": d.get("moxfield"),
+                       "isBasedOn": ["https://scryfall.com", "https://edhrec.com", "https://commanderspellbook.com"], "attribution": ATTRIBUTION}
+                with open(os.path.join(out, f), "w", encoding="utf-8") as h:
+                    json.dump(doc, h, ensure_ascii=False, indent=1)
+                files.append(f)
+                lines.append(f"- [{c['name']}, {d['label']}]({f}): bracket {d.get('bracket')}, version {d.get('version')}, audit: {(verdict or 'none').replace('_', ' ')}")
+    if os.path.exists(os.path.join(out, "summary.md")):
+        lines += ["", "## Optional", "- [Summary](summary.md): the same report as Markdown"]
+    lines += ["", ATTRIBUTION, ""]
+    with open(os.path.join(out, "llms.txt"), "w", encoding="utf-8") as h:
+        h.write("\n".join(lines))
+    head = (f'<meta property="og:title" content="{esc(D["title"])}">\n<meta property="og:description" content="{esc(D.get("subtitle"))}">\n'
+            '<meta property="og:type" content="website">\n<link rel="alternate" type="text/plain" href="llms.txt" title="Summary for tools">\n')
+    return head, files + ["llms.txt"]
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("site"); ap.add_argument("--out", help="default: the folder holding the data file")
@@ -145,7 +177,8 @@ def main():
     if leak:  # a username or home folder would ship inside a shareable page
         print(json.dumps({"pass": False, "errors": [f"local path in page data: {leak.group(0)[:40]}... (remove it from the project files)"]}, indent=1))
         sys.exit(1)
-    html = open(TEMPLATE, encoding="utf-8").read().replace("__TITLE__", re.sub(r"[<>&\"]", "", D["title"]))
+    head, extra_files = extras(D, a.out)
+    html = open(TEMPLATE, encoding="utf-8").read().replace("__TITLE__", re.sub(r"[<>&\"]", "", D["title"])).replace("</title>\n", "</title>\n" + head, 1)
     if D.get("viewer") != "three" or not (D.get("page") or {}).get("show", {}).get("viewer", True):
         html = html.replace(THREE_URL, "")  # interactive/basic pages never load three.js
     separate = a.separate_data or len(data) > 3_000_000
@@ -172,7 +205,7 @@ def main():
         errs.append(f"{total / 1e6:.0f} MB total (limit {LIMITS['total_mb']}); lower --width or atlas quality")
     errs += big
     report = {"pass": not errs, "out": os.path.abspath(a.out), "page": "index.html",
-              "supporting_files": sorted(f for f in files if f.startswith("img/") or (separate and f == "site-data.json")), "files": len(files),
+              "supporting_files": sorted(f for f in files if f.startswith("img/") or (separate and f == "site-data.json") or f in extra_files), "files": len(files),
               "total_mb": round(total / 1e6, 2), "data": "site-data.json" if separate else "inline",
               "image_failures": failed[:20], "errors": errs, "warnings": warns[:30]}
     print(json.dumps(report, indent=1))

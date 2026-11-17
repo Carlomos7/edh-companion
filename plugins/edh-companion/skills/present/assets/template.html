@@ -1254,7 +1254,7 @@ async function boot(){D=window.SITE_DATA;if(!D){try{D=await (await fetch("site-d
  document.title=D.title||document.title;$("#title").textContent=D.title||"";$("#subtitle").textContent=D.subtitle||"";if(!D.subtitle)$("#subtitle").remove();
  const heroTitle=IN_DECK&&D.groups.length===1&&D.groups[0].commanders.length===1;
  mastFan(SHOW.fan&&!heroTitle?fanKeys():[]);initTip();initPop();
- $("#foot").textContent="Card data and images from Scryfall; Magic card art © Wizards of the Coast. Not affiliated with or endorsed by Wizards.";
+ $("#foot").textContent="Card data and images from Scryfall; popularity numbers from EDHREC and combos from Commander Spellbook where cited. Magic card names and art © Wizards of the Coast. Unofficial Fan Content permitted under the Fan Content Policy; not approved or endorsed by Wizards.";
  const t=store.get("theme",null);if(t)document.documentElement.dataset.theme=t;setThemeLabel();
  const rerender=()=>{const y=scrollY;go(store.get("tab"),false);scrollTo(0,y)};
  $("#themeBtn").onclick=()=>{const cur=document.documentElement.dataset.theme||(matchMedia("(prefers-color-scheme:dark)").matches?"dark":"light");const n=cur==="dark"?"light":"dark";document.documentElement.dataset.theme=n;store.set("theme",n);setThemeLabel();rerender();$("#themeBtn").focus()};

@@ -2,6 +2,31 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.11.0
+Ranking, a first-draft deck builder, collections and upgrade paths, plus machine-readable page exports.
+- **Ranking (`edhcore/scoring.py`, candidates.py):** cards with EDHREC counts get a `score` (95% Wilson lower bound of inclusion, and lift = that ÷ baseline, capped at 8, only with 100+ decks and 10%+ inclusion) and a `rank`. `ranking.coverage` says how many top picks are niche; `--surprise N` marks high-lift picks most lists miss. The thresholds are untuned starting points.
+- **`autobuild.py` (brew):** a first-draft 100-card deck from candidates.json.
+  - Hard limits are filters: verdict, upcoming cards, singleton, Game Changers per bracket, and the budget as a true total from cheapest printings. A card with no price is left out under a budget, and no single card may take more than 8× the average share left per slot.
+  - Order: locks, then role floors from the new `references/roles.json` (ramp 12 for 4+ mana commanders), then rank without passing role caps.
+  - Lands: Karsten's formula (33–40), then candidate lands and basics split by pips.
+  - A mana check reruns the simulation and moves basics to the bottleneck color, at most 3 times.
+  - Output: why for every pick, binding limits, the rank cutoff, weak spots, and adds/cuts against brew.json.
+- **`collection.py`:** ManaBox, Moxfield, Deckbox and Archidekt CSV (read by header) or text lists → `<workspace>/collection.json`. Exact printings are kept when the export names them, duplicates are added up, and every row that didn't resolve is listed in `unmatched`.
+- **`upgrade_path.py` (brew):** one-for-one swaps ordered by value per dollar.
+  - Value = role floors filled plus lift gained; price = cheapest printing.
+  - Owned swaps ($0) come first, and the order is recomputed after each step. The budget is a running total.
+  - It cuts the least-played card (EDHREC inclusion, then Scryfall's overall EDHREC rank). Spells swap for spells and lands for lands. A strict or prefer theme only adds on-theme cards.
+- **Pages:** `build_site.py` writes `llms.txt` and one `export-<project>-<build>.json` per build (decklist, version, date, audit verdict and the attribution), adds Open Graph tags and an alternate link, and the footer names EDHREC, Commander Spellbook and the Fan Content Policy.
+- **Rules and docs:**
+  - research sources.md: site-terms rules, including EDHREC JSON only when the player asks, in small volumes, never republished. `methodology.excluded` records hosts not used.
+  - Acquisition and optimize docs cover owned / other printing / missing cards and upgrade paths.
+  - Audit checks cover ownership and upgrade totals.
+  - README credits Karsten, Chart.js and three.js.
+- **Fixes:**
+  - `companion.py card` now lists candidates.json entries (it read the wrong key).
+  - Blinking your own creature (Ephemerate) no longer counts as removal.
+- 258 unit tests.
+
 ## 8.10.0
 Honest numbers and honest sources: EDHREC statistics are stored with their sample and baseline, generated lists are labelled as generated, and a few mana-count bugs are fixed.
 - **EDHREC stats:** `card_candidates` and `rankings` cards take `lift` (preferred; EDHREC replaced synergy with lift on 2025-12-15), `baseline_pct`, `synergy_pct`, `window`, `as_of` and `trend_zscore` next to `decks`/`total_decks`/`inclusion_pct`. `validate` warns when lift doesn't match inclusion / baseline.

@@ -79,6 +79,21 @@ class Pipeline(unittest.TestCase):
         for t in ("Copy shown", "Copy for Moxfield", "gcopy"):  # per-section, filtered and single-card copy
             self.assertIn(t, self.html)
 
+    def test_machine_readable_exports(self):
+        site = os.path.join(self.tmp, "site")
+        llms = open(os.path.join(site, "llms.txt"), encoding="utf-8").read()
+        self.assertTrue(llms.startswith("# " + self.D["title"]))
+        self.assertIn('<meta property="og:title"', self.html)
+        self.assertIn('<link rel="alternate" type="text/plain" href="llms.txt"', self.html)
+        self.assertIn("Fan Content Policy", self.html)
+        for d in self.decks.values():
+            f = f"export-{d['project'] or 'deck'}-{d['id']}.json".lower()
+            self.assertIn(f"]({f})", llms)
+            x = json.load(open(os.path.join(site, f), encoding="utf-8"))
+            self.assertEqual((x["version"], x["decklist"], x["audit"]), (d["version"], d["moxfield"], (d["audit_view"] or {}).get("verdict")))
+            self.assertIn("Scryfall", x["attribution"])                  # attribution travels with the data
+            self.assertIn(f, self.build["supporting_files"])
+
     def test_audit_states_derived_never_upgraded(self):
         b3, b4 = self.decks["b3"]["audit_view"], self.decks["b4"]["audit_view"]
         self.assertEqual((b3["verdict"], b3["verdict_label"]), ("pass_with_warnings", "Pass with warnings"))

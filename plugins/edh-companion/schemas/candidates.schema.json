@@ -42,6 +42,9 @@
         "ineligible": {"type": "integer", "minimum": 0}
       }
     },
+    "ranking": {"type": "object", "description": "How cards were ranked (candidates.py). Popularity, not strength.",
+                "properties": {"basis": {"type": "string"}, "ranked": {"type": "integer", "minimum": 0}, "with_lift": {"type": "integer", "minimum": 0},
+                               "coverage": {"type": "string"}, "surprise": {"type": "array", "items": {"type": "string"}}}},
     "printing_choice": {"type": "object", "description": "Cards whose printing/art still has to be chosen (needed) or is already chosen in the brew (done). Not part of the verdict.",
                         "properties": {"needed": {"type": "integer", "minimum": 0}, "done": {"type": "integer", "minimum": 0}}},
     "cards": {
@@ -63,6 +66,10 @@
           "evidence_class": {"oneOf": [{"$ref": "common.schema.json#/$defs/evidence_class"}, {"type": "null"}], "description": "Strongest class among the card's evidence."},
           "evidence_confidence": {"oneOf": [{"$ref": "common.schema.json#/$defs/confidence"}, {"type": "null"}]},
           "edhrec": {"oneOf": [{"$ref": "common.schema.json#/$defs/edhrec_stats"}, {"type": "null"}], "description": "Best-supported ranking or candidate entry (largest sample); inclusion_pct computed from decks/total_decks when missing."},
+          "score": {"type": ["object", "null"], "description": "inclusion_lb: 95% Wilson lower bound of inclusion (%); lift_lb: inclusion_lb / baseline, capped at 8, null without a baseline, 100 decks or 10% inclusion.",
+                    "properties": {"inclusion_lb": {"type": "number"}, "lift_lb": {"type": ["number", "null"]}}},
+          "rank": {"type": "integer", "minimum": 1, "description": "Order by lift_lb, then inclusion_lb; only cards that aren't ineligible and have deck counts."},
+          "surprise": {"type": "boolean", "description": "A high-lift pick below the median inclusion (--surprise N)."},
           "data_strength": {"enum": ["ok", "thin", "none"], "description": "EDHREC sample behind edhrec: ok = 100+ decks, thin = fewer (needs_review), none = no numbers."},
           "edhrec_conflict": {"type": "array", "minItems": 2, "description": "Entries whose inclusion intervals (95% Wilson; 2 points when counts are missing) don't overlap; kept, never averaged.", "items": {"type": "object"}},
           "theme": {

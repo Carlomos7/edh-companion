@@ -168,6 +168,25 @@
               }
             }
           }
+        },
+        "excluded": {
+          "type": "array",
+          "description": "Sites not used because robots.txt or their terms forbid automated access (or the player excluded them).",
+          "items": {
+            "type": "object",
+            "required": [
+              "host",
+              "reason"
+            ],
+            "properties": {
+              "host": {
+                "type": "string"
+              },
+              "reason": {
+                "type": "string"
+              }
+            }
+          }
         }
       }
     },

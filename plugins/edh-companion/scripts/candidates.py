@@ -6,7 +6,7 @@
 """Research findings -> verified card candidates for brewing, with citations, theme fit and a verdict per card.
 
   candidates.py <project> [--commander NAME ...] [--bracket N] [--theme-sets a,b] [--add names.txt] [--add-name NAME ...]
-                [--fresh|--offline] [--out <project>/candidates.json]
+                [--surprise N] [--fresh|--offline] [--out <project>/candidates.json]
 
 Reads research.json (card_candidates, rankings, findings[].cards) and brew.json (or the newest brew*.json) for the
 commanders, target bracket and theme_policy; flags override. Cards added with --add/--add-name are kept with no
@@ -18,11 +18,12 @@ otherwise. With art_required, choosing a printing is not a verdict reason: each 
 needed|done|n/a (done = brew.json already names a printing) next to printings_on_theme, and the top-level
 printing_choice sums them. Prints a short summary; the full result is in candidates.json.
 """
-import argparse, glob, json, math, os, re, sys, time
+import argparse, glob, json, os, re, sys, time
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from edhcore.http import RequestError, Unavailable  # noqa: E402
 from edhcore.session import Session  # noqa: E402
+from edhcore.scoring import rank_key, score, wilson  # noqa: E402
 
 CLASS_RANK = ["verified_fact", "calculated", "popularity_metric", "community_opinion", "model_assessment", "unresolved"]
 CONF_RANK = ["high", "medium", "low"]
@@ -101,13 +102,6 @@ def strongest(classes):
         return None, None
     return min(classes, key=lambda x: (CLASS_RANK.index(x[0]) if x[0] in CLASS_RANK else 9,
                                        CONF_RANK.index(x[1]) if x[1] in CONF_RANK else 9))
-
-
-def wilson(n, tot, z=1.96):
-    """95% Wilson score interval for n of tot, in % points."""
-    p, d = n / tot, 1 + z * z / tot
-    mid, half = (p + z * z / (2 * tot)) / d, z * math.sqrt(p * (1 - p) / tot + z * z / (4 * tot * tot)) / d
-    return 100 * (mid - half), 100 * (mid + half)
 
 
 def interval(x):
@@ -210,6 +204,7 @@ def build(project, a, s, today=None):
                "evidence_class": cls, "evidence_confidence": conf, "edhrec": pick, "theme": {"fit": "unchecked", "how": None},
                "printings_on_theme": None, "printing_choice": "n/a", "added": e["added"], "verdict": None, "reasons": why}
         rec["data_strength"] = data_strength(pick)
+        rec["score"] = score(pick)
         if rec["data_strength"] == "thin":
             why.append(f"EDHREC sample thin ({pick.get('total_decks') or 'unknown'} decks): treat the numbers as a hint")
         if conflict:
@@ -251,12 +246,31 @@ def build(project, a, s, today=None):
 
     out.sort(key=lambda r: (["ineligible", "needs_review", "eligible"].index(r["verdict"]), r["name"]))
     counts = {k: sum(r["verdict"] == k for r in out) for k in ("eligible", "needs_review", "ineligible")}
+    ranking = rank(out, getattr(a, "surprise", 0) or 0)
     printing = {k: sum(r["printing_choice"] == k for r in out) for k in ("needed", "done")}
     return {"schema_version": "1.0", "generated": today, "research_version": research.get("version"), "brew": os.path.basename(bp) if bp else None,
             "commanders": commanders, "color_identity": identity, "bracket": bracket,
             "theme_policy": {"mode": mode, "eligibility": pol.get("eligibility"), "art_required": art, "theme_sets": sets,
                              "exceptions": [x["card"] for x in pol.get("exceptions", [])]},
-            "data": data, "counts": counts, "printing_choice": printing, "cards": out}
+            "data": data, "counts": counts, "printing_choice": printing, "ranking": ranking, "cards": out}
+
+
+def rank(out, surprise=0, top=30):
+    """Number cards that aren't ineligible and have deck counts: lift lower bound first, then inclusion lower bound.
+    Marks up to `surprise` high-lift picks below the median inclusion, and says how many of the top picks are niche."""
+    ranked = sorted((r for r in out if r["verdict"] != "ineligible" and r["score"]), key=lambda r: rank_key(r["score"]))
+    for i, r in enumerate(ranked, 1):
+        r["rank"] = i
+    incl = sorted(r["score"]["inclusion_lb"] for r in ranked)
+    median = incl[len(incl) // 2] if incl else 0
+    picks = sorted((r for r in ranked if (r["score"]["lift_lb"] or 0) >= 2 and r["score"]["inclusion_lb"] < median),
+                   key=lambda r: -r["score"]["lift_lb"])[:surprise]
+    for r in picks:
+        r["surprise"] = True
+    niche = sum((r["edhrec"] or {}).get("inclusion_pct", 100) < 20 for r in ranked[:top])
+    return {"basis": "lift lower bound, then inclusion lower bound (95% Wilson); popularity, not strength",
+            "ranked": len(ranked), "with_lift": sum(r["score"]["lift_lb"] is not None for r in ranked),
+            "coverage": f"{niche} of the top {min(top, len(ranked))} under 20% inclusion", "surprise": [r["name"] for r in picks]}
 
 
 def theme(rec, e, mode, art, sets, exceptions, prints, prints_err, why):
@@ -307,6 +321,7 @@ def main():
     ap.add_argument("--theme-sets", help="comma-separated set codes whose printings count as on theme")
     ap.add_argument("--add", help="file with one card name per line (newly found cards, no research evidence yet)")
     ap.add_argument("--add-name", action="append", help="a newly found card name (repeatable)")
+    ap.add_argument("--surprise", type=int, default=0, help="mark N high-lift picks below the median inclusion")
     ap.add_argument("--out")
     g = ap.add_mutually_exclusive_group()
     g.add_argument("--fresh", action="store_true", help="ignore cached data (final checks)")
@@ -329,6 +344,8 @@ def main():
         print(f"{r['verdict']}: {r['name']}: {'; '.join(r['reasons'])}")
     if len(flagged) > 30:
         print(f"+{len(flagged) - 30} more")
+    rk = doc["ranking"]
+    print(f"ranked {rk['ranked']} ({rk['with_lift']} with lift); {rk['coverage']}" + (f"; surprise: {', '.join(rk['surprise'])}" if rk["surprise"] else ""))
     print(f"wrote {out}")
 
 

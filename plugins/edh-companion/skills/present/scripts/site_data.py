@@ -633,7 +633,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             by_label.setdefault(x["label"], []).append(x["value"])
         rule0 = "; ".join(f"{k}: {', '.join(v)}" for k, v in by_label.items())  # summary.md: each label once, its values joined
         site.public.append(rule0)  # from brew.json: never a private quote
-        label = (B["id"].upper() if re.fullmatch(r"b\d", B["id"])
+        label = brew.get("label") or (B["id"].upper() if re.fullmatch(r"b\d", B["id"])
                  else f"B{tb['bracket']}" if B["id"] == "main" and brackets.count(tb["bracket"]) == 1 else B["id"])  # "main" says nothing; its bracket does
         deck = {"id": B["id"], "label": label, "bracket": tb["bracket"], "project": proj, "rule0": rule0, "rule0_items": rule0_items, "future": brew.get("future"),
                 "cards": cards, "stats": stats, "theme": theme, "theme_stats": theme_stats, "validation": val, "summary": summary, "version": brew["version"],

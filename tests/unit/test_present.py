@@ -76,6 +76,8 @@ class Pipeline(unittest.TestCase):
         for d in self.decks.values():
             self.assertEqual(sum(c["qty"] for c in d["cards"]), 100)
             self.assertNotIn("errors", d)  # internal deck_check failures go to presentation-checks.md, not the page
+        for t in ("Copy shown", "Copy for Moxfield", "gcopy"):  # per-section, filtered and single-card copy
+            self.assertIn(t, self.html)
 
     def test_audit_states_derived_never_upgraded(self):
         b3, b4 = self.decks["b3"]["audit_view"], self.decks["b4"]["audit_view"]
@@ -582,6 +584,24 @@ class Atlas(unittest.TestCase):
 @LIVE
 class CacheReuse(unittest.TestCase):
     """A 2-variant page built twice in one cache: each card is looked up once, and the rebuild needs no card lookups."""
+
+    def test_build_label_overrides_variant_id(self):
+        tmp = tempfile.mkdtemp()
+        try:
+            ws = os.path.join(tmp, "ws")
+            shutil.copytree(WS, ws)
+            f = next(os.path.join(ws, n) for n in sorted(os.listdir(ws)) if n.startswith("brew"))
+            with open(f, encoding="utf-8") as h:
+                b = json.load(h)
+            b["label"] = "B3 Upgraded"
+            with open(f, "w", encoding="utf-8") as h:
+                json.dump(b, h)
+            _, D, _ = build_pipeline(tmp, "from-workspace", ws)
+            labels = sorted(d["label"] for c in D["groups"][0]["commanders"] for d in c["decks"])
+            self.assertIn("B3 Upgraded", labels)
+            self.assertEqual(len(labels), 2)  # the other build keeps its default
+        finally:
+            shutil.rmtree(tmp, ignore_errors=True)
 
     def test_two_variants_share_one_lookup(self):
         tmp = tempfile.mkdtemp()

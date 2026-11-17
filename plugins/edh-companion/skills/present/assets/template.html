@@ -301,7 +301,9 @@ summary>h3,summary>h4{margin:0!important}
 @media (min-width:960px){.decklist .cols{columns:3}}
 .decklist .grp{break-inside:avoid;margin-bottom:var(--sp-5)}
 .decklist .grp h3{display:flex;align-items:center;gap:var(--sp-2);font:600 var(--fs-sm)/1.3 var(--body);border-bottom:2px solid var(--border);padding-bottom:var(--sp-2);margin:0 0 var(--sp-1)}
-.decklist .grp h3 .gn{margin-left:auto;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
+.decklist .gcopy{font:500 var(--fs-xs,12px)/1 var(--body);min-height:24px;min-width:24px;padding:0 var(--sp-2);border:1px solid var(--ctl-border);border-radius:var(--r-tile);background:var(--surface);color:var(--text);cursor:pointer}
+.gcopy:hover{border-color:var(--accent)}
+.grp h3 .gn{margin-left:auto;color:var(--muted);font-weight:500;font-variant-numeric:tabular-nums}
 .decklist .ln{display:grid;grid-template-columns:minmax(0,1fr) auto 64px 20px;gap:var(--sp-2);font-size:var(--fs-sm);min-height:36px;border-bottom:1px solid var(--border);align-items:center}
 @media (pointer:coarse){.decklist .ln{min-height:44px}}
 .decklist button.name{all:unset;cursor:zoom-in;min-width:0;overflow-wrap:anywhere;font-weight:500;align-self:stretch;display:flex;flex-wrap:wrap;align-items:center;gap:0 2px}
@@ -769,7 +771,7 @@ function hero(cur,deck,flat,asTitle,redraw,key){const hTag=asTitle?"h1":"h2";con
   counts?el("span",{},[counts.fail?plural(counts.fail,"fail"):null,counts.warning?plural(counts.warning,"warning"):null,counts.unverified?`${counts.unverified} unverified`:null].filter(Boolean).join(", ")||"no issues"):null,
   el("a",{href:"#sec-audit"},"See the audit"));
  const seg=cur.decks.length>1?el("div",{class:"seg",role:"group","aria-label":"Choose a build"},...cur.decks.map(d=>el("button",{type:"button",class:"btn","aria-pressed":d===deck,onclick:()=>{store.set(key+":"+cur.slug,did(d));redraw('.seg .btn[aria-pressed="true"]')}},
-   el("b",{},d.label||"B"+d.bracket),el("small",{},`${BR[d.bracket]||""}${SHOW.prices?", "+money((d.stats||{}).price):""}`)))):null;
+   el("b",{},d.label||"B"+d.bracket),el("small",{},[(d.label||"").includes(BR[d.bracket])?"":BR[d.bracket]||"",SHOW.prices?money((d.stats||{}).price):""].filter(Boolean).join(", "))))):null;
  const copy=el("button",{type:"button",class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
  const r0=deck.rule0_items||[];
  return el("section",{class:"hero",id:"sec-overview","aria-labelledby":"hero-name"},crop?el("div",{class:"hero-bg",style:`background-image:url("${crop.replace(/"/g,"%22")}")`}):null,
@@ -895,14 +897,15 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   {id:"tag",label:"Tags",min:1,get:c=>[isGC(c)&&"gc",swapsFor(c.name).length&&"swap",c.flags&&c.flags.length&&"flag",typeInfo(c).mdfc&&"mdfc"].filter(Boolean),
    opts:[{v:"gc",label:"Game Changers"},{v:"swap",label:"⇄ Proposed cuts"},{v:"flag",label:"! Flagged"},{v:"mdfc",label:"MDFC land"}]}].filter(Boolean);
  const q=el("input",{type:"search",placeholder:"Search cards",title:"Matches name, type or role",value:st.q,"aria-label":"Search the decklist"});
- const count=el("p",{class:"count",role:"status"});
+ const count=el("p",{class:"count",role:"status"});let shown=[];
+ const copyShown=el("button",{type:"button",class:"gcopy",title:"Copy every card the search and filters show, one Moxfield line each",onclick:e=>copyText(shown.map(moxLine).join("\n"),e.currentTarget)},"Copy shown");
  const chips=chipBar(groups,d.cards,sel,draw);
  const canGrid=IMG!=="none"&&VIEW();
  let view=canGrid?(st.view||(MODE==="interactive"?"list":"cards")):"list",dens=st.density||(MODE==="interactive"||innerWidth<600?"dense":"comfy");
  const tgl=(label,opts,curv,set)=>{const g=el("div",{class:"viewtog",role:"group","aria-label":label},...opts.map(([v,t])=>el("button",{type:"button","aria-pressed":curv()===v,onclick:e=>{set(v);g.querySelectorAll("button").forEach(b=>b.setAttribute("aria-pressed",b===e.currentTarget));draw()}},t)));return g};
  const tog=canGrid?tgl("View",[["list","List"],["cards","Cards"]],()=>view,v=>view=v):null;
  const den=canGrid?tgl("Card size",[["dense","Dense"],["comfy","Comfortable"]],()=>dens,v=>dens=v):null;
- sec.append(el("div",{class:"ctrl"},q,tog,den,grp,srt,count),chips);const out=el("div",{class:"cols"});sec.append(out);
+ sec.append(el("div",{class:"ctrl"},q,tog,den,grp,srt,count,copyShown),chips);const out=el("div",{class:"cols"});sec.append(out);
  const marked=D.theme?D.theme.labels.filter(l=>!isDefaultTheme(l.label)):[];
  const TL=themeLine(d);
  sec.append(el("div",{class:"legend"},D.theme?el("span",{},...marked.map(l=>tag(l.label)),tag("off-theme")," marked"+(TL?". "+cap(TL):"")):null,
@@ -912,15 +915,16 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
  function draw(){const s={group:grp.value,sort:srt.value,q:q.value,f:sel,view,density:dens};store.set(key,s);if(den)den.hidden=view!=="cards";
   const base=c=>textHit(c,s.q);chips.sync(base);
   let cs=d.cards.filter(c=>base(c)&&chipMatch(chips.groups,sel,c));
-  count.textContent=`Showing ${cs.reduce((a,c)=>a+c.qty,0)} of ${total}`;
+  count.textContent=`Showing ${cs.reduce((a,c)=>a+c.qty,0)} of ${total}`;copyShown.hidden=!cs.length;
   cs.sort(s.sort==="name"?(a,b)=>a.name.localeCompare(b.name):s.sort==="price"?(a,b)=>(b.price??0)-(a.price??0):(a,b)=>(a.mv-b.mv)||a.name.localeCompare(b.name));
   const gk=c=>c.commander?"Commander":s.group==="type"?mainType(c):s.group==="mv"?(mainType(c)==="Land"?"Lands":"Mana value "+Math.min(c.mv,7)+(c.mv>=7?"+":"")):s.group==="theme"?(c.theme==="off-theme"?"Off-theme":c.theme||"No theme label"):s.group==="role"?(Object.keys(c.roles||{}).sort().map(cap).join(" + ")||"No role rule matched"):"All cards";
   const G={};cs.forEach(c=>(G[gk(c)]=G[gk(c)]||[]).push(c));
   const order=Object.keys(G).sort((a,b)=>(a==="Commander"?-1:b==="Commander"?1:0)||(s.group==="type"?GROUP_ORDER.indexOf(a)-GROUP_ORDER.indexOf(b):a.localeCompare(b,undefined,{numeric:true})));
-  const flat=order.flatMap(g=>G[g]);  // the viewer browses the list in display order
+  const flat=order.flatMap(g=>G[g]);shown=flat;  // the viewer browses the list in display order
   if(!cs.length){out.className="";out.replaceChildren(noMatch(()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}));return}
   const head=g=>{const n=G[g].reduce((a,c)=>a+c.qty,0),lab=g==="Land"&&s.group==="type"?landLabel(G[g].concat(cs.filter(c=>typeInfo(c).mdfc&&mainType(c)!=="Land"))).text:String(n);
-   return el("h3",{},s.group==="type"&&TYPE_COLOR[g]?el("span",{class:"sw",style:`--c:${TYPE_COLOR[g]}`,"aria-hidden":"true"}):null,el("span",{},g),el("span",{class:"gn"},el("span",{class:"sr-only"},", "),lab,/^\d+$/.test(lab)?el("span",{class:"sr-only"},n===1?" card":" cards"):null))};
+   return el("h3",{},s.group==="type"&&TYPE_COLOR[g]?el("span",{class:"sw",style:`--c:${TYPE_COLOR[g]}`,"aria-hidden":"true"}):null,el("span",{},g),el("span",{class:"gn"},el("span",{class:"sr-only"},", "),lab,/^\d+$/.test(lab)?el("span",{class:"sr-only"},n===1?" card":" cards"):null),
+    el("button",{type:"button",class:"gcopy","aria-label":`Copy ${g} (${n} shown) for Moxfield`,title:"Copy the cards shown in this section, one Moxfield line each",onclick:e=>copyText(G[g].map(moxLine).join("\n"),e.currentTarget)},"Copy"))};
   out.className=view==="cards"?"":"cols";
   if(view==="cards"){out.replaceChildren(...order.map(g=>el("div",{class:"grp vis"},head(g),el("div",{class:"cardgrid"+(dens==="comfy"?" comfy":"")},...G[g].map(c=>{const m=c.theme&&!isDefaultTheme(c.theme)?(c.theme==="off-theme"?"Off-theme":c.theme):null;
    return cardTile(c,flat,[isGC(c)?el("span",{class:"gcb"},"GC"):null,swapsFor(c.name).length?el("span",{},"⇄"):null].filter(Boolean),null,
@@ -957,6 +961,7 @@ function changesSection(G,cur,deck){if(!SHOW.swaps)return null;const RV=deck.rec
  if(proposed.length)sec.append(el("h3",{},"To decide"),el("ul",{class:"recs"},...proposed.map(r=>row(r,"proposed"))));
  if(rejected.length)sec.append(el("details",{class:"more",style:"margin-top:var(--sp-5)"},el("summary",{},el("h3",{},"Rejected"),el("span",{class:"cn"},rejected.length)),el("ul",{class:"recs"},...rejected.map(r=>row(r,"rejected")))));
  return sec}
+const moxLine=c=>`${c.qty||1} ${c.name}${c.set&&c.cn?` (${c.set.toUpperCase()}) ${c.cn}`:""}`;  // one Moxfield import line; filtered-out cards never reach it
 function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1500)};
  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
  function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}
@@ -1113,7 +1118,7 @@ function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);$("#viewer").setAttribute("aria-label",`${c.name}, card ${V.i+1} of ${V.list.length}`);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
  if(V3.on)V3.show(c.img,c.back||D.default_back);
- const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),linkRow(c),el("p",{},el("button",{type:"button",class:"gcopy",title:moxLine(c),onclick:e=>copyText(moxLine(c),e.currentTarget)},"Copy for Moxfield")),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
  if(c.type)side.append(el("p",{class:"muted"},c.type+(c.mdfc_land?" (modal double-faced: the back is a land)":"")));
  if(c.why)side.append(el("p",{},c.why));
  if(c.tradeoffs)side.append(el("p",{class:"muted"},"Trade-off: "+c.tradeoffs));

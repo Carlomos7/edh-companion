@@ -2,6 +2,16 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.9.0
+Build names on pages and copy buttons for card lists.
+- **Build labels:** brew.json takes an optional `label` (up to 40 characters, e.g. "B3 Upgraded"). The page's build switch shows it; without one it shows the bracket (B3) as before, and the page no longer repeats the bracket name next to it.
+- **Copy buttons on the deck page:**
+  - **Copy** on every section heading copies the cards that section shows right now.
+  - **Copy shown** copies every card the current filters show.
+  - **Copy for Moxfield** in the card viewer copies one import line for that card.
+- **Docs:** research notes and benchmark write-ups moved out of the repo; only `docs/architecture.md` stays. README, CLAUDE.md and the eval notes no longer link to them.
+- 235 unit tests.
+
 ## 8.8.0
 Hooks, cost measurement and a wider eval suite, plus tools so findings and cards don't have to be read in full.
 - **Hooks (`hooks/hooks.json`, `scripts/hook.py`, stdlib only):**

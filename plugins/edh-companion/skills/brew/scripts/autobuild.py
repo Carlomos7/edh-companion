@@ -12,7 +12,7 @@ Reads candidates.json (run candidates.py first) and brew.json for the commanders
 Hard limits are filters, never scores: verdict not ineligible, not upcoming, singleton, Game Changers within the
 bracket, the budget as a true total from each card's cheapest printing (a card with no price can't be bought within
 a budget, so it's left out). Order: locked cards, then each role's floor from references/roles.json (ramp first,
-best-ranked cards with that role), then the rest by candidates.py's rank without passing any role's cap. Lands:
+best-ranked cards with that role; brew.json role_targets replace those floors and caps), then the rest by candidates.py's rank without passing any role's cap. Lands:
 Karsten's formula from the chosen spells (never below 33), the best-ranked candidate lands, then basics split by the
 spells' pips. Mana check: the seeded cast-by-turn simulation; when the commander isn't castable by the turn after
 its mana value in half the games and a color is the bottleneck, a basic of that color replaces one of the most
@@ -36,6 +36,22 @@ MIN_LANDS, MAX_LANDS = 33, 40
 def load(p):
     with open(p, encoding="utf-8") as h:
         return json.load(h)
+
+
+def with_targets(cfg, targets):
+    """roles.json defaults with a build's own role_targets (brew.json) on top: its roles replace the defaults' floors and
+    caps (max null = no cap), and its lands range bounds the land count. Returns a new cfg; targets None = cfg."""
+    if not targets:
+        return cfg
+    out = dict(cfg, roles={k: dict(v) for k, v in cfg["roles"].items()})
+    for r, t in (targets.get("roles") or {}).items():
+        out["roles"][r] = {"min": t["min"], "max": t["max"] if t.get("max") is not None else 99}
+    if "ramp" in (targets.get("roles") or {}):
+        out["ramp_high_cost"] = out["roles"]["ramp"]["min"]  # the player's ramp target wins over the 4-drop default
+    if targets.get("lands"):
+        out["lands"] = (targets["lands"]["min"], targets["lands"].get("max") or targets["lands"]["min"])
+    out["targets_note"] = targets.get("note") or "brew.json role_targets"
+    return out
 
 
 def basic(col):
@@ -131,7 +147,8 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
         rows = [(1, p["e"]["card"]) for p in nonland]
         lc = analytics.land_count(rows + [(lands_target, basic(ident[0]))])
         if lc:  # None when no spell could be picked
-            lands_target = min(MAX_LANDS, max(MIN_LANDS, round(lc["recommended"])))
+            lo, hi = cfg.get("lands", (MIN_LANDS, MAX_LANDS))  # the build's own land target when it has one
+            lands_target = min(hi, max(lo, round(lc["recommended"])))
         extra = len(nonland) - spell_slots()
         for p in sorted((p for p in nonland if p["why"].startswith(("rank", "candidate"))), key=lambda p: -(p["e"].get("rank") or 10 ** 6))[:max(0, extra)]:
             picked.remove(p)
@@ -210,7 +227,7 @@ def build(commanders, pool, cfg, bracket=None, budget=None, locks=(), bans=(), p
     for r in roles_cfg:  # a floor binds when it pulled in a card ranked below where filling stopped
         if cutoff and any(p["why"].startswith(f"{r} floor") and (p["e"].get("rank") or 10 ** 6) > cutoff for p in picked):
             binding.add(f"{r} floor {roles_cfg[r]['min']}")
-    return {"commanders": [c["name"] for c in commanders], "color_identity": ident, "bracket": bracket, "budget_usd": budget,
+    return {"targets": cfg.get("targets_note", "roles.json defaults"), "commanders": [c["name"] for c in commanders], "color_identity": ident, "bracket": bracket, "budget_usd": budget,
             "total_usd": round(spent, 2), "cards": sum(d["qty"] for d in deck) + len(commanders), "lands": sum(d["qty"] for d in deck if "land" in d["roles"]),
             "role_counts": counts, "game_changers": gc, "rank_cutoff": cutoff, "pool_size": len(usable), "binding": sorted(binding), "weak_spots": weak, "mana_check": gate,
             "deck": deck, "left_out": left_out}
@@ -246,7 +263,7 @@ def main():
     entries = [{"card": found[i], "rank": c.get("rank"), "evidence": c["evidence"], "status": c["status"], "theme_fit": c["theme"]["fit"]}
                for i, c in enumerate(pool) if found[i]]
     prices = deck_check.cheapest([e["card"]["name"] for e in entries] + [c["name"] for c in commanders]) if a.budget is not None else {}
-    doc = build(commanders, entries, load(ROLES_FILE), bracket=a.bracket or cand.get("bracket"), budget=a.budget, locks=a.lock, bans=a.ban,
+    doc = build(commanders, entries, with_targets(load(ROLES_FILE), brew.get("role_targets")), bracket=a.bracket or cand.get("bracket"), budget=a.budget, locks=a.lock, bans=a.ban,
                 price=lambda c: (prices.get(c["name"]) or {}).get("usd"),
                 strict_theme=(cand.get("theme_policy") or {}).get("mode") in ("strict", "prefer"))
     doc = {"schema_version": "1.0", "generated": time.strftime("%Y-%m-%d"), "candidates_generated": cand.get("generated"), "data": s.data_block(), **doc}

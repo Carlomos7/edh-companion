@@ -14,6 +14,8 @@ Starting points, not laws. Adjust for the commander and say why when you deviate
 
 The Command Zone's template ("Commander Deckbuilding Template for the New Era", episode 658, Feb 2025) is the common reference. If you show "template check" numbers to a user, cite that episode and pull its current numbers from the episode, not from memory.
 
+Project conventions: when PROJECT.md sets its own role targets, record them in each build's brew.json `role_targets` (`lands` and `roles` such as ramp, draw, removal, wipe, protection, each `{min, max}`; `max` null for "10+"; `note` names the source). The page's role check, autobuild.py and upgrade_path.py then use them instead of the ranges above. Interaction that the Oracle-text rules don't count (Auras, tap-down effects) still needs your own count; say so next to the number.
+
 ## Mana
 - Check land sources vs pips with deck_check's `stats.sources_check`: each color's effective sources (lands 1, cheap mana producers 3/4) against the most demanding card's need in Karsten's 99-card table, and `stats.land_count` (Karsten's formula: 31.42 + 3.13 × average mana value − 0.28 × cheap ramp and draw; a warning when the deck is 2+ lands off). `stats.cast_by_turn` is color-aware (London mulligan, first one free, turn-1 draw) and names the `bottleneck` color when colors, not mana, stop the commander. Five-color decks can't meet the table for double-pip cards; treat a shortfall there as a trade-off to state, not a fail.
 - Count only untapped-enough lands for low brackets' tempo needs; avoid more than a few taplands at B3+.

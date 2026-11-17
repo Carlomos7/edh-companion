@@ -2,6 +2,20 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.13.0
+The page template is a swappable folder, and pages (plus autobuild and upgrade_path) follow each project's own conventions.
+- **Template folder:** `skills/present/assets/template/` is now `index.html`, `page.css` and `page.js`.
+  - `build_site.py` puts them together into one self-contained page through four placeholders (`__TITLE__`, `/*__CSS__*/`, `/*__JS__*/`, `/*__DATA__*/`). With the default folder the output is byte-for-byte the same as 8.12.
+  - `--template DIR` swaps in another folder that has the same files and placeholders. A folder missing a file or a placeholder is refused.
+- **Template checks:** tests run `node --check page.js` and load the built page in a real browser, and fail on any uncaught JS error. A deliberately broken page.js was caught.
+- **Your role targets:** brew.json `role_targets` sets lands plus per-role `{min, max}`, with `max` null for "10+".
+  - Roles: ramp, draw, removal, counter, wipe, protection, recursion, tutor.
+  - The page's role check becomes "Against your targets", and the lands tile shows "your target 36–37".
+  - autobuild.py and upgrade_path.py use the targets instead of `roles.json`; autobuild then also fills a protection floor.
+- **Theme tiers:** `theme_policy.tiers` and `deck[].theme_tier` (e.g. Spider-Verse first, then other Marvel) add a sub-label on on-theme cards, in the list and grid views, and a count per tier in the theme line. The on-theme % and filters don't change.
+- **Docs:** page-spec (template folder contract, conventions on the page), construction.md (role_targets), themes.md (tiers).
+- 270 unit tests.
+
 ## 8.12.0
 Fixes from an independent review of 8.9–8.11, plus the features 8.11 left out.
 - **Ranking:** a lift under 1 now counts as 1, so staples with high baselines (Sol Ring, Command Tower) are no longer ranked below cards nobody has measured. Impossible counts (decks > total decks) give no score instead of crashing candidates.py.

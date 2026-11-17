@@ -570,6 +570,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
     for B in builds:
         brew, audit = B["brew"], B["audit"]
         res = deck_check(B["file"], site.tmp, ws, cheapest=True)
+        tiers = {t["id"]: t["label"] for t in (brew.get("theme_policy") or {}).get("tiers") or []}  # preference inside the theme
         where = os.path.basename(B["file"]) + (f" ({proj})" if proj else "")
         note_unavailable(site, res, where)
         if not res.get("cards"):
@@ -590,7 +591,7 @@ def add_project(site, ws, group_override=None, look_cands=()):
             st, rel = status_of(c)
             cards.append({"name": c["name"], "qty": c["qty"], "type": c.get("type_line"), "mv": int(c.get("cmc") or 0),
                           "land": "Land" in (c.get("type_line") or "").split("//")[0], "commander": c["commander"],
-                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "finish": bc.get("finish"), "artist": c.get("artist"), "owned": col_state(c, have), "price": price(c), "theme": tlabel.get(bc.get("theme")),
+                          "set": c["set"], "set_name": c.get("set_name"), "cn": c["collector_number"], "finish": bc.get("finish"), "artist": c.get("artist"), "tier": tiers.get(bc.get("theme_tier")) if bc.get("theme") == "on_theme" else None, "owned": col_state(c, have), "price": price(c), "theme": tlabel.get(bc.get("theme")),
                           "img": f, "back": b, "roles": c.get("roles") or {}, "label": bc.get("role"), "flags": fails.get(c["name"], []),
                           "mana": c.get("mana_cost"), "gc": c["game_changer"], "status": st, "releases": rel, "cheapest": c.get("cheapest"),
                           "reason": (exc or bc.get("note")) if bc.get("theme") in ("exception", "off_theme") else None, **views.card_types(c)})
@@ -607,9 +608,20 @@ def add_project(site, ws, group_override=None, look_cands=()):
                 stats[k] = s[k]
         stats["type_counts"], stats["mdfc_lands"] = views.type_counts(cards)  # views.card_types: one rule for groups, filters, charts
         if "roles" in s:
-            stats["template"] = {"lands": [s["lands"], *TEMPLATE_RANGES["lands"]], **{r: [roles.get(r, 0), *TEMPLATE_RANGES[r]] for r in ("ramp", "draw", "removal", "wipe")}}
-            stats["template_source"] = ("Typical ranges for a Commander deck, not rules. Role counts come from fixed Oracle-text rules "
-                                        "(deck_check), a card can count in several roles; lands are counted from card types.")
+            tgt = brew.get("role_targets") or {}
+            if tgt.get("roles") or tgt.get("lands"):  # the project's own targets (brew.json role_targets)
+                rows = {"lands": tgt.get("lands")} if tgt.get("lands") else {}
+                rows.update(tgt.get("roles") or {})
+                stats["template"] = {r: [s["lands"] if r == "lands" else roles.get(r, 0), t["min"], t.get("max")] for r, t in rows.items()}
+                stats["template_kind"] = "yours"
+                stats["template_source"] = ("Your targets from brew.json role_targets" + (f" ({tgt['note']})" if tgt.get("note") else "") + ". "
+                                            "Role counts come from fixed Oracle-text rules (deck_check), a card can count in several roles; "
+                                            "lands are counted from card types.")
+            else:
+                stats["template"] = {"lands": [s["lands"], *TEMPLATE_RANGES["lands"]], **{r: [roles.get(r, 0), *TEMPLATE_RANGES[r]] for r in ("ramp", "draw", "removal", "wipe")}}
+                stats["template_kind"] = "typical"
+                stats["template_source"] = ("Typical ranges for a Commander deck, not rules. Role counts come from fixed Oracle-text rules "
+                                            "(deck_check), a card can count in several roles; lands are counted from card types.")
         theme = theme_stats = None
         if tsite:
             cnt, exempt = {}, 0
@@ -620,6 +632,8 @@ def add_project(site, ws, group_override=None, look_cands=()):
                     exempt += c["qty"]  # n/a or unchecked: not in the percentage
             total = sum(cnt.values())
             theme = {"counts": cnt, "on_theme_pct": round(100 * cnt.get(tlabel["on_theme"], 0) / total, 1) if total else None}
+            if tiers:  # how many on-theme cards each preference tier has, in the policy's order
+                theme["tiers"] = [{"label": lbl, "count": sum(c["qty"] for c in cards if c["tier"] == lbl and not c["commander"])} for lbl in tiers.values()]
             # on_theme_pct = on / total; total = on + exception + off (commander and exempt cards left out)
             theme_stats = {"on": cnt.get(tlabel["on_theme"], 0), "exception": cnt.get(tlabel["exception"], 0), "off": cnt.get(tlabel["off_theme"], 0),
                            "exempt": exempt, "total": total}

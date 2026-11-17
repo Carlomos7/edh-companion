@@ -115,5 +115,17 @@ class Autobuild(unittest.TestCase):
         self.assertIn({"name": "Fable // Reflection", "why": "banned by you"}, ab.build([KRENKO], dfc, CFG, bans=["Fable"], runs=300)["left_out"])
 
 
+    def test_project_role_targets(self):
+        cfg = ab.with_targets(CFG, {"lands": {"min": 36, "max": 37}, "roles": {"ramp": {"min": 10, "max": 12}, "wipe": {"min": 2, "max": 2}},
+                                    "note": "PROJECT.md"})
+        self.assertEqual((cfg["roles"]["wipe"], cfg["ramp_high_cost"], cfg["lands"]), ({"min": 2, "max": 2}, 10, (36, 37)))
+        self.assertIs(ab.with_targets(CFG, None), CFG)
+        doc = ab.build([KRENKO], pool(), cfg, runs=300)
+        self.assertEqual(doc["role_counts"]["wipe"], 2)                       # exact target: floor and cap
+        self.assertEqual(doc["role_counts"]["ramp"], 10)                      # the player's 10 beats the 4-drop default of 12
+        self.assertTrue(36 <= doc["lands"] <= 37)
+        self.assertEqual(doc["targets"], "PROJECT.md")
+
+
 if __name__ == "__main__":
     unittest.main()

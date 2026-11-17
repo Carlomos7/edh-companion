@@ -123,6 +123,27 @@
             "type": "string"
           },
           "description": "Interpretations the player hasn't settled (e.g. 'do symbiotes count as Spider-Man?')."
+        },
+        "tiers": {
+          "type": "array",
+          "description": "Optional preference order inside the theme, best first (e.g. Spider-Verse, then other Marvel). On-theme cards name theirs in deck[].theme_tier; pages show it as a sub-label and count each tier. Doesn't change what counts as on theme.",
+          "items": {
+            "type": "object",
+            "required": [
+              "id",
+              "label"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[a-z0-9_-]+$"
+              },
+              "label": {
+                "type": "string",
+                "maxLength": 30
+              }
+            }
+          }
         }
       }
     },
@@ -269,6 +290,13 @@
           "custom": {
             "type": "boolean",
             "description": "true for a custom or proxy card (not a real, legal Magic card). Only with the player's approval for casual play; never counted as legal."
+          },
+          "theme_tier": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "description": "theme_policy.tiers id for an on-theme card (e.g. spider_verse)."
           }
         }
       }
@@ -500,6 +528,75 @@
             "string",
             "null"
           ]
+        }
+      }
+    },
+    "role_targets": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "description": "This build's own role targets (the project's conventions), used by the page's template check, autobuild.py and upgrade_path.py in place of the generic defaults. Role names are deck_check's: ramp, draw (card advantage), removal (single-target interaction), counter, wipe, protection, recursion, tutor. max null = open-ended (\"10+\").",
+      "properties": {
+        "lands": {
+          "type": "object",
+          "required": [
+            "min"
+          ],
+          "properties": {
+            "min": {
+              "type": "integer",
+              "minimum": 0
+            },
+            "max": {
+              "type": [
+                "integer",
+                "null"
+              ],
+              "minimum": 0
+            }
+          }
+        },
+        "roles": {
+          "type": "object",
+          "propertyNames": {
+            "enum": [
+              "ramp",
+              "draw",
+              "removal",
+              "counter",
+              "wipe",
+              "protection",
+              "recursion",
+              "tutor"
+            ]
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "min"
+            ],
+            "properties": {
+              "min": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "max": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 0
+              }
+            }
+          }
+        },
+        "note": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Where the targets come from, e.g. 'PROJECT.md role targets 2026-11-14'."
         }
       }
     }

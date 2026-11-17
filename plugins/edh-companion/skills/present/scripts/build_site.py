@@ -14,7 +14,8 @@ Exit 1 on schema errors or size-limit breaches.
 import argparse, json, os, re, sys
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-TEMPLATE = os.path.join(HERE, "..", "assets", "template.html")
+TEMPLATE = os.path.join(HERE, "..", "assets", "template")  # index.html + page.css + page.js; --template swaps the folder
+SLOTS_IN_INDEX = ("__TITLE__", "/*__CSS__*/", "/*__JS__*/", "/*__DATA__*/")
 LIMITS = {"page_mb": 16, "file_mb": 15, "files": 511, "total_mb": 256}
 THREE_URL = "https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"
 SLOTS = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s5)", "var(--s6)", "var(--s7)", "var(--s8)"]  # s4 = off-theme
@@ -136,11 +137,29 @@ def extras(D, out):
     return head, files + ["llms.txt"]
 
 
+def assemble(folder, title, head=""):
+    """One self-contained HTML page from a template folder: index.html with the placeholders in SLOTS_IN_INDEX, plus
+    page.css and page.js. Any folder with the same files and placeholders can replace the default (--template).
+    The page data goes in afterwards (/*__DATA__*/), so nothing in the CSS or JS can be taken for a placeholder."""
+    read = lambda n: open(os.path.join(folder, n), encoding="utf-8").read()
+    try:
+        index, css, js = read("index.html"), read("page.css"), read("page.js")
+    except FileNotFoundError as e:
+        sys.exit(f"template {folder}: {os.path.basename(e.filename)} missing (a template is index.html, page.css and page.js)")
+    missing = [p for p in SLOTS_IN_INDEX if p not in index]
+    if missing:
+        sys.exit(f"template {folder}: index.html lacks {', '.join(missing)}")
+    index = index.replace("__TITLE__", re.sub(r"[<>&\"]", "", title)).replace("</title>\n", "</title>\n" + head, 1)
+    index = index.replace("<style>/*__CSS__*/</style>", "<style>\n" + css + "</style>", 1).replace("/*__CSS__*/", css, 1)
+    return index.replace("<script>/*__JS__*/</script>", "<script>\n" + js + "</script>", 1).replace("/*__JS__*/", js, 1)
+
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     ap.add_argument("site"); ap.add_argument("--out", help="default: the folder holding the data file")
     ap.add_argument("--separate-data", action="store_true"); ap.add_argument("--no-images", action="store_true")
     ap.add_argument("--raw-cache"); ap.add_argument("--width", type=int, default=488)
+    ap.add_argument("--template", default=TEMPLATE, help="template folder (index.html, page.css, page.js); default: the plugin's")
     a = ap.parse_args()
     D = json.load(open(a.site, encoding="utf-8"))
     a.out = a.out or os.path.dirname(os.path.abspath(a.site))
@@ -178,7 +197,7 @@ def main():
         print(json.dumps({"pass": False, "errors": [f"local path in page data: {leak.group(0)[:40]}... (remove it from the project files)"]}, indent=1))
         sys.exit(1)
     head, extra_files = extras(D, a.out)
-    html = open(TEMPLATE, encoding="utf-8").read().replace("__TITLE__", re.sub(r"[<>&\"]", "", D["title"])).replace("</title>\n", "</title>\n" + head, 1)
+    html = assemble(a.template, D["title"], head)
     if D.get("viewer") != "three" or not (D.get("page") or {}).get("show", {}).get("viewer", True):
         html = html.replace(THREE_URL, "")  # interactive/basic pages never load three.js
     separate = a.separate_data or len(data) > 3_000_000

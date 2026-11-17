@@ -2,6 +2,10 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.15.0
+- **Build picker is a dropdown:** every build sits in one select, each option labelled with its bracket first and then its name ("Bracket 2 · Core", "Bracket 3 · Upgraded", "Bracket 3 · Budget list"), grouped by build group when there are several. "Compare with" and the Differences heading use the same naming. Switching still redraws in place and keeps the `#build=` link. On phones both selects are full width.
+- 272 unit tests.
+
 ## 8.14.0
 One page for every build: a build bar replaces per-group tabs, and two-commander decks show both commanders.
 - **Build bar:** every build of every group and commander sits in one bar on the Decks view, one segmented control per group, with label, bracket name, price and audit verdict on each button. Past 12 builds it becomes a grouped select.

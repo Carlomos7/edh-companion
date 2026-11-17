@@ -62,6 +62,7 @@ Compare deck_check stats with the plan and [construction defaults](../../brew/re
 - Recency: power/legality claims from before the latest bans/Game Changers update can't decide anything.
 - Sources: open every high-impact source (must-play, combo, ban, theme/printing, cEDH) and at least a fifth of the rest. "Source exists but says something else" is a fail. Unreachable is unverified.
 - Statistics: sample size present; under ~50 decks flagged low confidence.
+- Popularity numbers: every `popularity_metric` finding, and every ranking or candidate with EDHREC numbers, carries decks, total decks and `as_of`; missing ones are a warning. "High synergy" or "high lift" with no baseline (`baseline_pct`, or the baseline in the claim) is a warning. A number from a sample under ~100 decks used as a reason is a warning (`data_strength: thin` in candidates.json).
 - Class inflation: a `community_opinion` or `model_assessment` worded as fact is a warning.
 - Blind spots: an obvious commander, strategy, or high-synergy card missing; disagreements smoothed over.
 

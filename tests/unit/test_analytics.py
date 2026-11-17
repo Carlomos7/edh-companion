@@ -27,6 +27,14 @@ class Roles(unittest.TestCase):
         self.assertEqual(self.r("Sol Ring", "Artifact", "{T}: Add {C}{C}."), {"ramp"})
         self.assertEqual(self.r("Cultivate", "Sorcery", "Search your library for up to two basic land cards, reveal those cards, put one onto the battlefield tapped and the other into your hand, then shuffle."), {"ramp"})
 
+    def test_spell_land_double_faced_card_counts_once(self):
+        awakening = {"name": "Valakut Awakening // Valakut Stoneforge", "type_line": "Instant // Land", "cmc": 3, "produced_mana": ["R"],
+                     "card_faces": [{"type_line": "Instant", "mana_cost": "{2}{R}", "oracle_text": "Put any number of cards from your hand on the bottom of your library, then draw that many cards plus one."},
+                                    {"type_line": "Land", "mana_cost": "", "oracle_text": "As Valakut Stoneforge enters, you may pay 3 life. If you don't, it enters tapped.\n{T}: Add {R}."}]}
+        counts, per = analytics.role_counts([(1, awakening)])
+        self.assertEqual(counts, {"draw": 1})  # one card, one role; its land face isn't a second card or a land
+        self.assertNotIn("land", per[awakening["name"]])
+
     def test_lands_are_only_lands(self):
         self.assertEqual(self.r("Command Tower", "Land", "{T}: Add one mana of any color in your commander's color identity."), {"land"})
 
@@ -94,6 +102,22 @@ class ColorAware(unittest.TestCase):
         self.assertGreater(good["by_turn"][5], 0.5)
         self.assertIsNone(good["bottleneck"])
         self.assertGreater(good["mulligans_per_game"], 0)
+
+    def test_fetch_lands_find_only_their_types(self):
+        mire = c("Bloodstained Mire", "Land", "{T}, Pay 1 life, Sacrifice Bloodstained Mire: Search your library for a Swamp or Mountain card, put it onto the battlefield, then shuffle.")
+        passage = c("Fabled Passage", "Land", "{T}, Sacrifice Fabled Passage: Search your library for a basic land card, put it onto the battlefield tapped, then shuffle.")
+        verge = c("Krosan Verge", "Land", "{T}: Add {C}.\n{2}, {T}, Sacrifice Krosan Verge: Search your library for a Forest card and a Plains card, put them onto the battlefield tapped, then shuffle.", produced=["C"])
+        self.assertEqual(analytics.made_colors(mire), {"B", "R"})
+        self.assertEqual(analytics.made_colors(passage, "WU"), {"W", "U"})
+        self.assertEqual(analytics.made_colors(verge), {"G", "W"})  # its {C} is not a color
+        panorama = c("Jungle Panorama", "Land", "{T}: Add {C}.\n{1}, {T}, Sacrifice it: Search your library for a basic Forest, Island, or Mountain card, put it onto the battlefield tapped, then shuffle.", produced=["C"])
+        self.assertEqual(analytics.made_colors(panorama), {"G", "U", "R"})
+        bear = c("Bear", "Creature", "", "{1}{W}", 2)
+        chk = analytics.source_check([(36, mire), (63, bear)])
+        self.assertEqual(chk["W"]["sources"], 0)                 # a Mire can't find a Plains
+        sim = analytics.simulate([(36, mire), (63, bear)], 2, runs=500, cost={"W": 1})
+        self.assertEqual((sim["by_turn"][8], sim["bottleneck"]), (0.0, "W"))
+        self.assertEqual(analytics.mana([(36, mire), (63, bear)], "WBR")["sources"], {"W": 0, "B": 36, "R": 36})
 
     def test_karsten_needs_and_land_formula(self):
         self.assertEqual(analytics.karsten_need(c("Wrath of God", "Sorcery", "", "{2}{W}{W}", 4)), {"W": 26})

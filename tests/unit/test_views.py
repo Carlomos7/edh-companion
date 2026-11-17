@@ -228,6 +228,12 @@ class Completeness(unittest.TestCase):
             with self.subTest(p=os.path.relpath(p, FIX)):
                 self.check(load(p))
 
+    def test_pasted_source_without_url(self):
+        pasted = {"id": "src-002", "title": "Pasted list", "type": "decklist", "accessed": "2026-11-04", "origin": "pasted",
+                  "authorship": "machine_generated", "path": "sources/pasted/src-002.txt"}
+        R = self.check(research([fnd("fnd-001", "A generated list runs Sol Ring.", ["src-002"], cls="model_assessment")], [pasted]))
+        self.assertIsNone(R.sources_view()[0]["items"][0]["url"])
+
     @unittest.skipUnless(REAL and os.path.exists(os.path.join(REAL or "", "research.json")), "EDHC_REAL_PROJECT not set")
     def test_real_project_legacy_citations(self):
         tmp = tempfile.mkdtemp()

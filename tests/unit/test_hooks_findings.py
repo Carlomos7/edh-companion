@@ -51,6 +51,13 @@ class Findings(unittest.TestCase):
         lines = co.research_summary(RESEARCH)
         self.assertEqual(lines, ["card · community_opinion: 2 finding(s) from 2 creator(s) (low 1, medium 1) | fnd-1, fnd-2"])
 
+    def test_summary_counts_independent_roots(self):
+        r = {"sources": RESEARCH["sources"] + [{"id": "src-4", "author": "Repost Blog", "url": "https://blog.example/x", "derived_from": ["src-3"]},
+                                               {"id": "src-5", "title": "pasted list", "origin": "pasted", "authorship": "machine_generated", "generator": "a deck generator"}],
+             "findings": [{"id": "fnd-5", "claim": "Bolt is in most lists.", "class": "popularity_metric", "confidence": "low",
+                           "evidence": ["src-3", "src-4", "src-5"], "facet": "card"}]}
+        self.assertEqual(co.research_summary(r), ["card · popularity_metric: 1 finding(s) from 1 creator(s) + 1 generated (low 1) | fnd-5"])
+
     def test_card_report_finds_every_place(self):
         rows = "\n".join(co.card_report(self.d, "Lightning Bolt"))
         for frag in ("deck     brew.json v2: 1 Lightning Bolt (SLD IFIYW-2)", "rec      brew.json rec-1 [proposed]", "finding  fnd-1", "decision D-1"):

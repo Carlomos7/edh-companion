@@ -62,16 +62,9 @@
           "evidence": {"$ref": "common.schema.json#/$defs/evidence_refs"},
           "evidence_class": {"oneOf": [{"$ref": "common.schema.json#/$defs/evidence_class"}, {"type": "null"}], "description": "Strongest class among the card's evidence."},
           "evidence_confidence": {"oneOf": [{"$ref": "common.schema.json#/$defs/confidence"}, {"type": "null"}]},
-          "edhrec": {
-            "type": ["object", "null"],
-            "description": "Best-supported ranking entry (largest sample).",
-            "properties": {
-              "inclusion_pct": {"type": ["number", "null"]},
-              "decks": {"type": ["integer", "null"]},
-              "total_decks": {"type": ["integer", "null"]}
-            }
-          },
-          "edhrec_conflict": {"type": "array", "minItems": 2, "description": "Ranking entries whose inclusion % disagree by more than 2 points; kept, never averaged.", "items": {"type": "object"}},
+          "edhrec": {"oneOf": [{"$ref": "common.schema.json#/$defs/edhrec_stats"}, {"type": "null"}], "description": "Best-supported ranking or candidate entry (largest sample); inclusion_pct computed from decks/total_decks when missing."},
+          "data_strength": {"enum": ["ok", "thin", "none"], "description": "EDHREC sample behind edhrec: ok = 100+ decks, thin = fewer (needs_review), none = no numbers."},
+          "edhrec_conflict": {"type": "array", "minItems": 2, "description": "Entries whose inclusion intervals (95% Wilson; 2 points when counts are missing) don't overlap; kept, never averaged.", "items": {"type": "object"}},
           "theme": {
             "type": "object",
             "required": ["fit", "how"],

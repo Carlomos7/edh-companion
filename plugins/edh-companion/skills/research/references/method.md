@@ -36,6 +36,9 @@ Each finding is one claim the player could act on or dispute, written so a page 
 ## Evidence rules
 - **Opinion claims** (must-play, trap, best line) need two independent sources (different creators, or creator + data). One source: say "one source suggests" and set confidence low.
 - **Statistics** always carry the sample ("in 312 of 1,040 decks on EDHREC"). Under ~50 decks: low confidence.
+- **EDHREC numbers** go in the structured fields on `card_candidates` and `rankings` cards: `decks` (EDHREC `num_decks`), `total_decks` (`potential_decks`), `inclusion_pct` (computed as decks / total_decks; EDHREC has no inclusion field), `lift` (preferred: EDHREC replaced synergy with lift on 2025-12-15), `baseline_pct` (share of all decks of these colors), `synergy_pct` (old pages only), `window`, `as_of`, `trend_zscore`. Copy what the page shows; leave a field out rather than guess it. The text `synergy` on a candidate stays a note.
+- **Explaining a number:** counts, baseline, window and date, then what it means: "in 312 of 1,040 Krenko decks (30%) vs 4% of red decks, lift 7.5, last 2 years, as of 2026-11-01. That's an association, not proof the card is strong." "High synergy" or "high lift" without the baseline is not enough.
+- **Too new for statistics:** a card released in the last few weeks, or with fewer than ~100 decks behind it, is `unresolved` for popularity. Never extrapolate from a small or early sample; `candidates.py` marks these `data_strength: thin`.
 - **Popularity ≠ power.** EDHREC inclusion says what people play; tournament data says what wins; neither says what's fun at a bracket 3 table. Say which one you mean.
 - **Conflicts:** data beats opinion for "what's played"; tournament data beats both for "what wins"; newer beats older for "what's good now". Record the conflict in `disagreements` when it matters to the player's choice.
 - **Primary vs commentary:** a decklist, Scryfall record, Spellbook combo or tournament result is primary (`primary: true`); a video or thread about it is commentary.
@@ -43,9 +46,14 @@ Each finding is one claim the player could act on or dispute, written so a page 
 - **Model assessment** is allowed and useful, labelled as such. Never dress it up as a community consensus.
 - **Rules:** an interaction not confirmed by Commander Spellbook needs a Comprehensive Rules citation and a step-by-step walk listing every required piece. Don't credit one card with what needs three.
 
+## Generated and copied sources
+- Every source says how it reached us (`origin`: fetched, pasted, file, generated_by_us) and who made it (`authorship`: human_played, human_commentary, machine_generated, aggregate_statistic, unknown). Unsure: `unknown`, never a guess.
+- A machine-generated list (a deck generator, an AI) is a model's suggestion. On its own it can't support `verified_fact`, `community_opinion` or `popularity_metric`, and it never counts as a played list; use `model_assessment` or `unresolved`. `validate` warns otherwise.
+- A source that copies or summarises another (a repost, an article built on one EDHREC page) sets `derived_from`. Corroboration counts roots: two articles quoting the same thread are one voice. `research-find --summary` counts this way and shows generated sources apart.
+
 ## Commander profile (standard depth)
 1. Scryfall: the commander's exact text, identity, legality, printings (for themes: which printings carry the theme's art).
-2. EDHREC: top/high-synergy cards with deck counts; themes people build.
+2. EDHREC: top and high-lift cards with deck counts and baseline; themes people build.
 3. 3 to 6 recent public decklists across brackets: cards in most lists, cards the player's theme can't use, unusual inclusions worth a look. Save each list as fetched to `sources/decklists/<source-id>.json` (`url`, `fetched`, `cards`), so a count in a finding can be recomputed later instead of trusted.
 4. Creators: 2 to 3 deck techs from different channels in the last 12 months; extract plan, must-plays, traps, combos, with mm:ss.
 5. Community: 3 to 5 threads/primers: what's missing, overrated, frustrating at tables, "too strong for bracket N?".

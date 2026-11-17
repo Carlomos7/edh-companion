@@ -318,6 +318,79 @@
           "$ref": "#/$defs/price"
         }
       }
+    },
+    "edhrec_stats": {
+      "type": "object",
+      "description": "EDHREC numbers for one card among one commander's (or theme's) decks. Popularity, never strength. EDHREC replaced synergy with lift on 2025-12-15; prefer lift.",
+      "properties": {
+        "inclusion_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "decks / total_decks x 100. EDHREC has no inclusion field; compute it."
+        },
+        "decks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Decks with the card (EDHREC num_decks)."
+        },
+        "total_decks": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "description": "Decks that could play it (EDHREC potential_decks)."
+        },
+        "lift": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "exclusiveMinimum": 0,
+          "description": "inclusion_pct / baseline_pct: how many times more often than in all decks of these colors. 1 = no association."
+        },
+        "baseline_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 100,
+          "description": "Share of all decks of these colors that play the card."
+        },
+        "synergy_pct": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": -100,
+          "maximum": 100,
+          "description": "Old EDHREC synergy (inclusion_pct minus baseline_pct, in points)."
+        },
+        "window": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Period the counts cover, e.g. '2y' or 'all time'."
+        },
+        "as_of": {
+          "$ref": "#/$defs/date"
+        },
+        "trend_zscore": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "description": "EDHREC trend z-score: how unusual the card's recent change in play is."
+        }
+      }
     }
   }
 }

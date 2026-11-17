@@ -594,12 +594,19 @@ class CacheReuse(unittest.TestCase):
             with open(f, encoding="utf-8") as h:
                 b = json.load(h)
             b["label"] = "B3 Upgraded"
+            foil = b["deck"][0]
+            foil["finish"] = "foil"
             with open(f, "w", encoding="utf-8") as h:
                 json.dump(b, h)
             _, D, _ = build_pipeline(tmp, "from-workspace", ws)
-            labels = sorted(d["label"] for c in D["groups"][0]["commanders"] for d in c["decks"])
+            decks = [d for c in D["groups"][0]["commanders"] for d in c["decks"]]
+            labels = sorted(d["label"] for d in decks)
             self.assertIn("B3 Upgraded", labels)
             self.assertEqual(len(labels), 2)  # the other build keeps its default
+            d = next(d for d in decks if d["label"] == "B3 Upgraded")
+            card = next(c for c in d["cards"] if c["name"] == foil["name"])
+            self.assertEqual(card["finish"], "foil")
+            self.assertIn(f"{card['qty']} {card['name']} ({card['set'].upper()}) {card['cn']} *F*", d["moxfield"])  # Moxfield's foil marker
         finally:
             shutil.rmtree(tmp, ignore_errors=True)
 

@@ -36,7 +36,9 @@ def roles(card):
     """{role: [rule names]} for one card. Lands are 'land' only (a land that taps for mana isn't ramp)."""
     if "Land" in front_type(card):
         return {"land": ["is a land"]}
-    text = re.sub(r"\(.*?\)", "", oracle(card).lower())  # reminder text doesn't count
+    faces = [f for f in card.get("card_faces") or [] if "Land" not in f.get("type_line", "")]  # a spell's land back face isn't ramp
+    text = "\n".join(f.get("oracle_text", "") for f in faces) if card.get("card_faces") else oracle(card)
+    text = re.sub(r"\(.*?\)", "", text.lower())  # reminder text doesn't count
     found = {}
     for role, rule, rx in ROLE_RULES:
         if re.search(rx, text):
@@ -53,6 +55,23 @@ def role_counts(rows):
         for role in r:
             counts[role] = counts.get(role, 0) + qty
     return counts, per
+
+
+LAND_TYPES = {"plains": "W", "island": "U", "swamp": "B", "mountain": "R", "forest": "G"}
+
+
+def made_colors(c, any_colors=COLORS):
+    """Colors a card makes (Scryfall produced_mana). A land that searches for lands makes the colors of the land types
+    it names (Bloodstained Mire: B, R); one that finds any basic (Evolving Wilds, Fabled Passage) makes any of
+    `any_colors`."""
+    made = set(c.get("produced_mana") or []) & set(COLORS)
+    if made or "Land" not in front_type(c):
+        return made
+    m = re.search(r"search your library for (.*?)(?:, put|\.)", oracle(c).lower())
+    if not m:
+        return made
+    types = {LAND_TYPES[t] for t in re.findall("|".join(LAND_TYPES), m.group(1))}
+    return types or (set(any_colors) if "land" in m.group(1) else made)
 
 
 def pips(card):
@@ -75,7 +94,7 @@ def mana(rows, identity=None):
         if "Land" not in front_type(c):
             for col, n in pips(c).items():
                 need[col] += n * qty
-        made = set(c.get("produced_mana") or [])
+        made = made_colors(c, identity or COLORS)
         if "Land" in front_type(c) or ("ramp" in roles(c) and made):
             for col in COLORS:
                 if col in made:
@@ -97,10 +116,8 @@ def simulate(rows, commander_mv, on_play=True, runs=20000, seed=7, max_turn=8, c
     ident = set(need)
     deck = []
     for qty, c in rows:
-        made = set(c.get("produced_mana") or []) & set(COLORS)
+        made = made_colors(c, ident)  # a basic-land fetch counts as any color the commander needs
         land = "Land" in front_type(c)
-        if land and not made and re.search(r"search your library for [^.]*(?:basic )?land", oracle(c).lower()):
-            made = set(ident)  # fetch lands: count as any color the commander needs
         kind = "land" if land else ("rock" if c.get("produced_mana") and "ramp" in roles(c) and (c.get("cmc") or 0) <= 2 else "spell")
         deck += [(kind, int(c.get("cmc") or 0), frozenset(made))] * qty
     rng = random.Random(seed)
@@ -176,7 +193,7 @@ def simulate(rows, commander_mv, on_play=True, runs=20000, seed=7, max_turn=8, c
             "color_short_games": round(short_games / runs, 3), "color_short": shares,
             "bottleneck": max(shares, key=shares.get) if shares and max(shares.values()) > 0 else None,
             "assumptions": "London mulligan, first one free (Karsten 2022 keep rules); the starting player draws on turn 1; "
-                           "colors from Scryfall produced_mana, fetch lands as any needed color; one land a turn, chosen for a missing color; "
+                           "colors from Scryfall produced_mana, fetch lands as the land types they find (a basic-land fetch as any needed color); one land a turn, chosen for a missing color; "
                            "mana value 2 or less mana producers count from the turn after they're cast; tapped lands and other ramp ignored"}
 
 
@@ -205,7 +222,7 @@ def source_check(rows):
     3/4 (his rule for rocks), so the counts are 'effective sources'."""
     have, need = {c: 0.0 for c in COLORS}, {}
     for qty, c in rows:
-        made = set(c.get("produced_mana") or []) & set(COLORS)
+        made = made_colors(c)
         if "Land" in front_type(c):
             for col in made:
                 have[col] += qty

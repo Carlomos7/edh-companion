@@ -116,6 +116,8 @@ def seconds(t):
 def time_url(url, t):
     """Link that opens a video at t (a range opens at its start). YouTube ?t=Ns, Twitch ?t=1h2m3s, Vimeo #t=Ns;
     other hosts can't deep-link, so they get the plain URL and the time stays visible as text."""
+    if not url:  # pasted or file sources have no URL
+        return url
     s = seconds(t)
     u = urllib.parse.urlparse(url)
     host = u.netloc.lower().split(":")[0]
@@ -380,7 +382,7 @@ class Research:
     def _cite(self, p, sid, at):
         s = self.src[(p, sid)]
         return {"n": self.n[(p, sid)], "source_id": sid, "anchor": self.anchor("s", p, sid), "label": s.get("author") or s["title"],
-                "kind": s.get("type"), "title": s["title"], "url": s["url"], "at": [dict(a, url=time_url(s["url"], a["t"])) for a in at]}
+                "kind": s.get("type"), "title": s["title"], "url": s.get("url"), "at": [dict(a, url=time_url(s.get("url"), a["t"])) for a in at]}
 
     def _sources_of(self, p, f):
         """Source ids a finding rests on: its evidence (a finding id stands for that finding's sources), then any
@@ -424,7 +426,7 @@ class Research:
             if s.get("author"):
                 return s["author"]
             if _host(s.get("url")):
-                return _host(s["url"])
+                return _host(s.get("url"))
         return "Other sources"
 
     def findings_view(self):
@@ -478,11 +480,11 @@ class Research:
             starts = {seconds(t) for t in ms}
             for t in s.get("timestamps") or []:
                 if seconds(t) not in starts:
-                    ms[t] = {"t": t, "url": time_url(s["url"], t), "findings": []}
+                    ms[t] = {"t": t, "url": time_url(s.get("url"), t), "findings": []}
             k = s.get("type")
             g = groups.setdefault(k, {"kind": k, "kind_label": KIND_LABEL.get(k, (k or "Other").replace("_", " ").capitalize()), "items": []})
             g["items"].append({"n": self.n[key], "id": s["id"], "anchor": self.anchor("s", p, s["id"]), "project": p, "title": s["title"],
-                               "creator": s.get("author"), "date": s.get("published") or s.get("accessed"), "url": s["url"],
+                               "creator": s.get("author"), "date": s.get("published") or s.get("accessed"), "url": s.get("url"),
                                "primary": bool(s.get("primary")), "sample_size": s.get("sample_size"),
                                "cited_by": [{"id": fid, "anchor": self.anchor("f", p, fid), "project": p, "headline": self.head(p, fid)[0]}
                                             for fid in dict.fromkeys(cited.get(key, []))],

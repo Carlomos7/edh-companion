@@ -2,6 +2,14 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.16.0
+- **Tagged build picker:** the build and Compare with dropdowns are styled pickers instead of plain selects.
+  - Each option shows a coloured bracket chip (B1–B5), the build name with its bracket name and price beneath, and its audit tag ("Pass with warnings", "Not audited"). The current build has a ✓.
+  - Group headers appear when there are several groups. Long names wrap in the list and shorten in the closed button.
+  - Keyboard and screen readers follow the ARIA listbox pattern: arrows, Home/End, Enter/Space, Escape, and a click outside closes it.
+  - On phones the picker is full width.
+- **Tests:** every option has a chip and an audit tag, and the keyboard opens the picker, picks the last build and returns focus. 273 unit tests.
+
 ## 8.15.0
 - **Build picker is a dropdown:** every build sits in one select, each option labelled with its bracket first and then its name ("Bracket 2 · Core", "Bracket 3 · Upgraded", "Bracket 3 · Budget list"), grouped by build group when there are several. "Compare with" and the Differences heading use the same naming. Switching still redraws in place and keeps the `#build=` link. On phones both selects are full width.
 - 272 unit tests.

@@ -299,7 +299,7 @@ function hero(cur,deck,flat,asTitle){const hTag=asTitle?"h1":"h2";const H=cur.he
  const status=el("div",{class:"hstatus"},el("span",{class:"lbl"},"Audit"),stateTag(AV.verdict),
   counts?el("span",{},[counts.fail?plural(counts.fail,"fail"):null,counts.warning?plural(counts.warning,"warning"):null,counts.unverified?`${counts.unverified} unverified`:null].filter(Boolean).join(", ")||"no issues"):null,
   el("a",{href:"#sec-audit"},"See the audit"));
- const copy=el("button",{type:"button",class:"btn copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
+ const copy=el("button",{type:"button",class:"btn primary ic-copy copy",onclick:e=>copyText(deck.moxfield||deck.cards.map(x=>`${x.qty} ${x.name}${x.set?` (${x.set.toUpperCase()}) ${x.cn}`:""}`).join("\n"),e.currentTarget)},"Copy for Moxfield");
  const r0=deck.rule0_items||[];
  return el("section",{class:"hero",id:"sec-overview","aria-labelledby":"hero-name"},crop?el("div",{class:"hero-bg",style:`background-image:url("${crop.replace(/"/g,"%22")}")`}):null,
   el("div",{class:"hero-in"+(artBox?"":" noart")},artBox,
@@ -427,7 +427,7 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
    opts:[{v:"gc",label:"Game Changers"},{v:"swap",label:"⇄ Proposed cuts"},{v:"flag",label:"! Flagged"},{v:"mdfc",label:"MDFC land"}]}].filter(Boolean);
  const q=el("input",{type:"search",placeholder:"Search cards",title:"Matches name, type or role",value:st.q,"aria-label":"Search the decklist"});
  const count=el("p",{class:"count",role:"status"});let shown=[];
- const copyShown=el("button",{type:"button",class:"gcopy",title:"Copy every card the search and filters show, one Moxfield line each",onclick:e=>copyText(shown.map(moxLine).join("\n"),e.currentTarget)},"Copy shown");
+ const copyShown=el("button",{type:"button",class:"btn sm ic-copy gcopy",title:"Copy every card the search and filters show, one Moxfield line each",onclick:e=>copyText(shown.map(moxLine).join("\n"),e.currentTarget)},"Copy shown");
  const chips=chipBar(groups,d.cards,sel,draw);
  const canGrid=IMG!=="none"&&VIEW();
  let view=canGrid?(st.view||(MODE==="interactive"?"list":"cards")):"list",dens=st.density||(MODE==="interactive"||innerWidth<600?"dense":"comfy");
@@ -453,7 +453,7 @@ function deckList(d){const key="list",st=store.get(key,{group:"type",sort:"mv",q
   if(!cs.length){out.className="";out.replaceChildren(noMatch(()=>{q.value="";Object.keys(sel).forEach(k=>delete sel[k]);draw()}));return}
   const head=g=>{const n=G[g].reduce((a,c)=>a+c.qty,0),lab=g==="Land"&&s.group==="type"?landLabel(G[g].concat(cs.filter(c=>typeInfo(c).mdfc&&mainType(c)!=="Land"))).text:String(n);
    return el("h3",{},s.group==="type"&&TYPE_COLOR[g]?el("span",{class:"sw",style:`--c:${TYPE_COLOR[g]}`,"aria-hidden":"true"}):null,el("span",{},g),el("span",{class:"gn"},el("span",{class:"sr-only"},", "),lab,/^\d+$/.test(lab)?el("span",{class:"sr-only"},n===1?" card":" cards"):null),
-    el("button",{type:"button",class:"gcopy","aria-label":`Copy ${g} (${n} shown) for Moxfield`,title:"Copy the cards shown in this section, one Moxfield line each",onclick:e=>copyText(G[g].map(moxLine).join("\n"),e.currentTarget)},"Copy"))};
+    el("button",{type:"button",class:"btn sm ic-copy gcopy","aria-label":`Copy ${g} (${n} shown) for Moxfield`,title:"Copy the cards shown in this section, one Moxfield line each",onclick:e=>copyText(G[g].map(moxLine).join("\n"),e.currentTarget)},"Copy"))};
   out.className=view==="cards"?"":"cols";
   if(view==="cards"){out.replaceChildren(...order.map(g=>el("div",{class:"grp vis"},head(g),el("div",{class:"cardgrid"+(dens==="comfy"?" comfy":"")},...G[g].map(c=>{const m=c.theme&&!isDefaultTheme(c.theme)?(c.theme==="off-theme"?"Off-theme":c.theme):null;
    return cardTile(c,flat,[isGC(c)?el("span",{class:"gcb"},"GC"):null,swapsFor(c.name).length?el("span",{},"⇄"):null].filter(Boolean),null,
@@ -491,7 +491,7 @@ function changesSection(G,cur,deck){if(!SHOW.swaps)return null;const RV=deck.rec
  if(rejected.length)sec.append(el("details",{class:"more",style:"margin-top:var(--sp-5)"},el("summary",{},el("h3",{},"Rejected"),el("span",{class:"cn"},rejected.length)),el("ul",{class:"recs"},...rejected.map(r=>row(r,"rejected")))));
  return sec}
 const moxLine=c=>`${c.qty||1} ${c.name}${c.set&&c.cn?` (${c.set.toUpperCase()}) ${c.cn}${{foil:" *F*",etched:" *E*"}[c.finish]||""}`:""}`;  // one Moxfield import line with its finish; filtered-out cards never reach it
-function copyText(t,btn){const done=()=>{const o=btn.textContent;btn.textContent="Copied";setTimeout(()=>btn.textContent=o,1500)};
+function copyText(t,btn){const done=()=>{if(btn.classList.contains("done"))return;const o=btn.textContent;btn.textContent="Copied";btn.classList.add("done");setTimeout(()=>{btn.textContent=o;btn.classList.remove("done")},1500)};
  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>fallback());else fallback();
  function fallback(){const a=el("textarea",{style:"position:fixed;opacity:0"});a.value=t;document.body.append(a);a.select();try{document.execCommand("copy");done()}catch(e){}a.remove()}}
 
@@ -647,7 +647,7 @@ function showCard(){const c=cardOf(V.list[V.i]);V.flipped=false;V.rx=V.ry=V.hx=V
  $("#vFront").setAttribute("style",artStyle(c.img));$("#vFront").setAttribute("aria-label",c.name);$("#viewer").setAttribute("aria-label",`${c.name}, card ${V.i+1} of ${V.list.length}`);
  $("#vBack").setAttribute("style",artStyle(c.back||D.default_back));
  if(V3.on)V3.show(c.img,c.back||D.default_back);
- const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),c.artist?el("p",{class:"note"},"Illustrated by "+c.artist):null,c.owned?el("p",{class:"note"},{owned:"In your collection",other_printing:"In your collection (another printing)",missing:"Not in your collection"}[c.owned]):null,linkRow(c),el("p",{},el("button",{type:"button",class:"gcopy",title:moxLine(c),onclick:e=>copyText(moxLine(c),e.currentTarget)},"Copy for Moxfield")),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
+ const side=$("#vSide");side.replaceChildren(el("h3",{},c.name),c.artist?el("p",{class:"note"},"Illustrated by "+c.artist):null,c.owned?el("p",{class:"note"},{owned:"In your collection",other_printing:"In your collection (another printing)",missing:"Not in your collection"}[c.owned]):null,linkRow(c),el("p",{},el("button",{type:"button",class:"btn sm ic-copy gcopy",title:moxLine(c),onclick:e=>copyText(moxLine(c),e.currentTarget)},"Copy for Moxfield")),el("p",{},pill(c.theme)," ",statusPill(c)," ",c.rank?el("b",{},`Rank ${c.rank}${c.tier?", tier "+c.tier:""} `):"",c.pct!=null?el("span",{class:"num"},"Popularity: "+popText(c)):""));
  if(c.type)side.append(el("p",{class:"muted"},c.type+(c.mdfc_land?" (modal double-faced: the back is a land)":"")));
  if(c.why)side.append(el("p",{},c.why));
  if(c.tradeoffs)side.append(el("p",{class:"muted"},"Trade-off: "+c.tradeoffs));

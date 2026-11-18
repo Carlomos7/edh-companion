@@ -2,6 +2,13 @@
 
 Players get a new version with `/plugin marketplace update edh-companion` and a restart.
 
+## 8.17.0
+- **One button style across the page:** every button, picker, select and search box shares the same height, 10 px corners, border, hover, press and focus. The view toggles, theme button and card viewer buttons follow it too.
+  - Button classes: `.btn` (default), `.primary` (the one main action), `.ghost`, `.sm` (inside headings), `.icon` (square). `.ic-copy` adds a copy icon.
+- **Copy for Moxfield:** now the page's primary button. It has a copy icon, a soft accent gradient and glow, and lifts on hover. After copying it shows a check and "Copied" for 1.5 seconds.
+- **Copy buttons:** "Copy shown", the per-section "Copy" and the viewer's copy all use the same small button with the icon. On phones "Copy shown" sits beside the card count.
+- **Selects:** Group and Sort lose the browser's default look. They use the same box as the buttons with a drawn caret that follows the theme colours.
+
 ## 8.16.0
 - **Tagged build picker:** the build and Compare with dropdowns are styled pickers instead of plain selects.
   - Each option shows a coloured bracket chip (B1–B5), the build name with its bracket name and price beneath, and its audit tag ("Pass with warnings", "Not audited"). The current build has a ✓.

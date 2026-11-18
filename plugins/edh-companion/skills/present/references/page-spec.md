@@ -67,7 +67,7 @@ WebP atlases only, cut with CSS `background-position`, 488 px cells; the hero ar
 - `theme_policy.tiers` plus `deck[].theme_tier` add a preference sub-label to on-theme cards (e.g. Spider-Verse, Other Marvel) and a count per tier in the theme line. On theme stays on theme: the percentage and filters don't change.
 
 ## Accessibility and phones
-Every card is a button, tabs take arrow keys, scrollable tables are focusable regions, 390 px has no horizontal scroll, fixed aspect boxes prevent layout shift. Target: axe-core wcag2a, wcag2aa and wcag22aa clean in light and dark.
+Buttons use one system (`.btn`, plus `.primary` for the one main action such as Copy for Moxfield, `.ghost`, `.sm`, `.icon`; `.ic-copy` adds the copy icon and its check while "Copied" shows); pickers, selects and the search box share its height, corners and border. Every card is a button, tabs take arrow keys, scrollable tables are focusable regions, 390 px has no horizontal scroll, fixed aspect boxes prevent layout shift. Target: axe-core wcag2a, wcag2aa and wcag22aa clean in light and dark.
 
 ## Tests (maintainers only: `tests/` is in the repo, not the installed plugin)
 Edit `assets/template/` (index.html, page.css, page.js) only for something every page needs, keep existing behaviour working, and re-run `tests/unit/test_present.py` plus the browser check on the fixture project.

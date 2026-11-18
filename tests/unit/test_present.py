@@ -27,7 +27,7 @@ sys.path.insert(0, os.path.join(ROOT, "plugins", "edh-companion", "scripts"))
 from edhcore.cards import record  # noqa: E402
 
 
-def browse(case, html, script):
+def browse(case, html, script, actions=None):
     """Load a built page in Chromium and return (uncaught JS errors, the value of `script`). Skips without a browser."""
     try:
         from playwright.sync_api import sync_playwright
@@ -44,6 +44,8 @@ def browse(case, html, script):
             page.on("pageerror", lambda e: errors.append(str(e)))
             page.goto("file:///" + html.replace(os.sep, "/"))
             page.wait_for_timeout(1500)
+            if actions:
+                actions(page)
             value = page.evaluate(script)
             browser.close()
     except Exception as e:
@@ -320,19 +322,38 @@ class Showcase(unittest.TestCase):
         shutil.rmtree(cls.tmp, ignore_errors=True)
 
     def test_one_page_build_bar(self):
-        """Every build in one dropdown ("Bracket 3 · name", grouped), at most four views, ranking pages behind one switch."""
+        """Every build in one picker (bracket chip, name, audit tag; grouped), at most four views, ranking pages behind one switch."""
         errors, v = browse(self, os.path.join(self.tmp, "site", "index.html"), """({
             views: [...document.querySelectorAll('#tabs button')].map(b => b.dataset.view),
-            groups: [...document.querySelectorAll('#bsel optgroup')].map(g => g.label),
-            builds: [...document.querySelectorAll('#bsel option')].map(o => o.textContent),
-            selected: document.querySelectorAll('#bsel option[selected]').length})""")
+            groups: [...document.querySelectorAll('#bsel-lb .pk-g')].map(g => g.textContent),
+            chips: [...document.querySelectorAll('#bsel-lb .pk-opt')].map(o => (o.querySelector('.bchip') || {}).textContent),
+            tags: document.querySelectorAll('#bsel-lb .pk-opt .tag').length,
+            selected: document.querySelectorAll('#bsel-lb [aria-selected="true"]').length})""")
         self.assertEqual(errors, [])
         self.assertLessEqual(len(v["views"]), 4)
         self.assertEqual(v["views"][0], "decks")
         self.assertEqual(v["groups"], [g["title"] for g in self.D["groups"]])
-        self.assertEqual(len(v["builds"]), sum(len(c["decks"]) for g in self.D["groups"] for c in g["commanders"]))
-        self.assertTrue(all(b.startswith("Bracket ") or ": Bracket " in b for b in v["builds"]), v["builds"])  # the bracket comes first
+        n = sum(len(c["decks"]) for g in self.D["groups"] for c in g["commanders"])
+        self.assertEqual(len(v["chips"]), n)
+        self.assertTrue(all(c and c.startswith("B") for c in v["chips"]), v["chips"])  # every option leads with its bracket chip
+        self.assertEqual(v["tags"], n)                                                  # and carries its audit tag
         self.assertEqual(v["selected"], 1)
+
+    def test_build_picker_keyboard(self):
+        """Arrow keys open the picker, End moves to the last build, Enter picks it: the page redraws and the link follows."""
+        def keys(page):
+            page.focus("#bsel")
+            page.keyboard.press("ArrowDown")
+            page.keyboard.press("End")
+            page.keyboard.press("Enter")
+            page.wait_for_timeout(500)
+        errors, v = browse(self, os.path.join(self.tmp, "site", "index.html"), """({
+            hash: decodeURIComponent(location.hash), open: document.getElementById('bsel').getAttribute('aria-expanded'),
+            focus: document.activeElement.id})""", keys)
+        last = [(c["slug"], d["id"] or "b" + str(d["bracket"])) for g in self.D["groups"] for c in g["commanders"] for d in c["decks"]][-1]
+        self.assertEqual(errors, [])
+        self.assertEqual(v["hash"], f"#build={last[0]}/{last[1]}")
+        self.assertEqual((v["open"], v["focus"]), ("false", "bsel"))
 
     def test_groups_and_picker(self):
         g = {x["title"]: x for x in self.D["groups"]}

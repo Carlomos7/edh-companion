@@ -218,16 +218,38 @@ function renderDecks(host){
   body.append(...[E.length>1?buildBar(E,cur,pick,many):null,hero(c,deck,flat,asTitle),nav,noticesNode(deck),...parts].filter(Boolean));
   placeTheme(nav.querySelector(".in"));watchSections(nav)}
  draw()}
-// the build picker: one dropdown, "Bracket 3 · Upgraded", grouped by build group when there are several; plus "Compare with"
-function buildName(x,many){const rest=String(x.d.label||"").replace(new RegExp("^B"+x.d.bracket+"\\b\\s*"),"").trim()||BR[x.d.bracket]||"";
- return (many&&x.G.commanders.length>1?x.c.name+": ":"")+`Bracket ${x.d.bracket}`+(rest?` · ${rest}`:"")}
-function buildBar(E,cur,pick,many){const groups=[...new Set(E.map(x=>x.G))],grouped=groups.length>1;
- const opts=(skip,sel)=>grouped?groups.map(G=>el("optgroup",{label:G.title},...E.filter(x=>x.G===G&&x!==skip).map(x=>el("option",{value:x.key,selected:sel(x)},buildName(x,many)))))
-  :E.filter(x=>x!==skip).map(x=>el("option",{value:x.key,selected:sel(x)},buildName(x,many)));
- const byKey=k=>E.find(x=>x.key===k);
- const build=el("div",{class:"bgrp"},el("label",{class:"bgl",for:"bsel"},"Build"),el("select",{id:"bsel",onchange:e=>pick(byKey(e.target.value))},...opts(null,x=>x===cur)));
+// the build picker: "Bracket 3 · Upgraded" (text everywhere a plain name is needed), and the styled picker below
+function buildRest(x,many){return (many&&x.G.commanders.length>1?x.c.name+": ":"")+(String(x.d.label||"").replace(new RegExp("^B"+x.d.bracket+"\\b\\s*"),"").trim()||BR[x.d.bracket]||"")}
+function buildName(x,many){const r=buildRest(x,many);return `Bracket ${x.d.bracket}`+(r?` · ${r}`:"")}
+// A dropdown whose options carry tags: a button that opens a listbox (ARIA listbox pattern). Keyboard: arrows, Home/End,
+// Enter/Space to choose, Escape to close; a click outside closes it. items: [{key, group?, bracket?, name, sub?, state?}]
+function picker(id,label,items,curKey,onPick){const cur=items.find(x=>x.key===curKey)||items[0];
+ const row=x=>[x.bracket?el("span",{class:"bchip b"+x.bracket,title:`Bracket ${x.bracket}${BR[x.bracket]?" ("+BR[x.bracket]+")":""}`},"B"+x.bracket):null,
+  el("span",{class:"pk-name"},el("b",{},x.name),x.sub?el("small",{},x.sub):null),x.state?stateTag(x.state):null];
+ const btn=el("button",{type:"button",class:"pk-btn",id,"aria-haspopup":"listbox","aria-expanded":"false","aria-controls":id+"-lb","aria-labelledby":`${id}-l ${id}`},...row(cur),el("span",{class:"pk-caret","aria-hidden":"true"},"▾"));
+ const list=el("div",{class:"pk-list",role:"listbox",id:id+"-lb",tabindex:"-1","aria-labelledby":id+"-l",hidden:true}),opts=[];
+ let g0,a=items.indexOf(cur);
+ items.forEach((x,i)=>{if(x.group&&x.group!==g0){g0=x.group;list.append(el("div",{class:"pk-g",role:"presentation"},x.group))}
+  const o=el("div",{class:"pk-opt",role:"option",id:`${id}-o${i}`,"aria-selected":x===cur,onclick:()=>choose(i),onpointermove:()=>act(i)},...row(x),x===cur?el("span",{class:"pk-check","aria-hidden":"true"},"✓"):null);
+  opts.push(o);list.append(o)});
+ const act=i=>{a=Math.max(0,Math.min(items.length-1,i));opts.forEach((o,j)=>o.classList.toggle("on",j===a));list.setAttribute("aria-activedescendant",opts[a].id);opts[a].scrollIntoView({block:"nearest"})};
+ const outside=e=>{if(!wrap.contains(e.target))close(false)};
+ const open=()=>{list.hidden=false;btn.setAttribute("aria-expanded","true");act(items.indexOf(cur));list.focus({preventScroll:true});document.addEventListener("pointerdown",outside,true)};
+ const close=(focus=true)=>{list.hidden=true;btn.setAttribute("aria-expanded","false");document.removeEventListener("pointerdown",outside,true);if(focus)btn.focus({preventScroll:true})};
+ const choose=i=>{close();if(items[i]!==cur)onPick(items[i].key)};
+ btn.onclick=()=>list.hidden?open():close();
+ btn.onkeydown=e=>{if(e.key==="ArrowDown"||e.key==="ArrowUp"){e.preventDefault();open()}};
+ list.onkeydown=e=>{const k=e.key,stop=()=>e.preventDefault();
+  if(k==="ArrowDown"){stop();act(a+1)}else if(k==="ArrowUp"){stop();act(a-1)}else if(k==="Home"){stop();act(0)}else if(k==="End"){stop();act(items.length-1)}
+  else if(k==="Enter"||k===" "){stop();choose(a)}else if(k==="Escape"){stop();close()}else if(k==="Tab")close(false)};
+ const wrap=el("div",{class:"bgrp pk"},el("span",{class:"bgl",id:id+"-l"},label),btn,list);return wrap}
+function buildBar(E,cur,pick,many){const grouped=new Set(E.map(x=>x.G)).size>1,byKey=k=>E.find(x=>x.key===k);
+ const item=x=>{const rest=buildRest(x,many);return {key:x.key,group:grouped?x.G.title:null,bracket:x.d.bracket,name:rest||`Bracket ${x.d.bracket}`,
+  sub:[rest===BR[x.d.bracket]?"":BR[x.d.bracket],SHOW.prices&&(x.d.stats||{}).price!=null?money(x.d.stats.price):""].filter(Boolean).join(" · "),state:(x.d.audit_view||{}).verdict}};
  const ck="cmp:"+cur.key;
- const cmp=el("div",{class:"bgrp bcmp"},el("label",{class:"bgl",for:"cmpsel"},"Compare with"),el("select",{id:"cmpsel",onchange:e=>{store.set(ck,e.target.value);pick(cur)}},el("option",{value:""},"Nothing"),...opts(cur,x=>store.get(ck)===x.key)));
+ const build=picker("bsel","Build",E.map(item),cur.key,k=>pick(byKey(k)));
+ const cmp=picker("cmpsel","Compare with",[{key:"",name:"Nothing",sub:"show this build only"},...E.filter(x=>x!==cur).map(item)],store.get(ck)||"",k=>{store.set(ck,k);pick(cur)});
+ cmp.classList.add("bcmp");
  return el("nav",{class:"buildbar","aria-label":"Builds"},el("div",{class:"in"},build,cmp))}
 // what changes between two builds: cards only in one of them, and copies that differ (basics)
 function diffSection(deck,o){const m=d=>new Map(d.cards.filter(c=>!c.commander).map(c=>[c.name,c])),A=m(deck),B=m(o.d),lab=buildName(o,false);

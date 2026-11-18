@@ -501,3 +501,29 @@ footer.foot{max-width:var(--maxw);margin:0 auto;padding:0 var(--gutter) calc(var
 .hero-art.duo{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:var(--sp-2);width:min(100%,400px)}
 @media (min-width:960px){.hero-art.duo{width:min(100%,460px)}}
 @media (max-width:599px){.buildbar .bgrp{width:100%}.buildbar select{width:100%}}
+/* picker: a dropdown whose options carry tags (bracket chip, name, price, audit) */
+.pk{position:relative}
+.pk-btn{display:flex;align-items:center;gap:var(--sp-3);min-height:52px;width:min(100%,400px);padding:var(--sp-2) var(--sp-3);background:var(--surface);color:var(--text);
+ border:1px solid var(--ctl-border);border-radius:var(--r-panel);font:500 var(--fs-sm)/1.25 var(--body);cursor:pointer;text-align:left;box-shadow:var(--shadow-1);
+ transition:border-color var(--dur-1) var(--ease),box-shadow var(--dur-1) var(--ease)}
+.pk-btn:hover{border-color:var(--accent)}
+.pk-btn[aria-expanded="true"]{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 28%,transparent)}
+.pk-caret{margin-left:auto;color:var(--muted);transition:transform var(--dur-2) var(--ease)}
+.pk-btn[aria-expanded="true"] .pk-caret{transform:rotate(180deg)}
+.pk-btn .tag{flex:none}
+.pk-name{display:grid;min-width:0;flex:1}.pk-name b{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.pk-name small{color:var(--muted);font-size:var(--fs-xs);font-variant-numeric:tabular-nums}
+.pk-list{position:absolute;z-index:30;top:calc(100% + 6px);left:0;width:max(100%,360px);max-width:min(94vw,520px);max-height:min(60vh,460px);overflow:auto;
+ background:var(--surface);border:1px solid var(--border);border-radius:var(--r-panel);box-shadow:var(--shadow-2);padding:var(--sp-1)}
+.bcmp .pk-list{left:auto;right:0}
+.pk-list:focus{outline:none}
+.pk-g{font:600 var(--fs-xs)/1.2 var(--body);color:var(--muted);text-transform:uppercase;letter-spacing:.05em;padding:var(--sp-3) var(--sp-3) var(--sp-1)}
+.pk-opt{display:flex;align-items:center;gap:var(--sp-3);padding:var(--sp-2) var(--sp-3);border-radius:var(--r-tile);cursor:pointer;min-height:48px}
+.pk-opt.on{background:var(--surface-2);box-shadow:inset 0 0 0 1px var(--accent)}
+.pk-opt[aria-selected="true"] .pk-name b{color:var(--accent)}
+.pk-check{color:var(--accent);font-weight:700;width:1em;text-align:center}
+.bchip{display:inline-grid;place-items:center;min-width:36px;height:28px;padding:0 6px;border-radius:var(--r-tile);font:700 var(--fs-xs)/1 var(--body);color:#fff;background:var(--bc,#5b6370);flex:none;letter-spacing:.02em}
+.bchip.b1{--bc:#5b6370}.bchip.b2{--bc:#1a7346}.bchip.b3{--bc:#1d5fb8}.bchip.b4{--bc:#7a3cc4}.bchip.b5{--bc:#b42318}
+@media (max-width:599px){.pk-btn{width:100%}.pk-list,.bcmp .pk-list{left:0;right:0;width:auto;max-width:none}}
+@media (prefers-reduced-motion:reduce){.pk-caret{transition:none}}
+.pk-list .pk-name b{white-space:normal;overflow:visible}  /* full names in the list; the closed button shortens */
